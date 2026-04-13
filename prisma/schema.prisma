@@ -1,0 +1,180 @@
+// Employee Hours — SQLite locally (file:./dev.db). For hosted PostgreSQL, switch provider/url and migrations.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String // ADMIN | EMPLOYEE
+  phone        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  employee      Employee?
+  notifications Notification[]
+  auditLogs     AuditLog[]  @relation("ActorAuditLogs")
+  approvals     Approval[]
+}
+
+model Employee {
+  id             String    @id @default(cuid())
+  employeeCode   String    @unique @map("employee_id")
+  name           String
+  email          String    @unique
+  userId         String?   @unique
+  user           User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  hourlyRate     Float     @default(28)
+  overtimeRate   Float     @default(42)
+  department     String?
+  jobTitle       String?
+  deletedAt      DateTime? @map("deleted_at")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  timesheets Timesheet[]
+  payslips   Payslip[]
+
+  @@index([deletedAt])
+}
+
+model PayPeriod {
+  id        String   @id @default(cuid())
+  name      String?
+  startDate DateTime
+  endDate   DateTime
+  status    String   @default("OPEN") // OPEN | CLOSED | PROCESSING
+  isCurrent Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  timesheets Timesheet[]
+  payslips   Payslip[]
+
+  @@index([startDate, endDate])
+}
+
+model Timesheet {
+  id            String    @id @default(cuid())
+  employeeId    String
+  employee      Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  payPeriodId   String
+  payPeriod     PayPeriod @relation(fields: [payPeriodId], references: [id], onDelete: Cascade)
+  status        String    @default("DRAFT") // DRAFT | PENDING | VERIFIED | APPROVED | REJECTED
+  notes         String?
+  totalRegular  Float     @default(0)
+  totalOvertime Float     @default(0)
+  totalLeave    Float     @default(0)
+  totalHours    Float     @default(0)
+  submittedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  entries   TimesheetEntry[]
+  approvals Approval[]
+  payslip   Payslip?
+
+  @@unique([employeeId, payPeriodId])
+}
+
+model TimesheetEntry {
+  id            String    @id @default(cuid())
+  timesheetId   String
+  timesheet     Timesheet @relation(fields: [timesheetId], references: [id], onDelete: Cascade)
+  workDate      DateTime
+  regularHours  Float     @default(0)
+  overtimeHours Float     @default(0)
+  leaveHours    Float     @default(0)
+  location      String?
+  notes         String?
+
+  @@unique([timesheetId, workDate])
+  @@index([timesheetId])
+}
+
+model Approval {
+  id              String   @id @default(cuid())
+  timesheetId     String
+  timesheet       Timesheet @relation(fields: [timesheetId], references: [id], onDelete: Cascade)
+  adminId         String
+  admin           User      @relation(fields: [adminId], references: [id])
+  previousStatus  String?
+  newStatus       String
+  comment         String?
+  rejectionReason String?
+  createdAt       DateTime  @default(now())
+}
+
+model Payslip {
+  id              String    @id @default(cuid())
+  payslipNumber   String    @unique
+  timesheetId     String    @unique
+  timesheet       Timesheet @relation(fields: [timesheetId], references: [id], onDelete: Cascade)
+  employeeId      String
+  employee        Employee  @relation(fields: [employeeId], references: [id])
+  payPeriodId     String
+  payPeriod       PayPeriod @relation(fields: [payPeriodId], references: [id])
+
+  hourlyRate      Float
+  overtimeRate    Float
+  regularHours    Float
+  overtimeHours   Float
+  grossPay        Float
+  totalDeductions Float
+  netPay          Float
+  approvalDate    DateTime?
+  adminSignoff    String?
+
+  markedSentAt DateTime?
+  emailSentAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items PayslipItem[]
+}
+
+model PayslipItem {
+  id        String  @id @default(cuid())
+  payslipId String
+  payslip   Payslip @relation(fields: [payslipId], references: [id], onDelete: Cascade)
+  label     String
+  amount    Float
+  type      String // EARNING | DEDUCTION
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  body      String
+  readAt    DateTime?
+  metadata  String?
+  createdAt DateTime  @default(now())
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation("ActorAuditLogs", fields: [actorId], references: [id], onDelete: SetNull)
+  action     String
+  entityType String
+  entityId   String?
+  details    String?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
