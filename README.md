@@ -1,60 +1,88 @@
 # WorkLedger — Payroll manager
 
-Next.js app with Prisma and PostgreSQL.
+Next.js 16, Prisma 5, and PostgreSQL (**Neon**). Demo app for hours, approvals, and payslips.
 
-## Local setup
+## Quick start
 
-1. Create a **PostgreSQL** database (local install, [Neon](https://neon.tech) free tier, or Docker).
-2. Copy `.env.example` to `.env` and set `DATABASE_URL` and `AUTH_SECRET` (32+ random characters).
-3. Install and migrate:
+1. **Install:** `npm install`
+2. **Configure:** copy `.env.example` to `.env`. Set `DATABASE_URL` (Neon **pooler**), `DIRECT_URL` (Neon **direct**, no `-pooler` in the host), and `AUTH_SECRET` (32+ characters — see `.env.example`).
+3. **Database + demo data:** `npm run setup` (runs `prisma generate`, `prisma migrate deploy`, and `tsx prisma/seed.ts`)
+4. **Dev server:** `npm run dev` → [http://localhost:3000](http://localhost:3000)
+
+For a step-by-step checklist with copy buttons, **[open `setup.html` in your browser](setup.html)** (double-click the file — no server required).
+
+## Environment variables
+
+| Variable | Purpose |
+|----------|---------|
+| `DATABASE_URL` | Pooled connection (e.g. Neon `*-pooler.*.neon.tech`). Used by the app at runtime. |
+| `DIRECT_URL` | Direct/non-pooler host (no `-pooler`). Required in `schema.prisma` so **`prisma migrate deploy`** works against Neon. |
+| `AUTH_SECRET` | JWT/session signing; minimum 32 characters. |
+| `NEXT_PUBLIC_COMPANY_NAME` | Optional branding on login and employee screens. |
+
+Generate a secret:
 
 ```bash
-npm install
-npx prisma migrate dev
-npm run db:seed
-npm run dev
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+## Demo logins (after `npm run setup`)
+
+Password for both admins: **`PayrollDemo2026!`** (from `lib/demo-credentials.ts`)
+
+- `syalrakesh00@gmail.com`
+- `anmolchahal871@gmail.com`
 
 ## Deploy on Vercel
 
-1. Push the project to GitHub and import it in [Vercel](https://vercel.com/new).
-2. Add a **Postgres** database:
-   - Use [Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres), **Neon**, or **Supabase**, then copy the connection string.
-3. In the Vercel project → **Settings → Environment Variables**, add:
-   - **`DATABASE_URL`** — your Postgres URL (include `?sslmode=require` if the host requires SSL).
-   - **`AUTH_SECRET`** — at least 32 random characters (e.g. `openssl rand -base64 32`).
-   - Optional: **`NEXT_PUBLIC_COMPANY_NAME`** — shown on the login page.
-4. Deploy. The build runs `prisma migrate deploy` to create tables.
-5. **Seed admins / demo data** (one-time). In Vercel → your project → **Deployments** → **⋯** on the latest deployment → **Redeploy** is not enough; run seed from your machine against production:
+1. Push to GitHub and import the repo in [Vercel](https://vercel.com/new).
+2. Create or connect a **Neon** Postgres database.
+3. In **Settings → Environment Variables**, add:
+   - **`DATABASE_URL`** — Neon **pooled** URL (often includes `-pooler`).
+   - **`DIRECT_URL`** — Neon **direct** URL (host without `-pooler`). **Both** are required for builds that run `prisma migrate deploy`.
+   - **`AUTH_SECRET`** — 32+ random characters.
+   - Optional: **`NEXT_PUBLIC_COMPANY_NAME`**
+4. Deploy. The build runs `prisma generate`, `prisma migrate deploy`, and `next build`.
+5. **Seed production once** from your machine (or any environment with the same `DATABASE_URL` / `DIRECT_URL`):
 
 ```bash
-# Use the same DATABASE_URL as in Vercel (from Neon dashboard, etc.)
-set DATABASE_URL=postgresql://...   # Windows
-export DATABASE_URL=postgresql://... # macOS/Linux
-npx prisma db seed
-# or: npm run db:seed
+npm run setup
 ```
 
-Or use Neon's SQL editor / a local `tsx prisma/seed.ts` with production `DATABASE_URL`.
-
-6. Open your Vercel URL and sign in with the seeded admin email/password from `prisma/seed.ts` (or your `db:add-admins` script).
-
-### Neon note
-
-If migrations fail with a **pooler** connection, use Neon's **direct** (non-pooled) connection string for `DATABASE_URL` on Vercel, or add `directUrl` in `schema.prisma` and set `DIRECT_URL` per [Prisma + Neon](https://www.prisma.io/docs/orm/overview/databases/neon).
+Or: `npx prisma migrate deploy` then `npm run db:seed`.
 
 ## Scripts
 
 | Command | Description |
 |--------|-------------|
-| `npm run dev` | Dev server (LAN-friendly) |
-| `npm run dev:local` | Dev server, default host only |
-| `npm run build` | `prisma generate` + `migrate deploy` + `next build` |
-| `npm run db:seed` | Seed demo data |
-| `npm run live` | Temporary public tunnel (localtunnel) |
+| `npm run dev` | Validates `.env`, then starts Next.js dev server |
+| `npm run build` | Generate client, migrate, production build |
+| `npm run start` | Production server |
+| `npm run setup` | Generate + migrate + seed (local/staging bootstrap) |
+| `npm run db:migrate` | `prisma migrate deploy` |
+| `npm run db:seed` | Run `prisma/seed.ts` only |
+| `npm run db:generate` | `prisma generate` |
+| `npm run db:push` | `prisma db push` (prototyping only) |
+| `npm run db:studio` | Prisma Studio |
+| `npm run lint` | ESLint |
 
-## Tech
+## Troubleshooting
 
-Next.js 16, Prisma 5, PostgreSQL, Tailwind CSS 4.
+### `P3009` / failed migration recorded in `_prisma_migrations`
+
+If a previous run failed (e.g. once-off UTF-8 BOM in an old `migration.sql`), mark it rolled back and redeploy:
+
+```bash
+npx prisma migrate resolve --rolled-back "20260413230000_postgresql_init"
+npx prisma migrate deploy
+```
+
+Only do this on disposable databases, or after you understand [Prisma migrate resolve](https://www.prisma.io/docs/orm/prisma-migrate/workflows/troubleshooting-development).
+
+### Neon pooler and migrations
+
+Always set **both** `DATABASE_URL` (pooled) and `DIRECT_URL` (direct host, no `-pooler`). Migrations use `directUrl` in `schema.prisma`.
+
+## Tech stack
+
+Next.js 16, Prisma 5, PostgreSQL (Neon), Tailwind CSS 4, bcrypt + jose for auth.

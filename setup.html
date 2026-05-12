@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WorkLedger — Project Setup Guide</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --purple: #7c3aed;
+      --purple-dim: #5b21b6;
+      --danger: #f87171;
+      --radius: 12px;
+      --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+      --font-mono: ui-monospace, "Cascadia Code", "Fira Code", monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--bg);
+      min-height: 100vh;
+    }
+    a { color: var(--purple); }
+    a:hover { text-decoration: underline; }
+    .wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 2.5rem 1.25rem 4rem;
+    }
+    header {
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    h1 {
+      font-size: 1.65rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin: 0 0 0.5rem;
+      background: linear-gradient(135deg, #fff 0%, #c4b5fd 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 2rem 0 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    h2::before {
+      content: "";
+      width: 4px;
+      height: 1.1em;
+      background: var(--purple);
+      border-radius: 2px;
+    }
+    p.intro { color: var(--muted); margin: 0 0 1rem; }
+    ul { margin: 0.5rem 0 1rem 1.2rem; color: var(--muted); }
+    li { margin: 0.35rem 0; }
+    code, .mono {
+      font-family: var(--font-mono);
+      font-size: 0.88em;
+    }
+    .block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1rem 1rem;
+      margin: 0.75rem 0;
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: flex-start;
+      margin-bottom: 0.85rem;
+    }
+    .row:last-child { margin-bottom: 0; }
+    .row label {
+      flex: 0 0 100%;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+    }
+    pre.shell {
+      margin: 0;
+      flex: 1;
+      min-width: 200px;
+      padding: 0.65rem 0.85rem;
+      background: var(--bg);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: #e2e8f0;
+    }
+    .btn-copy {
+      flex-shrink: 0;
+      font-family: var(--font-sans);
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.5rem 0.85rem;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      background: var(--purple);
+      color: #fff;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .btn-copy:hover {
+      background: var(--purple-dim);
+    }
+    .btn-copy:active { transform: scale(0.98); }
+    .btn-copy.copied {
+      background: #15803d;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.75rem 0 1rem;
+      font-size: 0.9rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.65rem 0.75rem;
+      border: 1px solid var(--border);
+    }
+    th {
+      background: var(--surface);
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    tr:nth-child(even) td { background: rgba(30,41,59,0.5); }
+    .error-callout {
+      border-left: 4px solid var(--danger);
+      padding: 0.5rem 0 0.5rem 1rem;
+      margin: 0.85rem 0;
+      color: var(--muted);
+    }
+    .error-callout strong { color: #fecaca; }
+    footer {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>WorkLedger — Project Setup Guide</h1>
+      <p>Payroll Manager · Next.js 16 · Prisma 5 · Neon PostgreSQL · No server needed for this page</p>
+    </header>
+
+    <section>
+      <h2>Prerequisites</h2>
+      <ul>
+        <li><strong class="mono">Node.js 18+</strong> (LTS recommended)</li>
+        <li><strong class="mono">npm</strong> (ships with Node)</li>
+        <li>A <strong>Neon</strong> project with pooled + direct connection strings (<a href="https://neon.tech" target="_blank" rel="noopener">neon.tech</a>)</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Step 1 — Clone &amp; install</h2>
+      <p class="intro">From the project root:</p>
+      <div class="block">
+        <div class="row">
+          <pre class="shell mono" id="cmd-install">npm install</pre>
+          <button type="button" class="btn-copy" data-copy="cmd-install">Copy</button>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Step 2 — Configure <span class="mono">.env</span></h2>
+      <p class="intro">Copy <span class="mono">.env.example</span> to <span class="mono">.env</span>. Use your Neon URLs and a long random secret.</p>
+      <div class="block">
+        <div class="row">
+          <label for="tpl-database">DATABASE_URL (pooled — host usually contains <span class="mono">-pooler</span>)</label>
+          <pre class="shell mono" id="tpl-database">DATABASE_URL="postgresql://USER:PASSWORD@HOST.neon.tech/neondb?sslmode=require"</pre>
+          <button type="button" class="btn-copy" data-copy="tpl-database">Copy</button>
+        </div>
+        <div class="row">
+          <label for="tpl-direct">DIRECT_URL (direct — host must NOT contain <span class="mono">-pooler</span>)</label>
+          <pre class="shell mono" id="tpl-direct">DIRECT_URL="postgresql://USER:PASSWORD@DIRECT-HOST.neon.tech/neondb?sslmode=require"</pre>
+          <button type="button" class="btn-copy" data-copy="tpl-direct">Copy</button>
+        </div>
+        <div class="row">
+          <label for="tpl-secret">AUTH_SECRET (32+ characters)</label>
+          <pre class="shell mono" id="tpl-secret">AUTH_SECRET="paste-output-of-node_-e_crypto_randomBytes"</pre>
+          <button type="button" class="btn-copy" data-copy="tpl-secret">Copy</button>
+        </div>
+        <p style="margin:0.75rem 0 0;color:var(--muted);font-size:0.85rem;">Generate a secret:<br /></p>
+        <div class="row" style="margin-top:0.35rem;">
+          <pre class="shell mono" id="cmd-secret">node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"</pre>
+          <button type="button" class="btn-copy" data-copy="cmd-secret">Copy</button>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Step 3 — Run setup</h2>
+      <p class="intro">Runs Prisma codegen, applies migrations (<span class="mono">migrate deploy</span> uses <span class="mono">DIRECT_URL</span>), and seeds demo data.</p>
+      <div class="block">
+        <div class="row">
+          <pre class="shell mono" id="cmd-setup">npm run setup</pre>
+          <button type="button" class="btn-copy" data-copy="cmd-setup">Copy</button>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Step 4 — Start dev server</h2>
+      <div class="block">
+        <div class="row">
+          <pre class="shell mono" id="cmd-dev">npm run dev</pre>
+          <button type="button" class="btn-copy" data-copy="cmd-dev">Copy</button>
+        </div>
+      </div>
+      <p class="intro" style="margin-top:1rem;">Open <strong><a href="http://localhost:3000">http://localhost:3000</a></strong>. The CLI may run a quick env check first.</p>
+    </section>
+
+    <section>
+      <h2>Step 5 — Demo administrator logins</h2>
+      <table>
+        <thead>
+          <tr><th>Email</th><th>Password</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">syalrakesh00@gmail.com</td>
+            <td class="mono">PayrollDemo2026!</td>
+          </tr>
+          <tr>
+            <td class="mono">anmolchahal871@gmail.com</td>
+            <td class="mono">PayrollDemo2026!</td>
+          </tr>
+        </tbody>
+      </table>
+      <button type="button" class="btn-copy" style="margin-top:0.25rem;margin-bottom:0.5rem;" id="btn-copy-creds">Copy credentials (tab-separated)</button>
+      <p id="toast-creds" style="margin:0;font-size:0.85rem;color:var(--muted);"></p>
+    </section>
+
+    <section>
+      <h2>Common errors</h2>
+      <div class="error-callout">
+        <strong>P1001 / Can’t reach database</strong><br />
+        Fix: verify <span class="mono">DATABASE_URL</span> in <span class="mono">.env</span>, Neon project is awake, and the string matches the Neon dashboard (no typos).</div>
+      <div class="error-callout">
+        <strong>EPERM rename / DLL / ENOENT while installing</strong><br />
+        Fix: close VS Code/Cursor and other terminals, end stray <span class="mono">node.exe</span> processes in Task Manager, then reopen and retry <span class="mono">npm install</span>.</div>
+      <div class="error-callout">
+        <strong>Migration fails with Neon pooler</strong><br />
+        Fix: set <span class="mono">DIRECT_URL</span> to the <em>direct</em> connection string (hostname without <span class="mono">-pooler</span>). Keep <span class="mono">DATABASE_URL</span> pooled for the app.</div>
+    </section>
+
+    <section>
+      <h2>Useful commands</h2>
+      <table>
+        <thead>
+          <tr><th>Command</th><th>What it does</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono">npm run dev</td><td>Env check + Next.js development server</td></tr>
+          <tr><td class="mono">npm run setup</td><td>Generate + migrate + seed</td></tr>
+          <tr><td class="mono">npm run db:migrate</td><td><span class="mono">prisma migrate deploy</span></td></tr>
+          <tr><td class="mono">npm run db:seed</td><td>Seed only (destructive wipe + demo data)</td></tr>
+          <tr><td class="mono">npm run db:studio</td><td>Prisma Studio GUI</td></tr>
+          <tr><td class="mono">npm run build</td><td>Production build</td></tr>
+          <tr><td class="mono">npm run lint</td><td>ESLint</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <footer>
+      Pure HTML/CSS/JS · Copy buttons use <span class="mono">navigator.clipboard</span>. For HTTPS file:// quirks, paste values manually.</footer>
+  </div>
+
+  <script>
+    async function copyText(text, btn) {
+      try {
+        await navigator.clipboard.writeText(text);
+        if (btn) {
+          var prev = btn.textContent;
+          btn.textContent = "Copied";
+          btn.classList.add("copied");
+          setTimeout(function () {
+            btn.textContent = prev;
+            btn.classList.remove("copied");
+          }, 1600);
+        }
+        return true;
+      } catch (e) {
+        window.prompt("Copy manually:", text);
+        return false;
+      }
+    }
+
+    document.querySelectorAll("[data-copy]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-copy");
+        var el = document.getElementById(id);
+        if (el) copyText(el.textContent.trim(), btn);
+      });
+    });
+
+    document.getElementById("btn-copy-creds").addEventListener("click", function (ev) {
+      var txt =
+        "syalrakesh00@gmail.com\tPayrollDemo2026!\nanmolchahal871@gmail.com\tPayrollDemo2026!";
+      var toast = document.getElementById("toast-creds");
+      copyText(txt, ev.currentTarget).then(function (ok) {
+        toast.textContent = ok ? "Both rows copied to clipboard." : "Use the prompt to copy.";
+      });
+    });
+  </script>
+</body>
+</html>
