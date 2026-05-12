@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -77,10 +77,10 @@ export default function AdminTimesheetsPage() {
       <PageHeader
         eyebrow="Workflow"
         title="Timesheets pipeline"
-        description="Operational triage lane for submitted hours—prioritize bottlenecks, route approvals confidently."
+        description="Operational triage lane for submitted hoursâ€”prioritize bottlenecks, route approvals confidently."
       />
 
-      <Card className="rounded-2xl border-[var(--color-border)] !bg-white/95 backdrop-blur-sm">
+      <Card className="rounded-2xl border-[var(--color-border)] !bg-[var(--color-bg-card)]/95 backdrop-blur-sm">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="min-w-[220px] flex-1">
             <label className="label-field" htmlFor="timesheets-search">
@@ -103,7 +103,7 @@ export default function AdminTimesheetsPage() {
                 setStatus("");
               }}
               className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
-                status === "" ? "bg-violet-600 text-white" : "bg-violet-50 text-slate-600 ring-1 ring-violet-200 hover:bg-violet-100"
+                status === "" ? "bg-[var(--color-accent)] text-white" : "bg-[var(--color-accent-soft)] text-slate-600 ring-1 ring-[var(--color-accent)] hover:bg-[var(--color-accent-tint)]"
               }`}
             >
               All
@@ -118,8 +118,8 @@ export default function AdminTimesheetsPage() {
                 }}
                 className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
                   status === f.value
-                    ? "bg-violet-600 text-white"
-                    : "bg-violet-50 text-slate-600 ring-1 ring-violet-200 hover:bg-violet-100"
+                    ? "bg-[var(--color-accent)] text-white"
+                    : "bg-[var(--color-accent-soft)] text-slate-600 ring-1 ring-[var(--color-accent)] hover:bg-[var(--color-accent-tint)]"
                 }`}
               >
                 {f.label}
@@ -129,7 +129,7 @@ export default function AdminTimesheetsPage() {
         </div>
       </Card>
 
-      <Card padding={false} className="overflow-hidden rounded-2xl border-[var(--color-border)] !bg-white/95 backdrop-blur-sm">
+      <Card padding={false} className="overflow-hidden rounded-2xl border-[var(--color-border)] !bg-[var(--color-bg-card)]/95 backdrop-blur-sm">
         <div className="overflow-x-auto">
           <table className="table-shell min-w-[760px]">
             <thead>
@@ -152,7 +152,7 @@ export default function AdminTimesheetsPage() {
                 items.map((row) => (
                   <tr key={row.id} className="table-row table-row-muted">
                     <td className="px-4 py-3.5 font-medium text-slate-800">{row.employee.name}</td>
-                    <td className="px-4 py-3.5 text-slate-600">{row.submittedAt ? shortDate(row.submittedAt) : "—"}</td>
+                    <td className="px-4 py-3.5 text-slate-600">{row.submittedAt ? shortDate(row.submittedAt) : "â€”"}</td>
                     <td className="px-4 py-3.5 font-semibold text-slate-700">{row.totalHours}h</td>
                     <td className="px-4 py-3.5">
                       <TimesheetStatusBadge status={row.status} />
@@ -177,7 +177,7 @@ export default function AdminTimesheetsPage() {
                         </Button>
                         <Link
                           href={`/admin/timesheets/${row.id}`}
-                          className="inline-flex h-8 items-center rounded-lg bg-violet-100 px-3 text-xs font-semibold text-violet-700 hover:bg-violet-200"
+                          className="inline-flex h-8 items-center rounded-lg bg-[var(--color-accent-tint)] px-3 text-xs font-semibold text-[var(--color-accent-light)] hover:bg-[var(--color-accent)] hover:text-white"
                         >
                           Open
                         </Link>
@@ -189,8 +189,8 @@ export default function AdminTimesheetsPage() {
             </tbody>
           </table>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-violet-200 px-4 py-3.5 text-sm text-slate-600">
-          <span>{total === 0 ? "No rows" : `Page ${page} · ${total} total`}</span>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--color-accent-tint)] px-4 py-3.5 text-sm text-slate-600">
+          <span>{total === 0 ? "No rows" : `Page ${page} Â· ${total} total`}</span>
           <div className="flex gap-2">
             <Button variant="secondary" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
               Previous

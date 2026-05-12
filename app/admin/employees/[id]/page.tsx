@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/Card";
@@ -30,7 +30,7 @@ export default async function AdminEmployeeDetailPage({
     <div className="page-container max-w-2xl space-y-8">
       <div>
         <Link href="/admin/employees" className="link-accent text-sm">
-          ← Back to employees
+          â† Back to employees
         </Link>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <h1 className="page-title">{employee.name}</h1>
@@ -88,11 +88,11 @@ export default async function AdminEmployeeDetailPage({
           History stays available even when someone is deactivated.
         </p>
         <ul className="mt-5 grid gap-3 text-sm text-[var(--color-text-secondary)] sm:grid-cols-2">
-          <li className="rounded-xl border border-violet-100/80 bg-violet-50/40 px-4 py-3">
+          <li className="rounded-xl border border-[var(--color-accent-tint)]/80 bg-[var(--color-accent-soft)]/40 px-4 py-3">
             Timesheets:{" "}
             <span className="font-bold tabular-nums text-[var(--color-text-primary)]">{employee._count.timesheets}</span>
           </li>
-          <li className="rounded-xl border border-violet-100/80 bg-violet-50/40 px-4 py-3">
+          <li className="rounded-xl border border-[var(--color-accent-tint)]/80 bg-[var(--color-accent-soft)]/40 px-4 py-3">
             Payslips:{" "}
             <span className="font-bold tabular-nums text-[var(--color-text-primary)]">{employee._count.payslips}</span>
           </li>
@@ -102,7 +102,7 @@ export default async function AdminEmployeeDetailPage({
             href={`/admin/review?q=${encodeURIComponent(employee.name)}`}
             className="link-accent text-sm font-semibold"
           >
-            Open timesheet review (search by name) →
+            Open timesheet review (search by name) â†’
           </Link>
         </div>
       </Card>

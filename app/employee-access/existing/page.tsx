@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -49,7 +49,7 @@ export default function EmployeeExistingAccessPage() {
       <div className="relative flex min-h-screen flex-col items-center justify-center px-4 py-10">
         <div className="mb-8 w-full max-w-md text-center">
           <Link href="/employee-access" className="link-accent text-sm">
-            ← Back to employee access
+            â† Back to employee access
           </Link>
           <h1 className="mt-5 text-2xl font-bold tracking-tight text-[var(--color-text-primary)] sm:text-3xl">
             Welcome back
@@ -82,10 +82,10 @@ export default function EmployeeExistingAccessPage() {
               />
             </div>
             <Button type="submit" className="h-11 w-full" disabled={loading}>
-              {loading ? "Looking you up…" : "Go to my dashboard"}
+              {loading ? "Looking you upâ€¦" : "Go to my dashboard"}
             </Button>
           </form>
-          <p className="mt-6 border-t border-violet-100 pt-5 text-center text-xs text-slate-500">
+          <p className="mt-6 border-t border-[var(--color-accent-tint)] pt-5 text-center text-xs text-slate-500">
             First visit?{" "}
             <Link href="/employee-access/register" className="link-accent font-semibold">
               Create your Employee ID

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { AlertCircle, Check, Eye, EyeOff, Lock, Mail, Shield, Sparkles, Timer } from "lucide-react";
+import { AlertCircle, Eye, EyeOff, Lock, Mail, Shield, Timer, Zap } from "lucide-react";
 import { DEMO_ADMIN_PASSWORD } from "@/lib/demo-credentials";
 
 export default function LoginPage() {
@@ -35,44 +35,40 @@ export default function LoginPage() {
     }
   }
 
-  const brand = process.env.NEXT_PUBLIC_COMPANY_NAME ?? "Payroll Manager";
+  const brand = process.env.NEXT_PUBLIC_COMPANY_NAME ?? "Syal Operations Group";
 
   return (
-    <div className="login-root bg-[var(--color-page-bg)]">
+    <div className="login-root">
       <div className="login-brand">
         <div className="login-brand-logo-row">
           <div className="login-brand-logo-icon" aria-hidden>
-            <Sparkles className="h-5 w-5 text-[var(--color-text-inverse)]" strokeWidth={2} />
+            <Zap className="h-5 w-5 text-white" strokeWidth={2.5} fill="white" />
           </div>
           <span className="login-brand-logo-name">{brand}</span>
         </div>
 
         <div className="login-brand-body">
           <h1 className="login-brand-headline">
-            Payroll that runs on <span>autopilot</span>
+            Intelligent Payroll,
+            <br />
+            Perfectly on <span>Autopilot</span>
           </h1>
           <p className="login-brand-desc">
-            Track hours, streamline approvals, and keep every pay period tidy—without drowning in spreadsheets.
+            Streamline your entire payroll lifecycle from hours-to-paycheck, eliminating spreadsheets and human error.
           </p>
 
           <div className="login-features">
             <div className="login-feature">
               <div className="login-feature-icon">
-                <Timer className="h-4 w-4 text-[var(--color-accent)]" aria-hidden />
+                <Timer className="h-4 w-4" aria-hidden />
               </div>
               <span>Real-time timesheet visibility across your team</span>
             </div>
             <div className="login-feature">
               <div className="login-feature-icon">
-                <Shield className="h-4 w-4 text-[var(--color-accent)]" aria-hidden />
+                <Shield className="h-4 w-4" aria-hidden />
               </div>
               <span>Role-based access with a clean audit trail</span>
-            </div>
-            <div className="login-feature">
-              <div className="login-feature-icon">
-                <Check className="h-4 w-4 text-[var(--color-accent)]" aria-hidden />
-              </div>
-              <span>Payslips generated from approved hours—not guesswork</span>
             </div>
           </div>
         </div>
@@ -134,7 +130,7 @@ export default function LoginPage() {
                   />
                   <button
                     type="button"
-                    className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-[var(--color-text-muted)] transition hover:bg-[var(--color-page-bg)] hover:text-[var(--color-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-border-focus)]"
+                    className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-[var(--color-text-muted)] transition hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                     aria-pressed={showPassword}
                     title={showPassword ? "Hide password" : "Show password"}
@@ -176,11 +172,11 @@ export default function LoginPage() {
             Continue to employee portal
           </Link>
 
-          <div className="login-signup-row text-balance text-[var(--color-text-muted)]">
+          <div className="login-signup-row text-balance">
             <p className="font-medium text-[var(--color-text-secondary)]">Demo admin accounts (after seed)</p>
             <p className="mt-2 text-xs leading-relaxed">
               Password for both:{" "}
-              <code className="rounded bg-[var(--color-page-bg)] px-1.5 py-0.5 font-mono font-semibold text-[var(--color-primary)]">
+              <code className="rounded bg-[var(--color-accent-soft)] border border-[var(--color-accent-tint)] px-1.5 py-0.5 font-mono font-semibold text-[var(--color-accent-light)]">
                 {DEMO_ADMIN_PASSWORD}
               </code>
             </p>

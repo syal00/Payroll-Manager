@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -39,7 +39,7 @@ export default function AdminProfilePage() {
   }
 
   const initialsSource = name.trim() || email.trim() || "?";
-  const parts = initialsSource.replace(/[^a-zA-ZÀ-ÿ\s@.]/g, " ").split(/\s+/).filter(Boolean);
+  const parts = initialsSource.replace(/[^a-zA-Z\u00C0-\u00FF\s@.]/g, " ").split(/\s+/).filter(Boolean);
   const initials =
     parts.length >= 2
       ? `${parts[0]![0] ?? ""}${parts[1]![0] ?? ""}`.toUpperCase()
@@ -54,22 +54,22 @@ export default function AdminProfilePage() {
       />
 
       <div className="relative overflow-hidden rounded-2xl border border-[var(--color-border)] bg-gradient-to-br from-white via-violet-50/60 to-white p-6 shadow-[0_12px_42px_rgba(15,23,42,0.08)] backdrop-blur-md sm:p-8">
-        <div className="absolute -right-24 -top-28 h-52 w-52 rounded-full bg-violet-400/20 blur-3xl" aria-hidden />
+        <div className="absolute -right-24 -top-28 h-52 w-52 rounded-full bg-[var(--color-accent)]/25 blur-3xl" aria-hidden />
         <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center">
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 text-lg font-bold text-white shadow-lg shadow-violet-500/35">
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--color-accent-hover)] to-[var(--color-accent-deep)] text-lg font-bold text-white shadow-lg shadow-violet-500/35">
             {initialsSource === "?" ? <UserCircle className="h-10 w-10" strokeWidth={1.75} aria-hidden /> : initials}
           </div>
           <div className="min-w-0">
-            <p className="text-lg font-extrabold text-[#0f172a]">{name || "Administrator"}</p>
+            <p className="text-lg font-extrabold text-[var(--color-text-primary)]">{name || "Administrator"}</p>
             <p className="truncate text-sm font-medium text-[var(--color-text-secondary)]">{email}</p>
           </div>
         </div>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
-        <Card className="rounded-2xl border-[var(--color-border)] !bg-white/95 backdrop-blur-md">
+        <Card className="rounded-2xl border-[var(--color-border)] !bg-[var(--color-bg-card)]/95 backdrop-blur-md">
           <div className="mb-4 flex items-center gap-2">
-            <Shield className="h-4 w-4 text-violet-600" aria-hidden strokeWidth={2} />
+            <Shield className="h-4 w-4 text-[var(--color-accent-light)]" aria-hidden strokeWidth={2} />
             <h2 className="text-sm font-bold uppercase tracking-wide text-[var(--color-text-muted)]">Contact record</h2>
           </div>
           <form onSubmit={save} className="space-y-5">
@@ -108,11 +108,11 @@ export default function AdminProfilePage() {
         </Card>
 
         <div className="space-y-5">
-          <Card className="rounded-2xl border-[var(--color-border)] border-dashed !bg-slate-50/80 backdrop-blur-sm">
+          <Card className="rounded-2xl border-[var(--color-border)] border-dashed !bg-[var(--color-accent-soft)]/80 backdrop-blur-sm">
             <div className="flex items-start gap-3">
               <KeyRound className="mt-0.5 h-5 w-5 shrink-0 text-[var(--color-text-muted)]" aria-hidden strokeWidth={2} />
               <div>
-                <h3 className="text-sm font-bold text-[#0f172a]">Credential security</h3>
+                <h3 className="text-sm font-bold text-[var(--color-text-primary)]">Credential security</h3>
                 <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
                   Password rotations are issued by your identity owner. SSO and SCIM controls land in a future enterprise
                   bundle.
@@ -122,14 +122,14 @@ export default function AdminProfilePage() {
             </div>
           </Card>
 
-          <Card className="rounded-2xl border-[var(--color-border)] !bg-white/95 backdrop-blur-md">
-            <h3 className="text-sm font-bold text-[#0f172a]">Activity surface</h3>
+          <Card className="rounded-2xl border-[var(--color-border)] !bg-[var(--color-bg-card)]/95 backdrop-blur-md">
+            <h3 className="text-sm font-bold text-[var(--color-text-primary)]">Activity surface</h3>
             <p className="mt-1 text-xs text-[var(--color-text-muted)]">See every administrative footstep in the audit trail.</p>
             <Link
               href="/admin/history"
-              className="mt-4 inline-flex rounded-xl border border-violet-200 bg-violet-50 px-4 py-2 text-xs font-semibold text-violet-700 transition hover:bg-violet-100"
+              className="mt-4 inline-flex rounded-xl border border-[var(--color-accent-tint)] bg-[var(--color-accent-soft)] px-4 py-2 text-xs font-semibold text-[var(--color-accent-light)] transition hover:bg-[var(--color-accent-tint)]"
             >
-              Jump to history →
+              Jump to history â†’
             </Link>
           </Card>
         </div>

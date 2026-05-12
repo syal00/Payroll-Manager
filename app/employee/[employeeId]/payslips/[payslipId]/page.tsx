@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
@@ -45,10 +45,10 @@ export default function PublicPayslipDetailPage({
     return (
       <div className="flex items-center gap-3 text-sm text-slate-500">
         <span
-          className="h-4 w-4 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600"
+          className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--color-accent-tint)] border-t-violet-600"
           aria-hidden
         />
-        Loading payslip…
+        Loading payslipâ€¦
       </div>
     );
   }
@@ -57,7 +57,7 @@ export default function PublicPayslipDetailPage({
     <div className="page-container max-w-2xl space-y-8 print:max-w-none">
       <div>
         <Link href={`${base}/payslips`} className="link-accent text-sm print-hidden">
-          ← All payslips
+          â† All payslips
         </Link>
         <p className="page-eyebrow mt-4">Payslip</p>
         <h1 className="page-title mt-1 font-mono text-2xl md:text-3xl">{p.payslipNumber}</h1>
@@ -66,10 +66,10 @@ export default function PublicPayslipDetailPage({
       <Card className="print:border print:shadow-none">
         <h2 className="card-heading">Pay period</h2>
         <p className="mt-2 text-sm font-medium text-[var(--color-text-secondary)]">
-          {p.payPeriod.name ?? `${shortDate(p.payPeriod.startDate)} – ${shortDate(p.payPeriod.endDate)}`}
+          {p.payPeriod.name ?? `${shortDate(p.payPeriod.startDate)} â€“ ${shortDate(p.payPeriod.endDate)}`}
         </p>
         <p className="mt-2 text-xs text-slate-500">
-          {p.regularHours}h regular · {p.overtimeHours}h OT · {money(p.hourlyRate)} base ·{" "}
+          {p.regularHours}h regular Â· {p.overtimeHours}h OT Â· {money(p.hourlyRate)} base Â·{" "}
           {money(p.overtimeRate)} OT
         </p>
         <a
@@ -98,15 +98,15 @@ export default function PublicPayslipDetailPage({
           </div>
           <div className="flex justify-between text-slate-600">
             <span>Deductions</span>
-            <span className="tabular-nums">− {money(p.totalDeductions)}</span>
+            <span className="tabular-nums">âˆ’ {money(p.totalDeductions)}</span>
           </div>
-          <div className="flex justify-between border-t border-violet-100 pt-3 text-lg font-bold text-violet-900">
+          <div className="flex justify-between border-t border-[var(--color-accent-tint)] pt-3 text-lg font-bold text-[var(--color-accent-light)]">
             <span>Net pay</span>
             <span className="tabular-nums">{money(p.netPay)}</span>
           </div>
         </div>
         <p className="mt-5 border-t border-violet-50 pt-4 text-xs text-slate-500">
-          Approved by {p.adminSignoff ?? "—"} · {p.approvalDate ? shortDate(p.approvalDate) : "—"}
+          Approved by {p.adminSignoff ?? "â€”"} Â· {p.approvalDate ? shortDate(p.approvalDate) : "â€”"}
         </p>
       </Card>
     </div>

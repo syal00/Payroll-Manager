@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
@@ -190,10 +190,10 @@ export default function PublicTimesheetEntryPage({
     return (
       <div className="flex items-center gap-3 text-sm text-slate-500">
         <span
-          className="h-4 w-4 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600"
+          className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--color-accent-tint)] border-t-violet-600"
           aria-hidden
         />
-        Loading timesheet…
+        Loading timesheetâ€¦
       </div>
     );
   }
@@ -202,14 +202,14 @@ export default function PublicTimesheetEntryPage({
     <div className="page-container max-w-5xl space-y-8">
       <div>
         <Link href={`${base}/dashboard`} className="link-accent text-sm">
-          ← Dashboard
+          â† Dashboard
         </Link>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <h1 className="page-title">Submit your hours</h1>
           <TimesheetStatusBadge status={status} />
         </div>
         <p className="page-description mt-1">
-          {period.name ?? `${shortDate(period.startDate)} – ${shortDate(period.endDate)}`}
+          {period.name ?? `${shortDate(period.startDate)} â€“ ${shortDate(period.endDate)}`}
         </p>
       </div>
 
@@ -230,7 +230,7 @@ export default function PublicTimesheetEntryPage({
         <textarea
           id="emp-ts-notes"
           disabled={!editable}
-          className="textarea-field mt-1.5 min-h-[4.5rem] disabled:cursor-not-allowed disabled:bg-white/[0.04]"
+          className="textarea-field mt-1.5 min-h-[4.5rem] disabled:cursor-not-allowed disabled:bg-[var(--color-bg-card)]/[0.04]"
           rows={2}
           placeholder="Anything your manager should know about this period"
           value={notes}
@@ -239,7 +239,7 @@ export default function PublicTimesheetEntryPage({
       </Card>
 
       <Card padding={false} className="overflow-hidden">
-        <div className="border-b border-white/10 bg-white/[0.03] px-5 py-3">
+        <div className="border-b border-white/10 bg-[var(--color-bg-card)]/[0.03] px-5 py-3">
           <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-slate-500">
             Period totals
           </p>
@@ -340,8 +340,8 @@ export default function PublicTimesheetEntryPage({
                       <td className="px-4 py-2.5 tabular-nums text-[var(--color-text-muted)]">{e.regularHours}</td>
                       <td className="px-4 py-2.5 tabular-nums text-[var(--color-text-muted)]">{e.overtimeHours}</td>
                       <td className="px-4 py-2.5 tabular-nums text-[var(--color-text-muted)]">{e.leaveHours}</td>
-                      <td className="max-w-[12rem] px-4 py-2.5 text-slate-400">{e.location?.trim() || "—"}</td>
-                      <td className="max-w-[14rem] px-4 py-2.5 text-slate-500">{e.notes || "—"}</td>
+                      <td className="max-w-[12rem] px-4 py-2.5 text-slate-400">{e.location?.trim() || "â€”"}</td>
+                      <td className="max-w-[14rem] px-4 py-2.5 text-slate-500">{e.notes || "â€”"}</td>
                     </>
                   )}
                 </tr>
@@ -361,7 +361,7 @@ export default function PublicTimesheetEntryPage({
           </Button>
         </div>
       ) : (
-        <Card className="border-white/10 bg-white/[0.04]">
+        <Card className="border-white/10 bg-[var(--color-bg-card)]/[0.04]">
           <p className="text-sm leading-relaxed text-slate-300">
             This timesheet is locked while it&apos;s under review or finalized. If it was rejected, you can
             edit and submit again from this page.

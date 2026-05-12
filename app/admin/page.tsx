@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -163,7 +163,7 @@ export default function AdminDashboardPage() {
       href: "/admin/pay-periods",
       hint: "Open schedules",
       icon: CalendarRange,
-      trend: "—",
+      trend: "â€”",
       gradient: "indigo" as const,
     },
     {
@@ -177,11 +177,11 @@ export default function AdminDashboardPage() {
     },
     {
       label: "Active Departments",
-      value: deptCount ?? "—",
+      value: deptCount ?? "â€”",
       href: "/admin/employees",
       hint: "Unique department tags",
       icon: Building2,
-      trend: deptCount === null ? "—" : "Org",
+      trend: deptCount === null ? "â€”" : "Org",
       gradient: "violet" as const,
     },
   ];
@@ -191,7 +191,7 @@ export default function AdminDashboardPage() {
       <PageHeader
         eyebrow="Overview"
         title="Payroll command center"
-        description="Operational clarity for approvals, payouts, and compliance—minimal noise, decisive actions."
+        description="Operational clarity for approvals, payouts, and complianceâ€”minimal noise, decisive actions."
       />
 
       <div className="mb-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -206,7 +206,7 @@ export default function AdminDashboardPage() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.08 }}
       >
-        <Card className="border-[var(--color-border)] !bg-white/90 backdrop-blur-sm">
+        <Card className="border-[var(--color-border)] !bg-[var(--color-bg-card)]/90 backdrop-blur-sm">
           <div className="card-header !mb-1">
             <div>
               <h2 className="card-heading text-base">Weekly payroll pulse</h2>
@@ -215,7 +215,7 @@ export default function AdminDashboardPage() {
           </div>
           <PayrollNetTrendChart data={chartPayslip} />
         </Card>
-        <Card className="border-[var(--color-border)] !bg-white/90 backdrop-blur-sm">
+        <Card className="border-[var(--color-border)] !bg-[var(--color-bg-card)]/90 backdrop-blur-sm">
           <div className="card-header !mb-1">
             <div>
               <h2 className="card-heading text-base">Hours throughput</h2>
@@ -226,10 +226,10 @@ export default function AdminDashboardPage() {
         </Card>
       </motion.section>
 
-      <div className="mb-10 rounded-2xl border border-[var(--color-border)] bg-gradient-to-br from-white via-white to-violet-50/40 p-5 shadow-[0_4px_24px_rgba(15,23,42,0.06)] backdrop-blur-sm sm:p-6">
+      <div className="mb-10 rounded-2xl border border-[var(--color-border)] bg-gradient-to-br from-[var(--color-bg-card)] via-[var(--color-bg-card)] to-[var(--color-accent-soft)] p-5 shadow-[0_4px_24px_rgba(0,0,0,0.4)] backdrop-blur-sm sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-violet-600">Quick actions</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-accent-light)]">Quick actions</p>
             <p className="mt-1 text-sm text-[var(--color-text-secondary)]">Jump into the highest-impact workflows.</p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -240,8 +240,8 @@ export default function AdminDashboardPage() {
               </Button>
             </Link>
             <Link href="/admin/timesheets">
-              <Button variant="secondary" className="h-11 gap-2 rounded-xl border-[var(--color-border-strong)] hover:border-violet-200">
-                <Eye className="h-4 w-4 text-violet-600" aria-hidden strokeWidth={2} />
+              <Button variant="secondary" className="h-11 gap-2 rounded-xl border-[var(--color-border-strong)] hover:border-[var(--color-accent-tint)]">
+                <Eye className="h-4 w-4 text-[var(--color-accent-light)]" aria-hidden strokeWidth={2} />
                 Review timesheets
               </Button>
             </Link>
@@ -262,14 +262,14 @@ export default function AdminDashboardPage() {
       </div>
 
       <div className="chart-grid mb-10">
-        <Card className="border-[var(--color-border)] !bg-white/95">
+        <Card className="border-[var(--color-border)] !bg-[var(--color-bg-card)]/95">
           <div className="card-header !mb-0 flex-col gap-1 sm:flex-row sm:items-end">
             <div>
               <h2 className="card-heading text-base">Recent submissions</h2>
               <p className="card-subtitle">Awaiting routing through review</p>
             </div>
             <Link href="/admin/timesheets" className="link-accent shrink-0 text-sm font-semibold">
-              Full queue →
+              Full queue â†’
             </Link>
           </div>
           <div className="table-wrap mt-6">
@@ -287,19 +287,19 @@ export default function AdminDashboardPage() {
                 {data.recentSubmissions.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-4 py-12 text-center">
-                      <p className="text-sm font-semibold text-[#0f172a]">Queue is calm</p>
+                      <p className="text-sm font-semibold text-[var(--color-text-primary)]">Queue is calm</p>
                       <p className="mt-1 text-xs text-[var(--color-text-muted)]">Incoming employee hours will populate this table automatically.</p>
                     </td>
                   </tr>
                 ) : (
                   data.recentSubmissions.map((row) => (
                     <tr key={row.id} className="table-row table-row-muted">
-                      <td className="px-4 py-3 font-semibold text-[#0f172a]">{row.employee.name}</td>
+                      <td className="px-4 py-3 font-semibold text-[var(--color-text-primary)]">{row.employee.name}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-sm text-[var(--color-text-secondary)]">
-                        {row.submittedAt ? shortDate(row.submittedAt) : "—"}
+                        {row.submittedAt ? shortDate(row.submittedAt) : "â€”"}
                       </td>
                       <td className="table-num px-4 py-3 text-[var(--color-text-secondary)]">
-                        {typeof row.totalHours === "number" ? `${row.totalHours}h` : "—"}
+                        {typeof row.totalHours === "number" ? `${row.totalHours}h` : "â€”"}
                       </td>
                       <td className="px-4 py-3">
                         <TimesheetStatusBadge status={row.status} />
@@ -307,7 +307,7 @@ export default function AdminDashboardPage() {
                       <td className="px-4 py-3 text-right">
                         <Link
                           href={`/admin/timesheets/${row.id}`}
-                          className="inline-flex rounded-lg px-3 py-1.5 text-xs font-bold text-violet-600 hover:bg-violet-50"
+                          className="inline-flex rounded-lg px-3 py-1.5 text-xs font-bold text-[var(--color-accent-light)] hover:bg-[var(--color-accent-soft)]"
                         >
                           Open
                         </Link>
@@ -320,14 +320,14 @@ export default function AdminDashboardPage() {
           </div>
         </Card>
 
-        <Card className="border-[var(--color-border)] !bg-white/95">
+        <Card className="border-[var(--color-border)] !bg-[var(--color-bg-card)]/95">
           <div className="mb-5 flex flex-wrap items-start justify-between gap-2">
             <div>
               <h2 className="card-heading text-base">Recent approval actions</h2>
               <p className="card-subtitle">Administrative trace for sign-offs</p>
             </div>
             <Link href="/admin/history" className="link-accent text-sm font-semibold">
-              Audit log →
+              Audit log â†’
             </Link>
           </div>
           <ul className="space-y-3 text-sm">
@@ -342,15 +342,15 @@ export default function AdminDashboardPage() {
                   key={a.id}
                   className="rounded-2xl border border-[var(--color-border)] bg-gradient-to-br from-slate-50/90 to-white px-4 py-3 shadow-sm shadow-slate-200/40"
                 >
-                  <span className="font-semibold text-[#0f172a]">{a.timesheet.employee.name}</span>
+                  <span className="font-semibold text-[var(--color-text-primary)]">{a.timesheet.employee.name}</span>
                   <span className="mt-2 flex flex-wrap items-center gap-2 text-xs text-[var(--color-text-muted)]">
                     <span className="font-medium text-[var(--color-text-secondary)]">{a.admin.name}</span>
                     <span aria-hidden className="text-slate-300">
-                      ·
+                      Â·
                     </span>
                     <TimesheetStatusBadge status={a.newStatus} />
                     <span aria-hidden className="text-slate-300">
-                      ·
+                      Â·
                     </span>
                     {shortDate(a.createdAt)}
                   </span>
@@ -361,14 +361,14 @@ export default function AdminDashboardPage() {
         </Card>
       </div>
 
-      <Card className="border-[var(--color-border)] !bg-white/95">
+      <Card className="border-[var(--color-border)] !bg-[var(--color-bg-card)]/95">
         <div className="card-header flex-col gap-1 sm:flex-row sm:items-end">
           <div>
             <h2 className="card-heading text-base">Recent payslips</h2>
             <p className="card-subtitle">Latest payouts generated from approved hours</p>
           </div>
           <Link href="/admin/payslips" className="link-accent shrink-0 text-sm font-semibold">
-            View library →
+            View library â†’
           </Link>
         </div>
         <div className="table-wrap">
@@ -385,7 +385,7 @@ export default function AdminDashboardPage() {
               {data.recentPayslips.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-4 py-12 text-center text-sm text-[var(--color-text-muted)]">
-                    No payslips yet — approve validated timesheets to generate pay artifacts.
+                    No payslips yet â€” approve validated timesheets to generate pay artifacts.
                   </td>
                 </tr>
               ) : (
@@ -396,8 +396,8 @@ export default function AdminDashboardPage() {
                         {p.payslipNumber}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 font-semibold text-[#0f172a]">{p.employee.name}</td>
-                    <td className="table-num px-4 py-3 font-semibold text-[#0f172a]">${p.netPay.toFixed(2)}</td>
+                    <td className="px-4 py-3 font-semibold text-[var(--color-text-primary)]">{p.employee.name}</td>
+                    <td className="table-num px-4 py-3 font-semibold text-[var(--color-text-primary)]">${p.netPay.toFixed(2)}</td>
                     <td className="px-4 py-3 text-[var(--color-text-muted)]">{shortDate(p.createdAt)}</td>
                   </tr>
                 ))

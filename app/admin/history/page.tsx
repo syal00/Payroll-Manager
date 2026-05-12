@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/dashboard/PageHeader";
@@ -46,10 +46,10 @@ export default function AdminHistoryPage() {
       <PageHeader
         eyebrow="Compliance"
         title="Audit trail"
-        description="Immutable ledger of decisive actions—from schedule mutations to disbursement confirmations."
+        description="Immutable ledger of decisive actionsâ€”from schedule mutations to disbursement confirmations."
       />
 
-      <Card className="rounded-2xl border-[var(--color-border)] !bg-white/95 backdrop-blur-sm">
+      <Card className="rounded-2xl border-[var(--color-border)] !bg-[var(--color-bg-card)]/95 backdrop-blur-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="min-w-0 flex-1">
             <label className="label-field" htmlFor="audit-q">
@@ -69,7 +69,7 @@ export default function AdminHistoryPage() {
         </div>
       </Card>
 
-      <Card padding={false} className="overflow-hidden rounded-2xl border-[var(--color-border)] !bg-white/95 backdrop-blur-sm">
+      <Card padding={false} className="overflow-hidden rounded-2xl border-[var(--color-border)] !bg-[var(--color-bg-card)]/95 backdrop-blur-sm">
         <div className="divide-y divide-[var(--color-border)]">
           {items.length === 0 ? (
             <div className="px-4 py-14 text-center text-sm text-slate-500">
@@ -78,15 +78,15 @@ export default function AdminHistoryPage() {
             </div>
           ) : (
             items.map((row) => (
-              <div key={row.id} className="px-4 py-4 text-sm transition hover:bg-violet-50/40">
+              <div key={row.id} className="px-4 py-4 text-sm transition hover:bg-[var(--color-accent-soft)]/40">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-mono text-xs font-bold text-violet-900">{row.action}</span>
+                  <span className="font-mono text-xs font-bold text-[var(--color-accent-light)]">{row.action}</span>
                   <span className="text-xs text-slate-500">{shortDate(row.createdAt)}</span>
                   {row.actor && <span className="text-xs font-medium text-slate-600">{row.actor.name}</span>}
                 </div>
                 <p className="mt-1 text-xs text-slate-500">
                   {row.entityType}
-                  {row.entityId ? ` · ${row.entityId}` : ""}
+                  {row.entityId ? ` Â· ${row.entityId}` : ""}
                 </p>
                 {row.details && (
                   <pre className="mt-2 max-h-24 overflow-auto rounded-xl border border-[var(--color-border)] bg-slate-950 p-3 text-xs text-slate-300">

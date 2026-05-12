@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
@@ -39,10 +39,10 @@ export default function AdminPayslipDetailPage({ params }: { params: Promise<{ i
     return (
       <div className="flex items-center gap-3 text-sm text-slate-500">
         <span
-          className="h-4 w-4 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600"
+          className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--color-accent-tint)] border-t-violet-600"
           aria-hidden
         />
-        Loading payslip…
+        Loading payslipâ€¦
       </div>
     );
   }
@@ -51,13 +51,13 @@ export default function AdminPayslipDetailPage({ params }: { params: Promise<{ i
     <div className="page-container max-w-3xl space-y-8 print:max-w-none">
       <div>
         <Link href="/admin/payslips" className="link-accent text-sm print-hidden">
-          ← All payslips
+          â† All payslips
         </Link>
         <div className="mt-4">
           <p className="page-eyebrow">Payslip</p>
           <h1 className="page-title mt-1 font-mono text-2xl tracking-tight md:text-3xl">{p.payslipNumber}</h1>
           <p className="page-description mt-2">
-            {p.employee.name} · <span className="font-mono text-slate-700">{p.employee.employeeCode}</span>
+            {p.employee.name} Â· <span className="font-mono text-slate-700">{p.employee.employeeCode}</span>
           </p>
         </div>
       </div>
@@ -65,25 +65,25 @@ export default function AdminPayslipDetailPage({ params }: { params: Promise<{ i
       <Card className="print:border print:shadow-none">
         <h2 className="card-heading">Pay period &amp; hours</h2>
         <p className="mt-1 text-sm text-slate-600">
-          {p.payPeriod.name ?? `${shortDate(p.payPeriod.startDate)} – ${shortDate(p.payPeriod.endDate)}`}
+          {p.payPeriod.name ?? `${shortDate(p.payPeriod.startDate)} â€“ ${shortDate(p.payPeriod.endDate)}`}
         </p>
         <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
-          <div className="rounded-xl border border-violet-50 bg-violet-50/30 px-4 py-3">
+          <div className="rounded-xl border border-violet-50 bg-[var(--color-accent-soft)]/30 px-4 py-3">
             <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Hours</dt>
             <dd className="mt-1 font-semibold text-[var(--color-text-primary)]">
-              {p.regularHours} reg · {p.overtimeHours} OT
+              {p.regularHours} reg Â· {p.overtimeHours} OT
             </dd>
           </div>
-          <div className="rounded-xl border border-violet-50 bg-violet-50/30 px-4 py-3">
+          <div className="rounded-xl border border-violet-50 bg-[var(--color-accent-soft)]/30 px-4 py-3">
             <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Rates</dt>
             <dd className="mt-1 font-semibold text-[var(--color-text-primary)]">
               {money(p.hourlyRate)} / {money(p.overtimeRate)} OT
             </dd>
           </div>
-          <div className="rounded-xl border border-violet-50 bg-violet-50/30 px-4 py-3 sm:col-span-2">
+          <div className="rounded-xl border border-violet-50 bg-[var(--color-accent-soft)]/30 px-4 py-3 sm:col-span-2">
             <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Sign-off</dt>
             <dd className="mt-1 font-semibold text-[var(--color-text-primary)]">
-              {p.adminSignoff ?? "—"} · {p.approvalDate ? shortDate(p.approvalDate) : "—"}
+              {p.adminSignoff ?? "â€”"} Â· {p.approvalDate ? shortDate(p.approvalDate) : "â€”"}
             </dd>
           </div>
         </dl>
@@ -106,9 +106,9 @@ export default function AdminPayslipDetailPage({ params }: { params: Promise<{ i
           </div>
           <div className="flex justify-between text-slate-600">
             <span>Deductions</span>
-            <span className="tabular-nums">− {money(p.totalDeductions)}</span>
+            <span className="tabular-nums">âˆ’ {money(p.totalDeductions)}</span>
           </div>
-          <div className="flex justify-between border-t border-violet-100 pt-3 text-lg font-bold text-violet-900">
+          <div className="flex justify-between border-t border-[var(--color-accent-tint)] pt-3 text-lg font-bold text-[var(--color-accent-light)]">
             <span>Net pay</span>
             <span className="tabular-nums">{money(p.netPay)}</span>
           </div>

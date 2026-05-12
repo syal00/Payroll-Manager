@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, use } from "react";
 import { useRouter } from "next/navigation";
@@ -24,10 +24,10 @@ export default function PublicTimesheetIndexPage({
   return (
     <div className="flex items-center gap-3 text-sm text-slate-500">
       <span
-        className="h-4 w-4 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600"
+        className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--color-accent-tint)] border-t-violet-600"
         aria-hidden
       />
-      Finding your open pay period…
+      Finding your open pay periodâ€¦
     </div>
   );
 }

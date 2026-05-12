@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
@@ -29,7 +29,7 @@ export default function PublicPayslipsPage({
         <p className="page-eyebrow">Payroll</p>
         <h1 className="page-title mt-1 flex flex-wrap items-center gap-2">
           <span className="stat-icon shrink-0">
-            <FileText className="h-5 w-5 text-violet-200" aria-hidden />
+            <FileText className="h-5 w-5 text-[var(--color-accent)]" aria-hidden />
           </span>
           Payslips
         </h1>
@@ -47,7 +47,7 @@ export default function PublicPayslipsPage({
             items.map((p) => (
               <li
                 key={p.id}
-                className="flex flex-wrap items-center justify-between gap-4 px-6 py-4 transition hover:bg-violet-50/40"
+                className="flex flex-wrap items-center justify-between gap-4 px-6 py-4 transition hover:bg-[var(--color-accent-soft)]/40"
               >
                 <div>
                   <p className="font-mono text-sm font-semibold text-[var(--color-text-primary)]">{p.payslipNumber}</p>
@@ -57,7 +57,7 @@ export default function PublicPayslipsPage({
                 </div>
                 <div className="text-right">
                   <p className="font-bold tabular-nums text-[var(--color-text-primary)]">{money(p.netPay)}</p>
-                  <Link href={`${base}/payslips/${p.id}`} className="text-xs font-semibold text-violet-700 hover:underline">
+                  <Link href={`${base}/payslips/${p.id}`} className="text-xs font-semibold text-[var(--color-accent-light)] hover:underline">
                     Details / PDF
                   </Link>
                 </div>

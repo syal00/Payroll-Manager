@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -72,10 +72,10 @@ export default function AdminReviewPage() {
       <PageHeader
         eyebrow="Compliance"
         title="Timesheet review"
-        description="Surface discrepancies faster—tie every adjustment to payroll periods without leaving the approvals fabric."
+        description="Surface discrepancies fasterâ€”tie every adjustment to payroll periods without leaving the approvals fabric."
       />
 
-      <Card className="rounded-2xl border-[var(--color-border)] !bg-white/95 backdrop-blur-sm">
+      <Card className="rounded-2xl border-[var(--color-border)] !bg-[var(--color-bg-card)]/95 backdrop-blur-sm">
         <div className="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-end">
           <div className="min-w-[180px] flex-1">
             <label className="label-field" htmlFor="filter-period">
@@ -123,7 +123,7 @@ export default function AdminReviewPage() {
             <input
               id="filter-q"
               className="input-field mt-1.5"
-              placeholder="Search by name…"
+              placeholder="Search by nameâ€¦"
               value={q}
               onChange={(e) => setQ(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && (setPage(1), load())}
@@ -166,7 +166,7 @@ export default function AdminReviewPage() {
         </div>
       </Card>
 
-      <Card padding={false} className="overflow-hidden rounded-2xl border-[var(--color-border)] !bg-white/95 backdrop-blur-sm">
+      <Card padding={false} className="overflow-hidden rounded-2xl border-[var(--color-border)] !bg-[var(--color-bg-card)]/95 backdrop-blur-sm">
         <div className="overflow-x-auto">
           <table className="table-shell min-w-[720px]">
             <thead>
@@ -203,7 +203,7 @@ export default function AdminReviewPage() {
                     </td>
                     <td className="px-4 py-3.5 tabular-nums font-semibold text-[var(--color-text-primary)]">{row.totalHours}</td>
                     <td className="px-4 py-3.5 text-slate-500">
-                      {row.submittedAt ? shortDate(row.submittedAt) : "—"}
+                      {row.submittedAt ? shortDate(row.submittedAt) : "â€”"}
                     </td>
                     <td className="px-4 py-3.5 text-right">
                       <Link
@@ -220,7 +220,7 @@ export default function AdminReviewPage() {
           </table>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 px-4 py-3.5 text-sm text-slate-600">
-          <span>{total === 0 ? "No rows" : `Page ${page} · ${total} total`}</span>
+          <span>{total === 0 ? "No rows" : `Page ${page} Â· ${total} total`}</span>
           <div className="flex gap-2">
             <Button variant="secondary" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
               Previous

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { BarChart3, PieChart as PieChartIcon } from "lucide-react";
@@ -61,7 +61,7 @@ export default function AdminReportsPage() {
 
   const deptBar = useMemo(() => {
     const entries = Object.entries(actions).sort((a, b) => b[1] - a[1]).slice(0, 6);
-    return entries.map(([name, total]) => ({ name: name.length > 18 ? `${name.slice(0, 16)}…` : name, total }));
+    return entries.map(([name, total]) => ({ name: name.length > 18 ? `${name.slice(0, 16)}â€¦` : name, total }));
   }, [actions]);
 
   return (
@@ -69,7 +69,7 @@ export default function AdminReportsPage() {
       <PageHeader
         eyebrow="Insights"
         title="Operational analytics"
-        description="High-signal aggregates from live payroll workloads—composed from submissions, approvals, and audit entries already in your workspace."
+        description="High-signal aggregates from live payroll workloadsâ€”composed from submissions, approvals, and audit entries already in your workspace."
       />
 
       {loading ? (
@@ -81,13 +81,13 @@ export default function AdminReportsPage() {
       ) : stats ? (
         <>
           <div className="grid gap-5 lg:grid-cols-3">
-            <Card className="border-[var(--color-border)] !bg-white/95 backdrop-blur-md lg:col-span-2">
+            <Card className="border-[var(--color-border)] !bg-[var(--color-bg-card)]/95 backdrop-blur-md lg:col-span-2">
               <div className="flex items-start gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--color-accent-tint)] text-[var(--color-accent-light)]">
                   <BarChart3 className="h-5 w-5" aria-hidden strokeWidth={2} />
                 </span>
                 <div>
-                  <h2 className="text-base font-bold text-[#0f172a]">Throughput mix</h2>
+                  <h2 className="text-base font-bold text-[var(--color-text-primary)]">Throughput mix</h2>
                   <p className="text-sm text-[var(--color-text-muted)]">Comparison of finalized vs queued timesheets.</p>
                 </div>
               </div>
@@ -114,19 +114,19 @@ export default function AdminReportsPage() {
               </div>
             </Card>
 
-            <Card className="border-[var(--color-border)] !bg-white/95 backdrop-blur-md">
+            <Card className="border-[var(--color-border)] !bg-[var(--color-bg-card)]/95 backdrop-blur-md">
               <div className="flex items-start gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--color-accent-soft)] border border-[var(--color-accent-tint)] text-[var(--color-accent-light)]">
                   <PieChartIcon className="h-5 w-5" aria-hidden strokeWidth={2} />
                 </span>
                 <div>
-                  <h2 className="text-base font-bold text-[#0f172a]">Headcount footprint</h2>
+                  <h2 className="text-base font-bold text-[var(--color-text-primary)]">Headcount footprint</h2>
                   <p className="text-sm text-[var(--color-text-muted)]">Active employees versus issued payslips.</p>
                 </div>
               </div>
               <div className="mt-6 h-[220px] w-full">
                 {stats.totalEmployees === 0 && stats.generatedPayslips === 0 ? (
-                  <p className="flex min-h-[200px] items-center justify-center rounded-xl border border-dashed border-[var(--color-border)] bg-slate-50/80 px-4 text-center text-sm text-[var(--color-text-muted)]">
+                  <p className="flex min-h-[200px] items-center justify-center rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-accent-soft)]/80 px-4 text-center text-sm text-[var(--color-text-muted)]">
                     Hire employees and issue payslips to unlock ratio insights.
                   </p>
                 ) : (
@@ -162,12 +162,12 @@ export default function AdminReportsPage() {
             </Card>
           </div>
 
-          <Card className="border-[var(--color-border)] !bg-white/95 backdrop-blur-md">
-            <h2 className="text-base font-bold text-[#0f172a]">Audit action distribution</h2>
+          <Card className="border-[var(--color-border)] !bg-[var(--color-bg-card)]/95 backdrop-blur-md">
+            <h2 className="text-base font-bold text-[var(--color-text-primary)]">Audit action distribution</h2>
             <p className="text-sm text-[var(--color-text-muted)]">Top actions surfaced from recent compliance history.</p>
             <div className="mt-6 h-[280px] w-full">
               {deptBar.length === 0 ? (
-                <p className="flex min-h-[200px] items-center justify-center rounded-xl border border-dashed border-[var(--color-border)] bg-slate-50/80 px-6 text-center text-sm text-[var(--color-text-muted)]">
+                <p className="flex min-h-[200px] items-center justify-center rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-accent-soft)]/80 px-6 text-center text-sm text-[var(--color-text-muted)]">
                   Logs will illuminate once admins take additional actions beyond seeding events.
                 </p>
               ) : (

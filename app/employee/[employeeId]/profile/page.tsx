@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, use } from "react";
 import { Card } from "@/components/ui/Card";
@@ -38,10 +38,10 @@ export default function PublicProfilePage({
     return (
       <div className="flex items-center gap-3 text-sm text-slate-500">
         <span
-          className="h-4 w-4 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600"
+          className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--color-accent-tint)] border-t-violet-600"
           aria-hidden
         />
-        Loading profile…
+        Loading profileâ€¦
       </div>
     );
   }
@@ -52,7 +52,7 @@ export default function PublicProfilePage({
         <p className="page-eyebrow">About you</p>
         <h1 className="page-title mt-1 flex flex-wrap items-center gap-2">
           <span className="stat-icon shrink-0">
-            <IdCard className="h-5 w-5 text-violet-200" aria-hidden />
+            <IdCard className="h-5 w-5 text-[var(--color-accent)]" aria-hidden />
           </span>
           Profile
         </h1>
@@ -95,8 +95,8 @@ export default function PublicProfilePage({
             </div>
           )}
         </dl>
-        <p className="mt-5 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-slate-400">
-          Need an update? Ask your administrator—this screen is read-only for employees.
+        <p className="mt-5 rounded-xl border border-white/10 bg-[var(--color-bg-card)]/[0.04] px-3 py-2 text-xs text-slate-400">
+          Need an update? Ask your administratorâ€”this screen is read-only for employees.
         </p>
       </Card>
     </div>

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, use, useMemo } from "react";
 import Link from "next/link";
@@ -230,10 +230,10 @@ export default function AdminTimesheetDetailPage({
     return (
       <div className="flex items-center gap-3 text-sm text-slate-500">
         <span
-          className="h-4 w-4 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600"
+          className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--color-accent-tint)] border-t-violet-600"
           aria-hidden
         />
-        Loading timesheet…
+        Loading timesheetâ€¦
       </div>
     );
   }
@@ -243,17 +243,17 @@ export default function AdminTimesheetDetailPage({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <Link href="/admin/review" className="link-accent text-sm">
-            ← Back to review queue
+            â† Back to review queue
           </Link>
           <p className="page-eyebrow mt-3">Timesheet detail</p>
           <h1 className="page-title mt-1">{ts.employee.name}</h1>
           <p className="page-description mt-1">
             <span className="font-mono font-semibold text-[var(--color-text-secondary)]">{ts.employee.employeeCode}</span>
-            <span className="text-slate-300"> · </span>
+            <span className="text-slate-300"> Â· </span>
             {ts.employee.email}
           </p>
         </div>
-        <div className="shrink-0 self-start rounded-xl border border-violet-100 bg-violet-50/50 px-3 py-2">
+        <div className="shrink-0 self-start rounded-xl border border-[var(--color-accent-tint)] bg-[var(--color-accent-soft)]/50 px-3 py-2">
           <TimesheetStatusBadge status={ts.status} />
         </div>
       </div>
@@ -264,28 +264,28 @@ export default function AdminTimesheetDetailPage({
       <Card>
         <h2 className="card-heading">Pay period summary</h2>
         <p className="mt-1 text-sm text-slate-600">
-          {ts.payPeriod.name ?? `${shortDate(ts.payPeriod.startDate)} – ${shortDate(ts.payPeriod.endDate)}`}
+          {ts.payPeriod.name ?? `${shortDate(ts.payPeriod.startDate)} â€“ ${shortDate(ts.payPeriod.endDate)}`}
         </p>
         <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div className="rounded-xl border border-violet-100/80 bg-violet-50/40 px-3 py-3">
+          <div className="rounded-xl border border-[var(--color-accent-tint)]/80 bg-[var(--color-accent-soft)]/40 px-3 py-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Regular</p>
             <p className="mt-1 stat-card-value !text-xl">
               {canEditHours ? liveTotals.totalRegular : ts.totalRegular}h
             </p>
           </div>
-          <div className="rounded-xl border border-violet-100/80 bg-violet-50/40 px-3 py-3">
+          <div className="rounded-xl border border-[var(--color-accent-tint)]/80 bg-[var(--color-accent-soft)]/40 px-3 py-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Overtime</p>
             <p className="mt-1 stat-card-value !text-xl">
               {canEditHours ? liveTotals.totalOvertime : ts.totalOvertime}h
             </p>
           </div>
-          <div className="rounded-xl border border-violet-100/80 bg-violet-50/40 px-3 py-3">
+          <div className="rounded-xl border border-[var(--color-accent-tint)]/80 bg-[var(--color-accent-soft)]/40 px-3 py-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Leave</p>
             <p className="mt-1 stat-card-value !text-xl">
               {canEditHours ? liveTotals.totalLeave : ts.totalLeave}h
             </p>
           </div>
-          <div className="rounded-xl border border-violet-100/80 bg-violet-50/40 px-3 py-3">
+          <div className="rounded-xl border border-[var(--color-accent-tint)]/80 bg-[var(--color-accent-soft)]/40 px-3 py-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Total</p>
             <p className="mt-1 stat-card-value !text-xl">
               {canEditHours ? liveTotals.totalHours : ts.totalHours}h
@@ -326,7 +326,7 @@ export default function AdminTimesheetDetailPage({
           </div>
         ) : (
           <p className="mt-4 text-xs text-slate-500">
-            Pay rates: {money(ts.employee.hourlyRate)} hourly · {money(ts.employee.overtimeRate)} OT
+            Pay rates: {money(ts.employee.hourlyRate)} hourly Â· {money(ts.employee.overtimeRate)} OT
           </p>
         )}
       </Card>
@@ -345,7 +345,7 @@ export default function AdminTimesheetDetailPage({
             id="ts-edit-summary"
             className="textarea-field mt-1.5 min-h-[4.5rem]"
             rows={2}
-            placeholder="e.g. Corrected Mon–Wed to match access logs."
+            placeholder="e.g. Corrected Monâ€“Wed to match access logs."
             value={editSummary}
             onChange={(e) => setEditSummary(e.target.value)}
           />
@@ -452,10 +452,10 @@ export default function AdminTimesheetDetailPage({
                       <td className="px-4 py-2.5 tabular-nums text-[var(--color-text-secondary)]">{e.overtimeHours}</td>
                       <td className="px-4 py-2.5 tabular-nums text-[var(--color-text-secondary)]">{e.leaveHours}</td>
                       <td className="max-w-[12rem] px-4 py-2.5 text-slate-400">
-                        {e.location?.trim() || "—"}
+                        {e.location?.trim() || "â€”"}
                       </td>
                       <td className="max-w-[220px] truncate px-4 py-2.5 text-slate-500">
-                        {e.notes ?? "—"}
+                        {e.notes ?? "â€”"}
                       </td>
                     </>
                   )}
@@ -469,7 +469,7 @@ export default function AdminTimesheetDetailPage({
       <Card>
         <h2 className="card-heading">Review &amp; decision</h2>
         <p className="mt-1 text-xs text-slate-500">
-          Flow: Pending → Verified → Approved (or reject with a reason the employee will see).
+          Flow: Pending â†’ Verified â†’ Approved (or reject with a reason the employee will see).
         </p>
         <label className="label-field mt-4" htmlFor="ts-comment">
           Comment (optional)
@@ -568,7 +568,7 @@ export default function AdminTimesheetDetailPage({
             ts.approvals.map((a) => (
               <li
                 key={a.id}
-                className="rounded-xl border border-white/10 bg-violet-50/30 px-4 py-3 shadow-sm shadow-violet-950/[0.02]"
+                className="rounded-xl border border-white/10 bg-[var(--color-accent-soft)]/30 px-4 py-3 shadow-sm shadow-violet-950/[0.02]"
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <TimesheetStatusBadge status={a.newStatus} />

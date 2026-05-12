@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -59,7 +59,7 @@ export default function AdminPayslipsPage() {
         </Link>
       </PageHeader>
 
-      <Card className="rounded-2xl border-[var(--color-border)] !bg-white/95 backdrop-blur-sm">
+      <Card className="rounded-2xl border-[var(--color-border)] !bg-[var(--color-bg-card)]/95 backdrop-blur-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="min-w-0 flex-1">
             <label className="label-field" htmlFor="payslip-q">
@@ -69,7 +69,7 @@ export default function AdminPayslipsPage() {
               id="payslip-q"
               className="input-field mt-1.5"
               value={q}
-              placeholder="Search…"
+              placeholder="Searchâ€¦"
               onChange={(e) => setQ(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && (setPage(1), load())}
             />
@@ -80,7 +80,7 @@ export default function AdminPayslipsPage() {
         </div>
       </Card>
 
-      <Card padding={false} className="overflow-hidden rounded-2xl border-[var(--color-border)] !bg-white/95 backdrop-blur-sm">
+      <Card padding={false} className="overflow-hidden rounded-2xl border-[var(--color-border)] !bg-[var(--color-bg-card)]/95 backdrop-blur-sm">
         <div className="overflow-x-auto">
           <table className="table-shell min-w-[640px]">
             <thead>
@@ -111,12 +111,12 @@ export default function AdminPayslipsPage() {
                     </td>
                     <td className="px-4 py-3.5 tabular-nums font-semibold text-slate-700">${p.netPay.toFixed(2)}</td>
                     <td className="px-4 py-3.5 text-slate-500">
-                      {p.markedSentAt ? shortDate(p.markedSentAt) : "—"}
+                      {p.markedSentAt ? shortDate(p.markedSentAt) : "â€”"}
                     </td>
                     <td className="px-4 py-3.5 text-right">
                       <Link
                         href={`/admin/payslips/${p.id}`}
-                        className="inline-flex h-8 items-center rounded-lg bg-violet-100 px-3 text-sm font-semibold text-violet-700 transition hover:bg-violet-200"
+                        className="inline-flex h-8 items-center rounded-lg bg-[var(--color-accent-tint)] px-3 text-sm font-semibold text-[var(--color-accent-light)] transition hover:bg-[var(--color-accent)] hover:text-white"
                       >
                         Open
                       </Link>
@@ -127,7 +127,7 @@ export default function AdminPayslipsPage() {
             </tbody>
           </table>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-violet-200 px-4 py-3.5 text-sm text-slate-600">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--color-accent-tint)] px-4 py-3.5 text-sm text-slate-600">
           <span>Total {total}</span>
           <div className="flex gap-2">
             <Button variant="secondary" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>

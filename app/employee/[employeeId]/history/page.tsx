@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
@@ -101,7 +101,7 @@ export default function PublicHistoryPage({
                 timesheets.map((t) => (
                   <tr key={t.id} className="table-row table-row-muted">
                     <td className="px-4 py-3 text-[var(--color-text-secondary)]">
-                      {t.payPeriod.name ?? `${shortDate(t.payPeriod.startDate)} – ${shortDate(t.payPeriod.endDate)}`}
+                      {t.payPeriod.name ?? `${shortDate(t.payPeriod.startDate)} â€“ ${shortDate(t.payPeriod.endDate)}`}
                     </td>
                     <td className="px-4 py-3">
                       <TimesheetStatusBadge status={t.status} />
@@ -113,7 +113,7 @@ export default function PublicHistoryPage({
                           {t.payslip.payslipNumber}
                         </Link>
                       ) : (
-                        <span className="text-slate-400">—</span>
+                        <span className="text-slate-400">â€”</span>
                       )}
                     </td>
                   </tr>
@@ -135,7 +135,7 @@ export default function PublicHistoryPage({
             payslips.map((p) => (
               <li
                 key={p.id}
-                className="flex justify-between gap-4 rounded-xl border border-violet-100/80 px-4 py-3 shadow-sm shadow-violet-950/[0.02]"
+                className="flex justify-between gap-4 rounded-xl border border-[var(--color-accent-tint)]/80 px-4 py-3 shadow-sm shadow-violet-950/[0.02]"
               >
                 <div>
                   <p className="font-mono text-xs font-semibold text-[var(--color-text-primary)]">{p.payslipNumber}</p>
@@ -145,7 +145,7 @@ export default function PublicHistoryPage({
                 </div>
                 <div className="text-right">
                   <p className="font-bold tabular-nums text-[var(--color-text-primary)]">{money(p.netPay)}</p>
-                  <Link href={`${base}/payslips/${p.id}`} className="text-xs font-semibold text-violet-700 hover:underline">
+                  <Link href={`${base}/payslips/${p.id}`} className="text-xs font-semibold text-[var(--color-accent-light)] hover:underline">
                     View
                   </Link>
                 </div>

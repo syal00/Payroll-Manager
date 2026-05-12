@@ -16,7 +16,7 @@ import {
   LogOut,
   Menu,
   X,
-  Sparkles,
+  Zap,
   Search,
   Bell,
 } from "lucide-react";
@@ -53,9 +53,9 @@ export function AdminShell({
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
-  const brand = process.env.NEXT_PUBLIC_COMPANY_NAME ?? "Payroll Manager";
-  const topBarOrg = header?.organization ?? brand;
-  const topBarSubtitle = header?.roleTitle ?? "Payroll Operations";
+  const brand = (process.env.NEXT_PUBLIC_COMPANY_NAME ?? "Syal Operations Group").toUpperCase();
+  const topBarOrg = (header?.organization ?? brand).toUpperCase();
+  const topBarSubtitle = header?.roleTitle ?? "Admin Panel";
   const pageTitle = resolveAdminPageTitle(pathname);
 
   const formattedDate = useMemo(
@@ -103,11 +103,11 @@ export function AdminShell({
         <div className="relative z-10 w-full shrink-0">
           <div className="sidebar-logo-area">
             <div className="sidebar-logo-icon shrink-0" aria-hidden>
-              <Sparkles className="h-[18px] w-[18px] text-[var(--color-text-inverse)]" strokeWidth={2} />
+              <Zap className="h-[16px] w-[16px] text-white" strokeWidth={2.5} fill="white" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="sidebar-logo-text leading-tight">{brand}</div>
-              <div className="mt-1 text-[11px] font-medium leading-snug text-[var(--color-sidebar-text)]">{topBarSubtitle}</div>
+              <div className="mt-1 text-[11px] font-medium leading-snug text-[var(--color-text-muted)]">{topBarSubtitle}</div>
             </div>
           </div>
         </div>
@@ -146,7 +146,7 @@ export function AdminShell({
 
         <header className="topbar !hidden lg:!flex">
           <div className="topbar-left min-w-0">
-            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--color-text-muted)]">{topBarOrg}</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--color-accent)]">{topBarOrg}</span>
             <span className="topbar-greeting truncate text-[17px]">{pageTitle}</span>
             <span className="topbar-date text-[11px] text-[var(--color-text-muted)]">{formattedDate}</span>
           </div>
@@ -157,10 +157,10 @@ export function AdminShell({
           <div className="topbar-right ml-auto flex items-center gap-1 sm:gap-2">
             <button
               type="button"
-              className="icon-btn hidden rounded-xl border border-[var(--color-border)] bg-white shadow-sm md:flex"
+              className="icon-btn hidden md:flex"
               aria-label="Notifications"
             >
-              <Bell className="h-[18px] w-[18px] text-[var(--color-text-secondary)]" strokeWidth={2} />
+              <Bell className="h-[18px] w-[18px]" strokeWidth={2} />
             </button>
             <UserMenu userName={userName} emailHint={userEmail} onLogout={() => void logout()} />
           </div>
@@ -169,16 +169,16 @@ export function AdminShell({
         {open ? (
           <div className="fixed inset-0 z-[110] bg-[var(--color-sidebar-bg)] lg:hidden" role="dialog" aria-modal="true">
             <div className="flex h-full flex-col">
-              <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-4">
+              <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-4">
                 <div className="flex min-w-0 items-center gap-2">
                   <div className="sidebar-logo-icon !h-9 !w-9 shrink-0">
-                    <Sparkles className="h-4 w-4 text-[var(--color-text-inverse)]" aria-hidden strokeWidth={2} />
+                    <Zap className="h-4 w-4 text-white" aria-hidden strokeWidth={2.5} fill="white" />
                   </div>
-                  <span className="truncate text-[15px] font-extrabold text-white">{brand}</span>
+                  <span className="truncate font-display text-[15px] font-extrabold uppercase tracking-[1.4px] text-white">{brand}</span>
                 </div>
                 <button
                   type="button"
-                  className="icon-btn border-white/15 bg-transparent text-white"
+                  className="icon-btn"
                   aria-label="Close menu"
                   onClick={() => setOpen(false)}
                 >
@@ -186,11 +186,11 @@ export function AdminShell({
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto px-3 py-2">{navContent}</div>
-              <div className="border-t border-white/[0.06] px-4 py-4">
-                <p className="text-sm font-semibold text-white">{userName}</p>
+              <div className="border-t border-[var(--color-border)] px-4 py-4">
+                <p className="text-sm font-semibold text-[var(--color-text-primary)]">{userName}</p>
                 <Button
                   variant="ghost"
-                  className="btn-ghost mt-2 !justify-start px-2 !text-[var(--color-sidebar-text)] hover:!bg-white/10 hover:!text-white"
+                  className="btn-ghost mt-2 !justify-start px-2 !text-[var(--color-text-secondary)] hover:!bg-[var(--color-accent-soft)] hover:!text-[var(--color-text-primary)]"
                   onClick={logout}
                 >
                   <LogOut className="h-4 w-4" />

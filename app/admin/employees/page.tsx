@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
@@ -105,12 +105,12 @@ export default function AdminEmployeesPage() {
       <PageHeader
         eyebrow="Directory"
         title="Employee management"
-        description="Deactivating keeps timesheets, payslips, and history intact — restore roster access anytime without losing immutable payroll records."
+        description="Deactivating keeps timesheets, payslips, and history intact â€” restore roster access anytime without losing immutable payroll records."
       >
         <Button className="h-11 rounded-xl shadow-md shadow-violet-500/20">Add employee</Button>
       </PageHeader>
 
-      <Card className="rounded-2xl border-[var(--color-border)] !bg-white/95 shadow-[0_4px_22px_rgba(15,23,42,0.05)] backdrop-blur-sm">
+      <Card className="rounded-2xl border-[var(--color-border)] !bg-[var(--color-bg-card)]/95 shadow-[0_4px_22px_rgba(15,23,42,0.05)] backdrop-blur-sm">
         <div className="flex flex-col gap-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
@@ -145,8 +145,8 @@ export default function AdminEmployeesPage() {
                 onClick={() => setStatus(opt.value)}
                 className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
                   status === opt.value
-                    ? "bg-violet-600 text-white shadow-md shadow-violet-600/20"
-                    : "bg-violet-50 text-slate-600 ring-1 ring-violet-200 hover:bg-violet-100"
+                    ? "bg-[var(--color-accent)] text-white shadow-md shadow-violet-600/20"
+                    : "bg-[var(--color-accent-soft)] text-slate-600 ring-1 ring-[var(--color-accent)] hover:bg-[var(--color-accent-tint)]"
                 }`}
               >
                 {opt.label}
@@ -159,7 +159,7 @@ export default function AdminEmployeesPage() {
 
       {err && <div className="alert-error">{err}</div>}
 
-      <Card padding={false} className="overflow-hidden rounded-2xl border-[var(--color-border)] !bg-white/95 backdrop-blur-sm">
+      <Card padding={false} className="overflow-hidden rounded-2xl border-[var(--color-border)] !bg-[var(--color-bg-card)]/95 backdrop-blur-sm">
         <div className="overflow-x-auto">
           <table className="table-shell min-w-[900px]">
             <thead>
@@ -178,10 +178,10 @@ export default function AdminEmployeesPage() {
                   <td colSpan={6} className="px-4 py-12 text-center text-sm text-slate-500">
                     <span className="inline-flex items-center gap-2">
                       <span
-                        className="h-4 w-4 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600"
+                        className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--color-accent-tint)] border-t-violet-600"
                         aria-hidden
                       />
-                      Loading employees…
+                      Loading employeesâ€¦
                     </span>
                   </td>
                 </tr>
@@ -199,24 +199,24 @@ export default function AdminEmployeesPage() {
                     <tr key={r.id} className="table-row table-row-muted">
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-3">
-                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 text-xs font-bold text-white shadow-inner shadow-black/10">
+                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--color-accent-hover)] to-[var(--color-accent-deep)] text-xs font-bold text-white shadow-inner shadow-black/10">
                             {initials(r.name)}
                           </span>
                           <div className="min-w-0">
-                            <p className="truncate font-semibold text-[#0f172a]">{r.name}</p>
+                            <p className="truncate font-semibold text-[var(--color-text-primary)]">{r.name}</p>
                             <p className="truncate text-[11px] text-[var(--color-text-muted)]">{r.email}</p>
-                            <p className="font-mono text-[10px] font-semibold text-violet-600/90">{r.employeeCode}</p>
+                            <p className="font-mono text-[10px] font-semibold text-[var(--color-accent-light)]/90">{r.employeeCode}</p>
                           </div>
                         </div>
                       </td>
                       <td className="max-w-[160px] px-4 py-3.5 text-sm text-[var(--color-text-secondary)]">
-                        {r.department?.trim() ? r.department : <span className="text-[var(--color-text-muted)]">—</span>}
+                        {r.department?.trim() ? r.department : <span className="text-[var(--color-text-muted)]">â€”</span>}
                       </td>
                       <td className="max-w-[180px] px-4 py-3.5 text-sm text-[var(--color-text-secondary)]">
-                        {r.jobTitle?.trim() ? r.jobTitle : <span className="text-[var(--color-text-muted)]">—</span>}
+                        {r.jobTitle?.trim() ? r.jobTitle : <span className="text-[var(--color-text-muted)]">â€”</span>}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3.5 text-xs font-medium text-[var(--color-text-secondary)]">
-                        {r.timesheetCount} ts · {r.payslipCount} slips
+                        {r.timesheetCount} ts Â· {r.payslipCount} slips
                       </td>
                       <td className="px-4 py-3.5">
                         {isDeleted ? (
@@ -231,7 +231,7 @@ export default function AdminEmployeesPage() {
                         <div className="flex flex-wrap justify-end gap-2">
                           <Link
                             href={`/admin/employees/${r.id}`}
-                            className="inline-flex h-9 items-center rounded-xl border border-violet-200 bg-violet-50 px-3 text-xs font-semibold text-violet-700 shadow-sm transition hover:border-violet-300 hover:bg-violet-100"
+                            className="inline-flex h-9 items-center rounded-xl border border-[var(--color-accent-tint)] bg-[var(--color-accent-soft)] px-3 text-xs font-semibold text-[var(--color-accent-light)] shadow-sm transition hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-tint)]"
                           >
                             View
                           </Link>
@@ -284,7 +284,7 @@ export default function AdminEmployeesPage() {
             </p>
             <p className="mt-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-page-bg)] px-3 py-2 text-sm text-[var(--color-text-secondary)]">
               <span className="font-semibold">{confirmDelete.name}</span>
-              <span className="text-slate-400"> · </span>
+              <span className="text-slate-400"> Â· </span>
               <span className="font-mono text-xs">{confirmDelete.employeeCode}</span>
             </p>
             <div className="mt-6 flex flex-wrap justify-end gap-2">
@@ -302,7 +302,7 @@ export default function AdminEmployeesPage() {
                 disabled={pendingId === confirmDelete.id}
                 onClick={confirmSoftDelete}
               >
-                {pendingId === confirmDelete.id ? "Working…" : "Deactivate"}
+                {pendingId === confirmDelete.id ? "Workingâ€¦" : "Deactivate"}
               </Button>
             </div>
           </Card>
