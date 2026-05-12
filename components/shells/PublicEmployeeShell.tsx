@@ -11,8 +11,10 @@ import {
   Users,
   Menu,
   X,
+  Wallet,
+  Search,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useState, type ReactNode, useMemo } from "react";
 
 export function PublicEmployeeShell({
   employeeId,
@@ -28,6 +30,24 @@ export function PublicEmployeeShell({
   const [open, setOpen] = useState(false);
   const brand = process.env.NEXT_PUBLIC_COMPANY_NAME ?? "Payroll Manager";
 
+  const greetingPhrase = useMemo(() => {
+    const h = new Date().getHours();
+    if (h < 12) return "Good morning";
+    if (h < 17) return "Good afternoon";
+    return "Good evening";
+  }, []);
+
+  const formattedDate = useMemo(
+    () =>
+      new Intl.DateTimeFormat(undefined, {
+        weekday: "long",
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }).format(new Date()),
+    [],
+  );
+
   const links = [
     { href: `${base}/dashboard`, label: "Dashboard", icon: LayoutDashboard },
     { href: `${base}/timesheet`, label: "My timesheet", icon: Clock },
@@ -37,97 +57,108 @@ export function PublicEmployeeShell({
   ];
 
   const navContent = (
-    <nav className="flex flex-1 flex-col gap-1" aria-label="Employee">
-      {links.map(({ href, label, icon: Icon }) => {
-        let isActive = false;
-        if (label === "Dashboard") isActive = pathname === href;
-        else if (label === "My timesheet") isActive = pathname.startsWith(`${base}/timesheet`);
-        else isActive = pathname === href || pathname.startsWith(`${href}/`);
-        return (
-          <Link
-            key={href}
-            href={href}
-            onClick={() => setOpen(false)}
-            className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
-              isActive
-                ? "bg-gradient-to-r from-indigo-600/35 to-violet-600/25 text-white shadow-[0_0_24px_-8px_rgba(99,102,241,0.5)] ring-1 ring-indigo-400/30"
-                : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-100"
-            }`}
-          >
-            <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-indigo-200" : "opacity-80"}`} aria-hidden />
-            {label}
-          </Link>
-        );
-      })}
-    </nav>
+    <>
+      <p className="sidebar-section-label">Workspace</p>
+      <nav className="sidebar-nav flex flex-1 flex-col gap-0" aria-label="Employee">
+        {links.map(({ href, label, icon: Icon }) => {
+          let isActive = false;
+          if (label === "Dashboard") isActive = pathname === href;
+          else if (label === "My timesheet") isActive = pathname.startsWith(`${base}/timesheet`);
+          else isActive = pathname === href || pathname.startsWith(`${href}/`);
+          return (
+            <Link
+              key={href}
+              href={href}
+              onClick={() => setOpen(false)}
+              className={`sidebar-item ${isActive ? "active" : ""}`}
+            >
+              <Icon className="nav-icon" aria-hidden />
+              {label}
+            </Link>
+          );
+        })}
+      </nav>
+    </>
   );
 
   return (
-    <div className="flex min-h-screen bg-[#05020c]">
-      <aside className="relative hidden w-60 shrink-0 flex-col border-r border-white/[0.06] bg-gradient-to-b from-[#0c0618] via-[#0f0a24] to-[#08051a] lg:flex">
-        <div
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_100%_0%,rgba(99,102,241,0.1),transparent)]"
-          aria-hidden
-        />
-        <div className="relative border-b border-white/10 px-5 py-7">
-          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-indigo-400/80">{brand}</p>
-          <p className="mt-1.5 text-lg font-semibold text-white">Employee</p>
+    <div className="root-layout">
+      <aside className="sidebar relative hidden lg:flex">
+        <div className="relative z-10 w-full shrink-0">
+          <div className="sidebar-logo-area">
+            <div className="sidebar-logo-icon shrink-0" aria-hidden>
+              <Wallet className="h-[18px] w-[18px] text-[var(--color-text-inverse)]" strokeWidth={2} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="sidebar-logo-text leading-tight">{brand}</div>
+              <div className="mt-1 text-[11px] font-medium leading-snug text-[var(--color-sidebar-text)]">Employee portal</div>
+            </div>
+          </div>
         </div>
-        <div className="relative flex flex-1 flex-col px-3 py-5">{navContent}</div>
-        <div className="relative border-t border-white/10 p-4">
-          <p className="truncate text-sm font-medium text-slate-200">{displayName}</p>
+        <div className="relative z-10 flex min-h-0 w-full flex-1 flex-col px-0">{navContent}</div>
+        <div className="relative z-10 mt-auto flex w-full flex-col gap-1 border-t border-white/[0.06] px-3 py-3">
+          <p className="truncate px-1 text-[13px] font-semibold text-[var(--color-sidebar-text-active)]">{displayName}</p>
           <Link
             href="/employee-access"
-            className="mt-2 flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 transition hover:bg-white/[0.06] hover:text-white"
+            className="sidebar-item border-0 bg-transparent !text-[var(--color-sidebar-text)] hover:!text-white"
+            onClick={() => setOpen(false)}
           >
-            <Users className="h-4 w-4 shrink-0" aria-hidden />
+            <Users className="nav-icon" aria-hidden />
             Switch employee
           </Link>
         </div>
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-white/[0.08] bg-[#0a0618]/90 px-4 py-3.5 shadow-lg shadow-black/20 backdrop-blur-xl lg:hidden">
-          <div className="min-w-0">
-            <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-indigo-400/90">{brand}</p>
-            <p className="line-clamp-1 font-semibold text-white">{displayName}</p>
+      <div className="main-wrapper">
+        <header className="topbar lg:hidden">
+          <div className="topbar-left min-w-0">
+            <span className="topbar-greeting truncate">{brand}</span>
+            <span className="topbar-date truncate">{displayName}</span>
           </div>
           <button
             type="button"
-            className="rounded-xl p-2.5 text-slate-300 transition hover:bg-white/10 hover:text-white"
+            className="icon-btn border-0"
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
             onClick={() => setOpen((o) => !o)}
           >
-            {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            {open ? <X className="h-5 w-5" strokeWidth={2} /> : <Menu className="h-5 w-5" strokeWidth={2} />}
           </button>
         </header>
 
+        <header className="topbar !hidden lg:!flex">
+          <div className="topbar-left min-w-0">
+            <span className="topbar-greeting truncate">
+              {greetingPhrase}, {displayName.split(/\s+/)[0] ?? displayName}
+            </span>
+            <span className="topbar-date">{formattedDate}</span>
+          </div>
+          <div className="topbar-search" role="search">
+            <Search className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" aria-hidden />
+            <input type="search" readOnly placeholder="Search…" tabIndex={-1} aria-label="Search placeholder" />
+          </div>
+          <div className="topbar-right" />
+        </header>
+
         {open && (
-          <div
-            className="fixed inset-0 z-30 bg-[#0a0618]/98 backdrop-blur-md lg:hidden"
-            role="dialog"
-            aria-modal="true"
-          >
-            <div className="flex h-full flex-col px-4 py-4">
-              <div className="mb-4 flex justify-end">
-                <button
-                  type="button"
-                  className="rounded-xl p-2 text-slate-300 hover:bg-white/10 hover:text-white"
-                  aria-label="Close menu"
-                  onClick={() => setOpen(false)}
-                >
-                  <X className="h-6 w-6" />
+          <div className="fixed inset-0 z-[110] bg-[var(--color-sidebar-bg)] lg:hidden" role="dialog" aria-modal="true">
+            <div className="flex h-full flex-col">
+              <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-4">
+                <div className="flex min-w-0 items-center gap-2">
+                  <div className="sidebar-logo-icon !h-8 !w-8 shrink-0">
+                    <Wallet className="h-4 w-4 text-[var(--color-text-inverse)]" aria-hidden />
+                  </div>
+                  <span className="truncate text-[15px] font-extrabold text-white">{brand}</span>
+                </div>
+                <button type="button" className="icon-btn border-white/15 bg-transparent text-white" aria-label="Close menu" onClick={() => setOpen(false)}>
+                  <X className="h-5 w-5" />
                 </button>
               </div>
-              {navContent}
-              <div className="mt-auto border-t border-white/10 pt-4">
-                <p className="text-sm text-slate-200">{displayName}</p>
-                <Link
-                  href="/employee-access"
-                  className="mt-2 inline-flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-white"
-                >
-                  <Users className="h-4 w-4" aria-hidden />
+              <div className="flex-1 overflow-y-auto px-3 py-2">{navContent}</div>
+              <div className="border-t border-white/[0.06] px-4 py-4">
+                <p className="text-sm font-semibold text-white">{displayName}</p>
+                <Link href="/employee-access" className="sidebar-item mt-2 border-0 bg-transparent px-2 !text-[var(--color-sidebar-text)] hover:!text-white" onClick={() => setOpen(false)}>
+                  <Users className="nav-icon" aria-hidden />
                   Switch employee
                 </Link>
               </div>
@@ -135,7 +166,7 @@ export function PublicEmployeeShell({
           </div>
         )}
 
-        <main className="app-main-gradient flex-1 px-4 py-6 sm:px-6 md:px-8 md:py-8 lg:py-10">{children}</main>
+        <main className="page-content">{children}</main>
       </div>
     </div>
   );
