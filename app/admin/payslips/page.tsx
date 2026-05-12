@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { FileStack } from "lucide-react";
+import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { shortDate } from "@/lib/format";
@@ -46,20 +46,20 @@ export default function AdminPayslipsPage() {
 
   return (
     <div className="page-container max-w-6xl space-y-8">
-      <div>
-        <p className="page-eyebrow">Payroll</p>
-        <h1 className="page-title mt-1 flex flex-wrap items-center gap-2">
-          <span className="stat-icon shrink-0">
-            <FileStack className="h-5 w-5 text-violet-200" aria-hidden />
-          </span>
-          Payslips
-        </h1>
-        <p className="page-description">
-          Search by employee, open records, and handle PDFs and delivery tracking.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Payroll"
+        title="Payslip library"
+        description="Locate historical payouts, prep PDF exports, and cross-check disbursement timelines without disrupting accounting sources."
+      >
+        <Link
+          href="/admin/timesheets"
+          className="btn btn-primary inline-flex h-11 shrink-0 items-center rounded-xl px-5 text-sm font-semibold shadow-lg shadow-violet-500/25"
+        >
+          Generate payslip
+        </Link>
+      </PageHeader>
 
-      <Card>
+      <Card className="rounded-2xl border-[var(--color-border)] !bg-white/95 backdrop-blur-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="min-w-0 flex-1">
             <label className="label-field" htmlFor="payslip-q">
@@ -80,7 +80,7 @@ export default function AdminPayslipsPage() {
         </div>
       </Card>
 
-      <Card padding={false} className="overflow-hidden">
+      <Card padding={false} className="overflow-hidden rounded-2xl border-[var(--color-border)] !bg-white/95 backdrop-blur-sm">
         <div className="overflow-x-auto">
           <table className="table-shell min-w-[640px]">
             <thead>
@@ -104,19 +104,19 @@ export default function AdminPayslipsPage() {
               ) : (
                 items.map((p) => (
                   <tr key={p.id} className="table-row table-row-muted">
-                    <td className="px-4 py-3.5 font-mono text-sm font-medium text-slate-200">{p.payslipNumber}</td>
-                    <td className="px-4 py-3.5 font-medium text-slate-100">{p.employee.name}</td>
+                    <td className="px-4 py-3.5 font-mono text-sm font-medium text-slate-700">{p.payslipNumber}</td>
+                    <td className="px-4 py-3.5 font-medium text-slate-800">{p.employee.name}</td>
                     <td className="px-4 py-3.5 text-slate-600">
                       {p.payPeriod.name ?? shortDate(p.payPeriod.startDate)}
                     </td>
-                    <td className="px-4 py-3.5 tabular-nums font-semibold text-slate-100">${p.netPay.toFixed(2)}</td>
+                    <td className="px-4 py-3.5 tabular-nums font-semibold text-slate-700">${p.netPay.toFixed(2)}</td>
                     <td className="px-4 py-3.5 text-slate-500">
                       {p.markedSentAt ? shortDate(p.markedSentAt) : "—"}
                     </td>
                     <td className="px-4 py-3.5 text-right">
                       <Link
                         href={`/admin/payslips/${p.id}`}
-                        className="link-accent text-sm font-semibold"
+                        className="inline-flex h-8 items-center rounded-lg bg-violet-100 px-3 text-sm font-semibold text-violet-700 transition hover:bg-violet-200"
                       >
                         Open
                       </Link>
@@ -127,7 +127,7 @@ export default function AdminPayslipsPage() {
             </tbody>
           </table>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 px-4 py-3.5 text-sm text-slate-600">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-violet-200 px-4 py-3.5 text-sm text-slate-600">
           <span>Total {total}</span>
           <div className="flex gap-2">
             <Button variant="secondary" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>

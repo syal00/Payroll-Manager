@@ -1,64 +1,152 @@
 import Link from "next/link";
-import { Card } from "@/components/ui/Card";
-import { UserPlus, LogIn, Sparkles } from "lucide-react";
+import { Bell, Search, User } from "lucide-react";
 
 export default function EmployeeAccessHubPage() {
   const brand = process.env.NEXT_PUBLIC_COMPANY_NAME ?? "Payroll Manager";
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden">
-      <div className="pointer-events-none absolute inset-0 bg-app-pattern" aria-hidden />
-      <div className="relative flex min-h-screen flex-col items-center justify-center px-4 py-12">
-        <div className="mb-10 max-w-lg text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-600 text-white shadow-lg shadow-violet-600/25">
-            <Sparkles className="h-6 w-6" aria-hidden />
-          </div>
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-violet-400">{brand}</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-white">Employee portal</h1>
-          <p className="mt-3 text-sm leading-relaxed text-slate-400">
-            Create your profile once, then return anytime with your work email—no password to remember.
-          </p>
-        </div>
-
-        <div className="grid w-full max-w-lg gap-4 md:max-w-3xl md:grid-cols-2">
-          <Link href="/employee-access/register" className="group block outline-none">
-            <Card className="h-full transition duration-200 hover:-translate-y-0.5 hover:border-violet-500/30 hover:shadow-[0_0_40px_-12px_rgba(139,92,246,0.35)]">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500/30 to-indigo-600/20 text-violet-200 shadow-[0_0_32px_-8px_rgba(139,92,246,0.55)] ring-1 ring-violet-400/25">
-                <UserPlus className="h-6 w-6" aria-hidden />
-              </div>
-              <h2 className="mt-5 text-lg font-semibold text-white">Create Employee ID</h2>
-              <p className="mt-2 text-sm leading-relaxed text-slate-400">
-                New here? Add your name and work email. We assign an ID (e.g. EMP001) and open your
-                dashboard.
-              </p>
-              <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-violet-300 group-hover:gap-2">
-                Get started <span aria-hidden>→</span>
+    <div className="employee-portal-hub flex min-h-screen flex-col bg-[var(--color-page-bg)]">
+      <header className="portal-hub-header sticky top-0 z-50 border-b border-white/[0.06] bg-[#0b1220] text-white shadow-[0_1px_0_rgba(255,255,255,0.04)]">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <div className="flex h-14 items-center justify-between gap-3 sm:h-[60px] sm:gap-4">
+            <Link href="/employee-access" className="flex min-w-0 items-center gap-2.5">
+              <span
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary)] text-[13px] font-extrabold tracking-tight text-white shadow-[var(--shadow-violet)]"
+                aria-hidden
+              >
+                PM
               </span>
-            </Card>
-          </Link>
+              <span className="truncate text-[15px] font-semibold tracking-tight">{brand}</span>
+            </Link>
 
-          <Link href="/employee-access/existing" className="group block outline-none">
-            <Card className="h-full transition duration-200 hover:-translate-y-0.5 hover:border-indigo-500/30 hover:shadow-[0_0_40px_-12px_rgba(99,102,241,0.35)]">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/20 text-indigo-200 ring-1 ring-indigo-400/25 shadow-[0_0_28px_-8px_rgba(99,102,241,0.45)]">
-                <LogIn className="h-6 w-6" aria-hidden />
-              </div>
-              <h2 className="mt-5 text-lg font-semibold text-white">I already have a profile</h2>
-              <p className="mt-2 text-sm leading-relaxed text-slate-400">
+            <nav
+              className="hidden items-center gap-8 text-[13px] font-medium md:absolute md:left-1/2 md:flex md:-translate-x-1/2"
+              aria-label="Primary"
+            >
+              <a href="#employee-portal" className="text-white">
+                Employee Portal
+              </a>
+              <Link href="/login" className="text-white/75 transition-colors hover:text-white">
+                Admin Access
+              </Link>
+              <a href="#help" className="text-white/75 transition-colors hover:text-white">
+                Help
+              </a>
+            </nav>
+
+            <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+              <button
+                type="button"
+                className="flex h-10 w-10 items-center justify-center rounded-full text-white/85 transition-colors hover:bg-white/10 hover:text-white"
+                aria-label="Account"
+              >
+                <User className="h-[18px] w-[18px]" strokeWidth={2} />
+              </button>
+              <button
+                type="button"
+                className="flex h-10 w-10 items-center justify-center rounded-full text-white/85 transition-colors hover:bg-white/10 hover:text-white"
+                aria-label="Notifications"
+              >
+                <Bell className="h-[18px] w-[18px]" strokeWidth={2} />
+              </button>
+              <button
+                type="button"
+                className="flex h-10 w-10 items-center justify-center rounded-full text-white/85 transition-colors hover:bg-white/10 hover:text-white"
+                aria-label="Search"
+              >
+                <Search className="h-[18px] w-[18px]" strokeWidth={2} />
+              </button>
+            </div>
+          </div>
+
+          <nav
+            className="flex items-center justify-center gap-6 border-t border-white/[0.08] py-3 text-[13px] font-medium md:hidden"
+            aria-label="Primary mobile"
+          >
+            <a href="#employee-portal" className="text-white">
+              Employee Portal
+            </a>
+            <Link href="/login" className="text-white/75">
+              Admin Access
+            </Link>
+            <a href="#help" className="text-white/75">
+              Help
+            </a>
+          </nav>
+        </div>
+      </header>
+
+      <main className="portal-hub-main flex flex-1 flex-col px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+        <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6">
+          <section
+            id="employee-portal"
+            className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-8 shadow-[var(--shadow-card)] sm:p-10"
+          >
+            <div className="mx-auto max-w-2xl text-center">
+              <h1 className="text-xl font-bold tracking-tight text-[var(--color-text-primary)] sm:text-2xl">
+                Employee Portal
+              </h1>
+              <p className="mt-3 text-[15px] leading-relaxed text-[var(--color-text-primary)] sm:text-base">
+                Create your profile once, then return anytime with your work email—no password to remember.
+              </p>
+              <a
+                href="#access-options"
+                className="mt-6 inline-flex min-h-11 items-center justify-center rounded-lg bg-[var(--color-primary)] px-8 text-[14px] font-semibold text-white shadow-[var(--shadow-sm)] transition-[var(--transition-base)] hover:bg-[var(--color-primary-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
+              >
+                Get started
+              </a>
+            </div>
+          </section>
+
+          <div id="access-options" className="grid flex-1 gap-6 md:grid-cols-2 md:items-stretch">
+            <section className="flex flex-col rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-8 shadow-[var(--shadow-card)] sm:p-9">
+              <h2 className="text-lg font-bold tracking-tight text-[var(--color-text-primary)]">
+                Create Employee ID
+              </h2>
+              <p className="mt-3 flex-1 text-[15px] leading-relaxed text-[var(--color-text-primary)]">
+                New here? Add your name and work email. We assign an ID (e.g., EMP001) and open your dashboard.
+              </p>
+              <Link
+                href="/employee-access/register"
+                className="mt-8 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-[var(--color-primary)] px-6 text-[14px] font-semibold text-white shadow-[var(--shadow-sm)] transition-[var(--transition-base)] hover:bg-[var(--color-primary-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
+              >
+                Get started
+              </Link>
+            </section>
+
+            <section className="flex flex-col rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-8 shadow-[var(--shadow-card)] sm:p-9">
+              <h2 className="text-lg font-bold tracking-tight text-[var(--color-text-primary)]">
+                I already have a profile
+              </h2>
+              <p className="mt-3 flex-1 text-[15px] leading-relaxed text-[var(--color-text-primary)]">
                 Enter the email you used before. We&apos;ll send you straight to your hours and payslips.
               </p>
-              <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-indigo-700 group-hover:gap-2">
-                Continue <span aria-hidden>→</span>
-              </span>
-            </Card>
-          </Link>
-        </div>
+              <Link
+                href="/employee-access/existing"
+                className="mt-8 inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-[var(--color-border-strong)] bg-white px-6 text-[14px] font-semibold text-[var(--color-text-primary)] shadow-[var(--shadow-xs)] transition-[var(--transition-base)] hover:border-[var(--color-border-focus)] hover:bg-[var(--color-surface-secondary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
+              >
+                Continue
+              </Link>
+            </section>
+          </div>
 
-        <p className="mt-12 text-center text-sm text-slate-500">
-          <Link href="/login" className="link-accent">
-            Administrator sign in
-          </Link>
-        </p>
-      </div>
+          <p
+            id="help"
+            className="text-center text-[13px] leading-relaxed text-[var(--color-text-secondary)] sm:text-[14px]"
+          >
+            Questions? Contact your payroll administrator, or use <strong className="font-semibold text-[var(--color-text-primary)]">Admin Access</strong> if you manage payroll.
+          </p>
+
+          <p className="mt-auto pb-2 pt-6 text-center text-[14px]">
+            <Link
+              href="/login"
+              className="font-medium text-[var(--color-primary)] underline-offset-4 transition-colors hover:text-[var(--color-primary-hover)] hover:underline"
+            >
+              Administrator sign in
+            </Link>
+          </p>
+        </div>
+      </main>
     </div>
   );
 }

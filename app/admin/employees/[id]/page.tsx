@@ -44,12 +44,12 @@ export default async function AdminEmployeeDetailPage({
       </div>
 
       <Card>
-        <h2 className="text-base font-semibold text-white">Contact &amp; payroll</h2>
+        <h2 className="card-heading">Contact &amp; payroll</h2>
         <p className="mt-1 text-xs text-slate-500">Rates and identifiers on file</p>
         <dl className="mt-5 space-y-4 text-sm">
           <div className="flex justify-between gap-4 border-b border-violet-50 pb-3">
             <dt className="text-slate-500">Email</dt>
-            <dd className="text-right font-medium text-slate-200">{employee.email}</dd>
+            <dd className="text-right font-medium text-[var(--color-text-secondary)]">{employee.email}</dd>
           </div>
           <div className="flex justify-between gap-4 border-b border-violet-50 pb-3">
             <dt className="text-slate-500">Hourly rate</dt>
@@ -83,18 +83,18 @@ export default async function AdminEmployeeDetailPage({
       </Card>
 
       <Card>
-        <h2 className="text-base font-semibold text-white">Records retained</h2>
+        <h2 className="card-heading">Records retained</h2>
         <p className="mt-1 text-sm text-slate-600">
           History stays available even when someone is deactivated.
         </p>
-        <ul className="mt-5 grid gap-3 text-sm text-slate-200 sm:grid-cols-2">
+        <ul className="mt-5 grid gap-3 text-sm text-[var(--color-text-secondary)] sm:grid-cols-2">
           <li className="rounded-xl border border-violet-100/80 bg-violet-50/40 px-4 py-3">
             Timesheets:{" "}
-            <span className="font-bold tabular-nums text-white">{employee._count.timesheets}</span>
+            <span className="font-bold tabular-nums text-[var(--color-text-primary)]">{employee._count.timesheets}</span>
           </li>
           <li className="rounded-xl border border-violet-100/80 bg-violet-50/40 px-4 py-3">
             Payslips:{" "}
-            <span className="font-bold tabular-nums text-white">{employee._count.payslips}</span>
+            <span className="font-bold tabular-nums text-[var(--color-text-primary)]">{employee._count.payslips}</span>
           </li>
         </ul>
         <div className="mt-5">

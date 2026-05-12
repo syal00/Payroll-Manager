@@ -11,7 +11,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
   const header = getAdminHeaderForEmail(session.email);
   return (
-    <AdminShell userName={session.name} header={header ?? undefined}>
+    <AdminShell userName={session.name} userEmail={session.email} header={header ?? undefined}>
       {children}
     </AdminShell>
   );

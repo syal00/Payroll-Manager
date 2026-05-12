@@ -15,13 +15,30 @@ function isPublicPath(pathname: string) {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const token = request.cookies.get(COOKIE_NAME)?.value;
+  const secret = process.env.AUTH_SECRET;
+
+  if (pathname === "/") {
+    if (!token || !secret || secret.length < 32) {
+      return NextResponse.next();
+    }
+    try {
+      const key = new TextEncoder().encode(secret);
+      const { payload } = await jose.jwtVerify(token, key);
+      const role = payload.role as string;
+      if (role === "ADMIN") {
+        return NextResponse.redirect(new URL("/admin", request.url));
+      }
+      return NextResponse.redirect(new URL("/employee-access", request.url));
+    } catch (_e: unknown) {
+      void _e;
+      return NextResponse.next();
+    }
+  }
 
   if (isPublicPath(pathname)) {
     return NextResponse.next();
   }
-
-  const token = request.cookies.get(COOKIE_NAME)?.value;
-  const secret = process.env.AUTH_SECRET;
 
   if (!token || !secret || secret.length < 32) {
     if (pathname.startsWith("/api/")) {
@@ -42,19 +59,13 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/employee-access", request.url));
     }
 
-    if (pathname === "/") {
-      if (role === "ADMIN") {
-        return NextResponse.redirect(new URL("/admin", request.url));
-      }
-      return NextResponse.redirect(new URL("/employee-access", request.url));
-    }
-
     if (pathname.startsWith("/admin") && role !== "ADMIN") {
       return NextResponse.redirect(new URL("/employee-access", request.url));
     }
 
     return NextResponse.next();
-  } catch {
+  } catch (_e: unknown) {
+    void _e;
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

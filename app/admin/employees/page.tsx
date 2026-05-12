@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Users } from "lucide-react";
+import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -15,12 +15,22 @@ type Row = {
   deletedAt: string | null;
   timesheetCount: number;
   payslipCount: number;
+  department: string | null;
+  jobTitle: string | null;
 };
+
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
+  return `${parts[0]![0] ?? ""}${parts[parts.length - 1]![0] ?? ""}`.toUpperCase();
+}
 
 type StatusFilter = "active" | "deleted" | "all";
 
 export default function AdminEmployeesPage() {
   const [status, setStatus] = useState<StatusFilter>("active");
+  const [q, setQ] = useState("");
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
@@ -43,6 +53,16 @@ export default function AdminEmployeesPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const filteredRows = rows.filter((r) => {
+    const query = q.trim().toLowerCase();
+    if (!query) return true;
+    return (
+      r.name.toLowerCase().includes(query) ||
+      r.email.toLowerCase().includes(query) ||
+      r.employeeCode.toLowerCase().includes(query)
+    );
+  });
 
   async function confirmSoftDelete() {
     if (!confirmDelete) return;
@@ -82,25 +102,33 @@ export default function AdminEmployeesPage() {
 
   return (
     <div className="page-container max-w-6xl space-y-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p className="page-eyebrow">Directory</p>
-          <h1 className="page-title mt-1">
-            <span className="stat-icon mb-2">
-              <Users className="h-5 w-5 text-violet-200" aria-hidden />
-            </span>
-            <span className="block">Employee management</span>
-          </h1>
-          <p className="page-description">
-            Deactivating keeps timesheets, payslips, and history intact. Restore access anytime.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Directory"
+        title="Employee management"
+        description="Deactivating keeps timesheets, payslips, and history intact — restore roster access anytime without losing immutable payroll records."
+      >
+        <Button className="h-11 rounded-xl shadow-md shadow-violet-500/20">Add employee</Button>
+      </PageHeader>
 
-      <Card>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <Card className="rounded-2xl border-[var(--color-border)] !bg-white/95 shadow-[0_4px_22px_rgba(15,23,42,0.05)] backdrop-blur-sm">
+        <div className="flex flex-col gap-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="label-field" htmlFor="employee-search">
+                Search
+              </label>
+              <input
+                id="employee-search"
+                className="input-field mt-1.5"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Name, email, or employee ID"
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-semibold text-slate-100">Show</p>
+            <p className="text-sm font-semibold text-[var(--color-text-primary)]">Show</p>
             <p className="text-xs text-slate-500">Filter the roster</p>
           </div>
           <div className="flex flex-wrap gap-2" role="group" aria-label="Employee status filter">
@@ -118,7 +146,7 @@ export default function AdminEmployeesPage() {
                 className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
                   status === opt.value
                     ? "bg-violet-600 text-white shadow-md shadow-violet-600/20"
-                    : "bg-white/[0.06] text-slate-300 ring-1 ring-white/10 hover:bg-white/10"
+                    : "bg-violet-50 text-slate-600 ring-1 ring-violet-200 hover:bg-violet-100"
                 }`}
               >
                 {opt.label}
@@ -126,18 +154,20 @@ export default function AdminEmployeesPage() {
             ))}
           </div>
         </div>
+        </div>
       </Card>
 
       {err && <div className="alert-error">{err}</div>}
 
-      <Card padding={false} className="overflow-hidden">
+      <Card padding={false} className="overflow-hidden rounded-2xl border-[var(--color-border)] !bg-white/95 backdrop-blur-sm">
         <div className="overflow-x-auto">
-          <table className="table-shell min-w-[720px]">
+          <table className="table-shell min-w-[900px]">
             <thead>
               <tr className="table-head">
-                <th className="px-4 py-3.5">Name</th>
-                <th className="px-4 py-3.5">Email</th>
-                <th className="px-4 py-3.5">Employee ID</th>
+                <th className="px-4 py-3.5">Team member</th>
+                <th className="px-4 py-3.5">Department</th>
+                <th className="px-4 py-3.5">Position</th>
+                <th className="px-4 py-3.5">Summary</th>
                 <th className="px-4 py-3.5">Status</th>
                 <th className="px-4 py-3.5 text-right">Actions</th>
               </tr>
@@ -145,7 +175,7 @@ export default function AdminEmployeesPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-sm text-slate-500">
+                  <td colSpan={6} className="px-4 py-12 text-center text-sm text-slate-500">
                     <span className="inline-flex items-center gap-2">
                       <span
                         className="h-4 w-4 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600"
@@ -155,33 +185,53 @@ export default function AdminEmployeesPage() {
                     </span>
                   </td>
                 </tr>
-              ) : rows.length === 0 ? (
+              ) : filteredRows.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-14 text-center">
-                    <p className="text-sm font-medium text-slate-200">No employees match this filter</p>
+                  <td colSpan={6} className="px-4 py-14 text-center">
+                    <p className="text-sm font-medium text-slate-700">No employees match this filter</p>
                     <p className="mt-1 text-xs text-slate-500">Try another filter or add profiles from the employee portal.</p>
                   </td>
                 </tr>
               ) : (
-                rows.map((r) => {
+                filteredRows.map((r) => {
                   const isDeleted = Boolean(r.deletedAt);
                   return (
                     <tr key={r.id} className="table-row table-row-muted">
-                      <td className="px-4 py-3.5 font-medium text-slate-100">{r.name}</td>
-                      <td className="px-4 py-3.5 text-slate-600">{r.email}</td>
-                      <td className="px-4 py-3.5 font-mono text-xs text-slate-700">{r.employeeCode}</td>
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-3">
+                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 text-xs font-bold text-white shadow-inner shadow-black/10">
+                            {initials(r.name)}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold text-[#0f172a]">{r.name}</p>
+                            <p className="truncate text-[11px] text-[var(--color-text-muted)]">{r.email}</p>
+                            <p className="font-mono text-[10px] font-semibold text-violet-600/90">{r.employeeCode}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="max-w-[160px] px-4 py-3.5 text-sm text-[var(--color-text-secondary)]">
+                        {r.department?.trim() ? r.department : <span className="text-[var(--color-text-muted)]">—</span>}
+                      </td>
+                      <td className="max-w-[180px] px-4 py-3.5 text-sm text-[var(--color-text-secondary)]">
+                        {r.jobTitle?.trim() ? r.jobTitle : <span className="text-[var(--color-text-muted)]">—</span>}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3.5 text-xs font-medium text-[var(--color-text-secondary)]">
+                        {r.timesheetCount} ts · {r.payslipCount} slips
+                      </td>
                       <td className="px-4 py-3.5">
                         {isDeleted ? (
-                          <Badge variant="danger">Deactivated</Badge>
-                        ) : (
+                          <Badge variant="danger">Inactive</Badge>
+                        ) : r.timesheetCount > 0 ? (
                           <Badge variant="success">Active</Badge>
+                        ) : (
+                          <Badge variant="warning">Pending</Badge>
                         )}
                       </td>
                       <td className="px-4 py-3.5 text-right">
                         <div className="flex flex-wrap justify-end gap-2">
                           <Link
                             href={`/admin/employees/${r.id}`}
-                            className="inline-flex h-9 items-center rounded-xl border border-white/15 bg-white/[0.06] px-3 text-xs font-semibold text-slate-200 shadow-sm transition hover:border-violet-400/40 hover:bg-white/10"
+                            className="inline-flex h-9 items-center rounded-xl border border-violet-200 bg-violet-50 px-3 text-xs font-semibold text-violet-700 shadow-sm transition hover:border-violet-300 hover:bg-violet-100"
                           >
                             View
                           </Link>
@@ -219,20 +269,20 @@ export default function AdminEmployeesPage() {
 
       {confirmDelete && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm"
+          className="modal-overlay z-[1100]"
           role="dialog"
           aria-modal="true"
           aria-labelledby="delete-employee-title"
         >
-          <Card className="w-full max-w-md border-violet-100 shadow-2xl shadow-violet-950/15">
-            <h2 id="delete-employee-title" className="text-lg font-semibold text-slate-100">
+          <Card className="modal w-full max-w-md !shadow-[var(--shadow-modal)] border-[var(--color-border)]">
+            <h2 id="delete-employee-title" className="modal-title text-lg">
               Deactivate employee?
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-slate-600">
               They won&apos;t be able to use the portal until restored. All timesheets, payslips, and audit
               history stay on file.
             </p>
-            <p className="mt-3 rounded-xl bg-white/[0.06] px-3 py-2 text-sm text-slate-200">
+            <p className="mt-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-page-bg)] px-3 py-2 text-sm text-[var(--color-text-secondary)]">
               <span className="font-semibold">{confirmDelete.name}</span>
               <span className="text-slate-400"> · </span>
               <span className="font-mono text-xs">{confirmDelete.employeeCode}</span>

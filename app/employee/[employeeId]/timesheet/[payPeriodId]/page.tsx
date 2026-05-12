@@ -246,19 +246,19 @@ export default function PublicTimesheetEntryPage({
           <div className="mt-2 flex flex-wrap gap-x-6 gap-y-2 text-sm">
             <span className="text-slate-400">
               Regular{" "}
-              <strong className="ml-1 tabular-nums text-slate-100">{totals.totalRegular}h</strong>
+              <strong className="ml-1 tabular-nums text-[var(--color-text-primary)]">{totals.totalRegular}h</strong>
             </span>
             <span className="text-slate-400">
               Overtime{" "}
-              <strong className="ml-1 tabular-nums text-slate-100">{totals.totalOvertime}h</strong>
+              <strong className="ml-1 tabular-nums text-[var(--color-text-primary)]">{totals.totalOvertime}h</strong>
             </span>
             <span className="text-slate-400">
               Leave{" "}
-              <strong className="ml-1 tabular-nums text-slate-100">{totals.totalLeave}h</strong>
+              <strong className="ml-1 tabular-nums text-[var(--color-text-primary)]">{totals.totalLeave}h</strong>
             </span>
             <span className="text-slate-400">
               Total{" "}
-              <strong className="ml-1 tabular-nums text-violet-200">{totals.totalHours}h</strong>
+              <strong className="ml-1 tabular-nums text-[var(--color-primary)]">{totals.totalHours}h</strong>
             </span>
           </div>
         </div>
@@ -277,7 +277,7 @@ export default function PublicTimesheetEntryPage({
             <tbody>
               {entries.map((e, i) => (
                 <tr key={e.workDate} className="table-row table-row-muted">
-                  <td className="whitespace-nowrap px-4 py-2.5 font-medium text-slate-200">
+                  <td className="whitespace-nowrap px-4 py-2.5 font-medium text-[var(--color-text-secondary)]">
                     {shortDate(e.workDate)}
                   </td>
                   {editable ? (
@@ -337,9 +337,9 @@ export default function PublicTimesheetEntryPage({
                     </>
                   ) : (
                     <>
-                      <td className="px-4 py-2.5 tabular-nums text-slate-200">{e.regularHours}</td>
-                      <td className="px-4 py-2.5 tabular-nums text-slate-200">{e.overtimeHours}</td>
-                      <td className="px-4 py-2.5 tabular-nums text-slate-200">{e.leaveHours}</td>
+                      <td className="px-4 py-2.5 tabular-nums text-[var(--color-text-muted)]">{e.regularHours}</td>
+                      <td className="px-4 py-2.5 tabular-nums text-[var(--color-text-muted)]">{e.overtimeHours}</td>
+                      <td className="px-4 py-2.5 tabular-nums text-[var(--color-text-muted)]">{e.leaveHours}</td>
                       <td className="max-w-[12rem] px-4 py-2.5 text-slate-400">{e.location?.trim() || "—"}</td>
                       <td className="max-w-[14rem] px-4 py-2.5 text-slate-500">{e.notes || "—"}</td>
                     </>

@@ -56,14 +56,13 @@ export default function EmployeeRegisterPage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden">
-      <div className="pointer-events-none absolute inset-0 bg-app-pattern" aria-hidden />
+    <div className="relative min-h-screen overflow-x-hidden bg-[var(--color-page-bg)]">
       <div className="relative flex min-h-screen flex-col items-center justify-center px-4 py-10">
         <div className="mb-8 w-full max-w-md text-center">
           <Link href="/employee-access" className="link-accent text-sm">
             ← Back to employee access
           </Link>
-          <h1 className="mt-5 text-2xl font-bold tracking-tight text-slate-100 sm:text-3xl">
+          <h1 className="mt-5 text-2xl font-bold tracking-tight text-[var(--color-text-primary)] sm:text-3xl">
             Create your Employee ID
           </h1>
           <p className="mt-2 text-sm leading-relaxed text-slate-600">
@@ -71,7 +70,7 @@ export default function EmployeeRegisterPage() {
           </p>
         </div>
 
-        <Card className="w-full max-w-md border-white/70 shadow-xl shadow-violet-950/10">
+        <Card className="w-full max-w-md shadow-[var(--shadow-card)]">
           <form onSubmit={onSubmit} className="space-y-5">
             {error && (
               <div

@@ -63,26 +63,26 @@ export default function AdminPayslipDetailPage({ params }: { params: Promise<{ i
       </div>
 
       <Card className="print:border print:shadow-none">
-        <h2 className="text-base font-semibold text-white">Pay period &amp; hours</h2>
+        <h2 className="card-heading">Pay period &amp; hours</h2>
         <p className="mt-1 text-sm text-slate-600">
           {p.payPeriod.name ?? `${shortDate(p.payPeriod.startDate)} – ${shortDate(p.payPeriod.endDate)}`}
         </p>
         <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
           <div className="rounded-xl border border-violet-50 bg-violet-50/30 px-4 py-3">
             <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Hours</dt>
-            <dd className="mt-1 font-semibold text-white">
+            <dd className="mt-1 font-semibold text-[var(--color-text-primary)]">
               {p.regularHours} reg · {p.overtimeHours} OT
             </dd>
           </div>
           <div className="rounded-xl border border-violet-50 bg-violet-50/30 px-4 py-3">
             <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Rates</dt>
-            <dd className="mt-1 font-semibold text-white">
+            <dd className="mt-1 font-semibold text-[var(--color-text-primary)]">
               {money(p.hourlyRate)} / {money(p.overtimeRate)} OT
             </dd>
           </div>
           <div className="rounded-xl border border-violet-50 bg-violet-50/30 px-4 py-3 sm:col-span-2">
             <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Sign-off</dt>
-            <dd className="mt-1 font-semibold text-white">
+            <dd className="mt-1 font-semibold text-[var(--color-text-primary)]">
               {p.adminSignoff ?? "—"} · {p.approvalDate ? shortDate(p.approvalDate) : "—"}
             </dd>
           </div>
@@ -90,17 +90,17 @@ export default function AdminPayslipDetailPage({ params }: { params: Promise<{ i
       </Card>
 
       <Card className="print:border print:shadow-none">
-        <h2 className="text-base font-semibold text-white">Earnings breakdown</h2>
+        <h2 className="card-heading">Earnings breakdown</h2>
         <ul className="mt-4 divide-y divide-violet-100/90 text-sm">
           {p.items.map((it, i) => (
             <li key={i} className="flex justify-between py-3 first:pt-0">
               <span className="text-slate-700">{it.label}</span>
-              <span className="tabular-nums font-semibold text-white">{money(it.amount)}</span>
+              <span className="tabular-nums font-semibold text-[var(--color-text-primary)]">{money(it.amount)}</span>
             </li>
           ))}
         </ul>
         <div className="mt-4 space-y-2 border-t border-white/12 pt-4 text-sm">
-          <div className="flex justify-between font-semibold text-white">
+          <div className="flex justify-between font-semibold text-[var(--color-text-primary)]">
             <span>Gross pay</span>
             <span className="tabular-nums">{money(p.grossPay)}</span>
           </div>
@@ -116,12 +116,12 @@ export default function AdminPayslipDetailPage({ params }: { params: Promise<{ i
       </Card>
 
       <Card className="print-hidden">
-        <h2 className="text-base font-semibold text-white">Actions</h2>
+        <h2 className="card-heading">Actions</h2>
         <p className="mt-1 text-xs text-slate-500">Download, delivery, and related records</p>
         <div className="mt-4 flex flex-wrap gap-2">
           <a
             href={`/api/payslips/${id}/pdf`}
-            className="inline-flex h-10 items-center gap-2 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white shadow-md shadow-violet-600/20 transition hover:bg-violet-700"
+            className="btn btn-primary h-10 gap-2 px-4 shadow-sm"
           >
             <Download className="h-4 w-4" aria-hidden />
             Download PDF
@@ -149,13 +149,13 @@ export default function AdminPayslipDetailPage({ params }: { params: Promise<{ i
           </Button>
           <Link
             href={`/admin/timesheets/${p.timesheet.id}`}
-            className="inline-flex h-10 items-center rounded-xl border border-white/15 bg-white/[0.06] px-4 text-sm font-semibold text-slate-200 shadow-sm transition hover:border-violet-400/35 hover:bg-white/10"
+            className="btn btn-secondary h-10 shadow-sm"
           >
             View timesheet
           </Link>
         </div>
         {emailPreview && (
-          <pre className="mt-4 max-h-48 overflow-auto rounded-xl border border-white/10 bg-black/35 p-4 text-xs text-slate-400">
+          <pre className="mt-4 max-h-48 overflow-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-page-bg)] p-4 text-xs text-[var(--color-text-muted)]">
             {emailPreview}
           </pre>
         )}

@@ -79,7 +79,7 @@ export default function PublicHistoryPage({
       </Card>
 
       <Card>
-        <h2 className="text-base font-semibold text-white">Timesheets</h2>
+        <h2 className="card-heading">Timesheets</h2>
         <div className="mt-4 -mx-2 overflow-x-auto rounded-xl border border-violet-50/80">
           <table className="table-shell min-w-[560px]">
             <thead>
@@ -100,13 +100,13 @@ export default function PublicHistoryPage({
               ) : (
                 timesheets.map((t) => (
                   <tr key={t.id} className="table-row table-row-muted">
-                    <td className="px-4 py-3 text-slate-200">
+                    <td className="px-4 py-3 text-[var(--color-text-secondary)]">
                       {t.payPeriod.name ?? `${shortDate(t.payPeriod.startDate)} – ${shortDate(t.payPeriod.endDate)}`}
                     </td>
                     <td className="px-4 py-3">
                       <TimesheetStatusBadge status={t.status} />
                     </td>
-                    <td className="px-4 py-3 tabular-nums font-medium text-white">{t.totalHours}h</td>
+                    <td className="px-4 py-3 tabular-nums font-medium text-[var(--color-text-primary)]">{t.totalHours}h</td>
                     <td className="px-4 py-3">
                       {t.payslip ? (
                         <Link className="link-accent font-mono text-xs" href={`${base}/payslips/${t.payslip.id}`}>
@@ -125,7 +125,7 @@ export default function PublicHistoryPage({
       </Card>
 
       <Card>
-        <h2 className="text-base font-semibold text-white">Payslips</h2>
+        <h2 className="card-heading">Payslips</h2>
         <ul className="mt-4 space-y-2 text-sm">
           {payslips.length === 0 ? (
             <li className="rounded-xl border border-dashed border-white/12 px-4 py-8 text-center text-slate-500">
@@ -138,13 +138,13 @@ export default function PublicHistoryPage({
                 className="flex justify-between gap-4 rounded-xl border border-violet-100/80 px-4 py-3 shadow-sm shadow-violet-950/[0.02]"
               >
                 <div>
-                  <p className="font-mono text-xs font-semibold text-white">{p.payslipNumber}</p>
+                  <p className="font-mono text-xs font-semibold text-[var(--color-text-primary)]">{p.payslipNumber}</p>
                   <p className="text-xs text-slate-500">
                     {p.payPeriod.name ?? shortDate(p.payPeriod.startDate)}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold tabular-nums text-white">{money(p.netPay)}</p>
+                  <p className="font-bold tabular-nums text-[var(--color-text-primary)]">{money(p.netPay)}</p>
                   <Link href={`${base}/payslips/${p.id}`} className="text-xs font-semibold text-violet-700 hover:underline">
                     View
                   </Link>

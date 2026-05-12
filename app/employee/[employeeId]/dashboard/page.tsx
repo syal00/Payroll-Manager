@@ -68,9 +68,9 @@ export default function PublicEmployeeDashboardPage({
   }
   if (!data) {
     return (
-      <div className="flex items-center gap-3 text-sm text-slate-400">
+      <div className="flex items-center gap-3 text-sm text-[var(--color-text-muted)]">
         <span
-          className="h-4 w-4 animate-spin rounded-full border-2 border-violet-500/30 border-t-violet-300"
+          className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--color-primary-muted)] border-t-[var(--color-primary)]"
           aria-hidden
         />
         Loading your dashboard…
@@ -80,36 +80,38 @@ export default function PublicEmployeeDashboardPage({
 
   return (
     <div className="page-container max-w-5xl space-y-10">
-      <div>
-        <p className="page-eyebrow">Hello</p>
-        <h1 className="page-title mt-1">Welcome, {data.employee.name}</h1>
-        <p className="page-description mt-2">
-          <span className="font-mono font-semibold text-slate-200">{data.employee.employeeCode}</span>
-          <span className="text-slate-300"> · </span>
-          {data.employee.email}
-        </p>
+      <div className="page-header !mb-4">
+        <div className="page-header-left">
+          <p className="page-eyebrow">Hello</p>
+          <h1 className="page-title mt-1">Welcome, {data.employee.name}</h1>
+          <p className="page-description mt-2 font-mono text-[var(--color-text-secondary)]">
+            <span className="font-semibold">{data.employee.employeeCode}</span>
+            <span> · </span>
+            <span>{data.employee.email}</span>
+          </p>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card className="border-violet-500/15 bg-gradient-to-br from-violet-950/40 via-transparent to-indigo-950/30">
+        <Card className="card-violet shadow-[var(--shadow-violet)] transition hover:opacity-[0.98]">
           <div className="flex items-start gap-3">
-            <div className="stat-icon shrink-0">
-              <Calendar className="h-5 w-5 text-violet-200" aria-hidden />
+            <div className="stat-icon !border-[rgba(255,255,255,0.3)] !bg-[rgba(255,255,255,0.2)] !text-white">
+              <Calendar className="h-5 w-5 text-white" aria-hidden />
             </div>
             <div className="min-w-0 flex-1">
-              <h2 className="text-base font-semibold text-white">Current pay period</h2>
+              <h2 className="text-[15px] font-bold text-[var(--color-text-inverse)]">Current pay period</h2>
               {data.currentPeriod ? (
                 <>
-                  <p className="mt-2 text-lg font-semibold leading-snug text-slate-200">
+                  <p className="mt-2 text-base font-semibold leading-snug text-[rgba(255,255,255,0.9)]">
                     {data.currentPeriod.name ??
                       `${shortDate(data.currentPeriod.startDate)} – ${shortDate(data.currentPeriod.endDate)}`}
                   </p>
                   <Link href={`${base}/timesheet/${data.currentPeriod.id}`} className="mt-4 inline-block">
-                    <Button>Submit my hours</Button>
+                    <Button className="!bg-[rgba(255,255,255,0.96)] !text-[var(--color-primary)] hover:!brightness-105">Submit my hours</Button>
                   </Link>
                 </>
               ) : (
-                <p className="mt-2 text-sm text-slate-600">
+                <p className="mt-2 text-sm text-[rgba(255,255,255,0.7)]">
                   There isn&apos;t an active period right now. Check back when payroll opens a new window.
                 </p>
               )}
@@ -119,31 +121,31 @@ export default function PublicEmployeeDashboardPage({
 
         <Card>
           <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-500/20 text-indigo-200 ring-1 ring-indigo-400/25 shadow-[0_0_24px_-8px_rgba(99,102,241,0.4)]">
+            <div className="stat-icon !border-[var(--color-info-border)] !bg-[var(--color-info-bg)] !text-[var(--color-info)]">
               <ListChecks className="h-5 w-5" aria-hidden />
             </div>
             <div className="min-w-0 flex-1">
-              <h2 className="text-base font-semibold text-white">Your submissions</h2>
-              <p className="mt-1 text-xs text-slate-500">Quick snapshot by status</p>
+              <h2 className="card-heading">Your submissions</h2>
+              <p className="card-subtitle">Quick snapshot by status</p>
               <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                <div className="rounded-xl border border-violet-100/80 bg-violet-50/40 px-3 py-3">
-                  <p className="text-xs font-semibold text-slate-500">Pending review</p>
-                  <p className="mt-1 text-2xl font-bold tabular-nums text-white">{data.counts.pending}</p>
+                <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-page-bg)] px-3 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Pending review</p>
+                  <p className="stat-card-value !text-[21px] !font-extrabold">{data.counts.pending}</p>
                 </div>
-                <div className="rounded-xl border border-emerald-100/80 bg-emerald-50/40 px-3 py-3">
-                  <p className="text-xs font-semibold text-slate-500">Approved</p>
-                  <p className="mt-1 text-2xl font-bold tabular-nums text-white">{data.counts.approved}</p>
+                <div className="rounded-[var(--radius-lg)] border border-[var(--color-success-border)] bg-[var(--color-success-bg)] px-3 py-3">
+                  <p className="text-xs font-semibold text-[var(--color-success-text)]">Approved</p>
+                  <p className="text-2xl font-extrabold tabular-nums text-[var(--color-success-text)]">{data.counts.approved}</p>
                 </div>
-                <div className="rounded-xl border border-rose-100/80 bg-rose-50/40 px-3 py-3">
-                  <p className="text-xs font-semibold text-slate-500">Rejected</p>
-                  <p className="mt-1 text-2xl font-bold tabular-nums text-white">{data.counts.rejected}</p>
+                <div className="rounded-[var(--radius-lg)] border border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] px-3 py-3">
+                  <p className="text-xs font-semibold text-[var(--color-danger-text)]">Rejected</p>
+                  <p className="text-2xl font-extrabold tabular-nums text-[var(--color-danger-text)]">{data.counts.rejected}</p>
                 </div>
-                <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-3">
-                  <p className="text-xs font-semibold text-slate-500">Draft</p>
-                  <p className="mt-1 text-2xl font-bold tabular-nums text-white">{data.counts.draft}</p>
+                <div className="rounded-[var(--radius-lg)] border border-[var(--color-border-strong)] bg-[var(--color-surface-secondary)] px-3 py-3">
+                  <p className="text-xs font-semibold text-[var(--color-text-muted)]">Draft</p>
+                  <p className="stat-card-value !text-[21px] !font-extrabold">{data.counts.draft}</p>
                 </div>
               </div>
-              <Link href={`${base}/timesheet`} className="mt-4 inline-block text-sm font-semibold text-violet-700 hover:underline">
+              <Link href={`${base}/timesheet`} className="link-accent mt-4 inline-block text-sm font-semibold">
                 Open timesheet →
               </Link>
             </div>
@@ -152,16 +154,16 @@ export default function PublicEmployeeDashboardPage({
       </div>
 
       <Card>
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <div className="card-header flex-wrap">
           <div>
-            <h2 className="text-base font-semibold text-white">Recent submissions</h2>
-            <p className="text-xs text-slate-500">Last updates across periods</p>
+            <h2 className="card-heading">Recent submissions</h2>
+            <p className="card-subtitle">Last updates across periods</p>
           </div>
           <Link href={`${base}/history`} className="link-accent text-sm">
             Full history
           </Link>
         </div>
-        <div className="-mx-2 overflow-x-auto rounded-xl border border-violet-50/80">
+        <div className="-mx-[2px] table-wrap rounded-[var(--radius-lg)]">
           <table className="table-shell min-w-[480px]">
             <thead>
               <tr className="table-head">
@@ -174,22 +176,20 @@ export default function PublicEmployeeDashboardPage({
             <tbody>
               {data.recentTimesheets.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-10 text-center text-sm text-slate-500">
-                    <p className="font-medium text-slate-700">No submissions yet</p>
+                  <td colSpan={4} className="px-4 py-10 text-center text-sm text-[var(--color-text-muted)]">
+                    <p className="font-medium text-[var(--color-text-primary)]">No submissions yet</p>
                     <p className="mt-1 text-xs">When you submit hours, they&apos;ll show up here.</p>
                   </td>
                 </tr>
               ) : (
                 data.recentTimesheets.map((t) => (
                   <tr key={t.id} className="table-row table-row-muted">
-                    <td className="px-4 py-3 text-slate-200">
-                      {t.payPeriod.name ?? shortDate(t.payPeriod.startDate)}
-                    </td>
+                    <td className="px-4 py-3 font-medium text-[var(--color-text-secondary)]">{t.payPeriod.name ?? shortDate(t.payPeriod.startDate)}</td>
                     <td className="px-4 py-3">
                       <TimesheetStatusBadge status={t.status} />
                     </td>
-                    <td className="px-4 py-3 tabular-nums font-medium text-white">{t.totalHours}h</td>
-                    <td className="px-4 py-3 text-slate-500">{shortDate(t.updatedAt)}</td>
+                    <td className="table-num px-4 py-3 text-[var(--color-text-primary)]">{t.totalHours}h</td>
+                    <td className="px-4 py-3 text-[var(--color-text-muted)]">{shortDate(t.updatedAt)}</td>
                   </tr>
                 ))
               )}
@@ -200,11 +200,11 @@ export default function PublicEmployeeDashboardPage({
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-base font-semibold text-white">Notifications</h2>
+          <div className="card-header flex-wrap">
+            <h2 className="card-heading">Notifications</h2>
             <button
               type="button"
-              className="text-xs font-semibold text-violet-700 hover:underline"
+              className="btn btn-xs btn-violet-soft"
               onClick={() =>
                 fetch(`/api/public/employees/${employeeId}/notifications/read-all`, {
                   method: "POST",
@@ -216,21 +216,21 @@ export default function PublicEmployeeDashboardPage({
           </div>
           <ul className="space-y-2 text-sm">
             {data.notifications.length === 0 ? (
-              <li className="rounded-xl border border-dashed border-white/12 px-4 py-8 text-center text-slate-500">
-                You&apos;re all caught up.
+              <li className="empty-state !rounded-[var(--radius-lg)] border border-dashed border-[var(--color-border)] !bg-[var(--color-page-bg)]">
+                <p className="empty-state-desc mb-0">You&apos;re all caught up.</p>
               </li>
             ) : (
               data.notifications.map((n) => (
                 <li
                   key={n.id}
-                  className={`rounded-xl border px-4 py-3 transition ${
+                  className={`rounded-[var(--radius-lg)] border px-4 py-3 transition ${
                     n.readAt
-                      ? "border-white/8 bg-white/[0.03]"
-                      : "border-violet-500/30 bg-violet-500/10 shadow-[0_0_24px_-8px_rgba(139,92,246,0.35)]"
+                      ? "border-[var(--color-border)] bg-[var(--color-surface-secondary)]"
+                      : "border-[var(--color-primary-muted)] bg-[var(--color-primary-light)] shadow-sm"
                   }`}
                 >
-                  <p className="font-semibold text-white">{n.title}</p>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-600">{n.body}</p>
+                  <p className="font-semibold text-[var(--color-text-primary)]">{n.title}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">{n.body}</p>
                 </li>
               ))
             )}
@@ -238,32 +238,32 @@ export default function PublicEmployeeDashboardPage({
         </Card>
 
         <Card>
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-base font-semibold text-white">Recent payslips</h2>
+          <div className="card-header">
+            <h2 className="card-heading">Recent payslips</h2>
             <Link href={`${base}/payslips`} className="link-accent text-sm">
               View all
             </Link>
           </div>
           <ul className="space-y-2 text-sm">
             {data.recentPayslips.length === 0 ? (
-              <li className="rounded-xl border border-dashed border-white/12 px-4 py-8 text-center text-slate-500">
-                No payslips yet—your team will add them after approval.
+              <li className="empty-state !rounded-[var(--radius-lg)] border border-dashed border-[var(--color-border)] !bg-[var(--color-page-bg)]">
+                <p className="empty-state-desc mb-0 text-balance">
+                  No payslips yet—your team will add them after approval.
+                </p>
               </li>
             ) : (
               data.recentPayslips.map((p) => (
                 <li
                   key={p.id}
-                  className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 shadow-inner shadow-black/20"
+                  className="flex items-center justify-between rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 shadow-xs"
                 >
                   <div>
-                    <p className="font-mono text-xs font-semibold text-white">{p.payslipNumber}</p>
-                    <p className="text-xs text-slate-500">
-                      {p.payPeriod.name ?? shortDate(p.payPeriod.startDate)}
-                    </p>
+                    <p className="font-mono text-xs font-bold text-[var(--color-text-primary)]">{p.payslipNumber}</p>
+                    <p className="text-xs text-[var(--color-text-muted)]">{p.payPeriod.name ?? shortDate(p.payPeriod.startDate)}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold tabular-nums text-white">{money(p.netPay)}</p>
-                    <Link href={`${base}/payslips/${p.id}`} className="text-xs font-semibold text-violet-700 hover:underline">
+                    <p className="font-bold tabular-nums text-[var(--color-text-primary)]">{money(p.netPay)}</p>
+                    <Link href={`${base}/payslips/${p.id}`} className="link-accent text-xs font-semibold">
                       Open
                     </Link>
                   </div>

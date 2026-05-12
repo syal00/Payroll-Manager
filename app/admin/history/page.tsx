@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ScrollText } from "lucide-react";
+import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { shortDate } from "@/lib/format";
@@ -43,20 +43,13 @@ export default function AdminHistoryPage() {
 
   return (
     <div className="page-container max-w-5xl space-y-8">
-      <div>
-        <p className="page-eyebrow">Compliance</p>
-        <h1 className="page-title mt-1 flex flex-wrap items-center gap-2">
-          <span className="stat-icon shrink-0">
-            <ScrollText className="h-5 w-5 text-violet-200" aria-hidden />
-          </span>
-          Audit trail
-        </h1>
-        <p className="page-description">
-          System actions across timesheets, payslips, pay periods, and approvals.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Compliance"
+        title="Audit trail"
+        description="Immutable ledger of decisive actions—from schedule mutations to disbursement confirmations."
+      />
 
-      <Card>
+      <Card className="rounded-2xl border-[var(--color-border)] !bg-white/95 backdrop-blur-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="min-w-0 flex-1">
             <label className="label-field" htmlFor="audit-q">
@@ -76,8 +69,8 @@ export default function AdminHistoryPage() {
         </div>
       </Card>
 
-      <Card padding={false} className="overflow-hidden">
-        <div className="divide-y divide-violet-50/90">
+      <Card padding={false} className="overflow-hidden rounded-2xl border-[var(--color-border)] !bg-white/95 backdrop-blur-sm">
+        <div className="divide-y divide-[var(--color-border)]">
           {items.length === 0 ? (
             <div className="px-4 py-14 text-center text-sm text-slate-500">
               <p className="font-medium text-slate-700">No log entries match</p>
@@ -85,7 +78,7 @@ export default function AdminHistoryPage() {
             </div>
           ) : (
             items.map((row) => (
-              <div key={row.id} className="px-4 py-4 text-sm transition hover:bg-white/[0.03]">
+              <div key={row.id} className="px-4 py-4 text-sm transition hover:bg-violet-50/40">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-mono text-xs font-bold text-violet-900">{row.action}</span>
                   <span className="text-xs text-slate-500">{shortDate(row.createdAt)}</span>
@@ -96,7 +89,7 @@ export default function AdminHistoryPage() {
                   {row.entityId ? ` · ${row.entityId}` : ""}
                 </p>
                 {row.details && (
-                  <pre className="mt-2 max-h-24 overflow-auto rounded-xl border border-white/10 bg-black/30 p-3 text-xs text-slate-400">
+                  <pre className="mt-2 max-h-24 overflow-auto rounded-xl border border-[var(--color-border)] bg-slate-950 p-3 text-xs text-slate-300">
                     {row.details}
                   </pre>
                 )}
@@ -104,7 +97,7 @@ export default function AdminHistoryPage() {
             ))
           )}
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 px-4 py-3.5 text-sm text-slate-600">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--color-border)] px-4 py-3.5 text-sm text-[var(--color-text-secondary)]">
           <span>Total {total}</span>
           <div className="flex gap-2">
             <Button variant="secondary" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>

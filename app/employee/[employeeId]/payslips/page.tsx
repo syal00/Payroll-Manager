@@ -50,13 +50,13 @@ export default function PublicPayslipsPage({
                 className="flex flex-wrap items-center justify-between gap-4 px-6 py-4 transition hover:bg-violet-50/40"
               >
                 <div>
-                  <p className="font-mono text-sm font-semibold text-white">{p.payslipNumber}</p>
+                  <p className="font-mono text-sm font-semibold text-[var(--color-text-primary)]">{p.payslipNumber}</p>
                   <p className="text-xs text-slate-500">
                     {p.payPeriod.name ?? shortDate(p.payPeriod.startDate)}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold tabular-nums text-white">{money(p.netPay)}</p>
+                  <p className="font-bold tabular-nums text-[var(--color-text-primary)]">{money(p.netPay)}</p>
                   <Link href={`${base}/payslips/${p.id}`} className="text-xs font-semibold text-violet-700 hover:underline">
                     Details / PDF
                   </Link>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ClipboardList } from "lucide-react";
+import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TimesheetStatusBadge } from "@/components/status-badges";
@@ -69,21 +69,13 @@ export default function AdminReviewPage() {
 
   return (
     <div className="page-container max-w-7xl space-y-8">
-      <div>
-        <p className="page-eyebrow">Workflow</p>
-        <h1 className="page-title mt-1 flex flex-wrap items-center gap-2">
-          <span className="stat-icon shrink-0">
-            <ClipboardList className="h-5 w-5 text-violet-200" aria-hidden />
-          </span>
-          Timesheet review
-        </h1>
-        <p className="page-description">
-          Review and manage submitted work hours. Filter by period, search by name, then open a record for
-          detail and approvals.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Compliance"
+        title="Timesheet review"
+        description="Surface discrepancies faster—tie every adjustment to payroll periods without leaving the approvals fabric."
+      />
 
-      <Card>
+      <Card className="rounded-2xl border-[var(--color-border)] !bg-white/95 backdrop-blur-sm">
         <div className="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-end">
           <div className="min-w-[180px] flex-1">
             <label className="label-field" htmlFor="filter-period">
@@ -174,7 +166,7 @@ export default function AdminReviewPage() {
         </div>
       </Card>
 
-      <Card padding={false} className="overflow-hidden">
+      <Card padding={false} className="overflow-hidden rounded-2xl border-[var(--color-border)] !bg-white/95 backdrop-blur-sm">
         <div className="overflow-x-auto">
           <table className="table-shell min-w-[720px]">
             <thead>
@@ -199,7 +191,7 @@ export default function AdminReviewPage() {
               ) : (
                 items.map((row) => (
                   <tr key={row.id} className="table-row table-row-muted text-slate-700">
-                    <td className="px-4 py-3.5 font-medium text-slate-100">{row.employee.name}</td>
+                    <td className="px-4 py-3.5 font-medium text-[var(--color-text-primary)]">{row.employee.name}</td>
                     <td className="px-4 py-3.5 text-slate-600">
                       {row.payPeriod.name ?? shortDate(row.payPeriod.startDate)}
                     </td>
@@ -209,14 +201,14 @@ export default function AdminReviewPage() {
                     <td className="px-4 py-3.5 tabular-nums text-slate-600">
                       {row.totalRegular} / {row.totalOvertime} / {row.totalLeave}
                     </td>
-                    <td className="px-4 py-3.5 tabular-nums font-semibold text-slate-100">{row.totalHours}</td>
+                    <td className="px-4 py-3.5 tabular-nums font-semibold text-[var(--color-text-primary)]">{row.totalHours}</td>
                     <td className="px-4 py-3.5 text-slate-500">
                       {row.submittedAt ? shortDate(row.submittedAt) : "—"}
                     </td>
                     <td className="px-4 py-3.5 text-right">
                       <Link
                         href={`/admin/timesheets/${row.id}`}
-                        className="inline-flex h-9 items-center rounded-xl bg-violet-600 px-3 text-xs font-semibold text-white shadow-sm transition hover:bg-violet-700"
+                        className="btn btn-primary btn-xs h-9 px-3 shadow-sm"
                       >
                         Review
                       </Link>

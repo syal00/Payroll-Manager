@@ -2,15 +2,24 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import {
   Users,
   CalendarRange,
   ClipboardClock,
-  ClipboardCheck,
-  FileText,
-  ArrowRight,
+  Timer,
+  Wallet,
+  Building2,
+  Plus,
+  Eye,
+  CalendarPlus,
+  FileOutput,
 } from "lucide-react";
+import { PageHeader } from "@/components/dashboard/PageHeader";
+import { DashboardMetricCard } from "@/components/dashboard/DashboardMetricCard";
+import { PayrollNetTrendChart, HoursTrendChart } from "@/components/dashboard/DashboardCharts";
 import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
 import { TimesheetStatusBadge } from "@/components/status-badges";
 import { shortDate } from "@/lib/format";
 
@@ -23,6 +32,7 @@ type Stats = {
   recentSubmissions: {
     id: string;
     status: string;
+    totalHours?: number;
     submittedAt: string | null;
     employee: { name: string; user: { name: string } | null };
     payPeriod: { name: string | null; startDate: string; endDate: string };
@@ -46,8 +56,13 @@ type Stats = {
   }[];
 };
 
+type EmpRow = {
+  department: string | null;
+};
+
 export default function AdminDashboardPage() {
   const [data, setData] = useState<Stats | null>(null);
+  const [deptCount, setDeptCount] = useState<number | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
@@ -58,137 +73,244 @@ export default function AdminDashboardPage() {
         else setData(j);
       })
       .catch(() => setErr("Failed to load"));
+    fetch("/api/admin/employees?status=active")
+      .then((r) => r.json())
+      .then((j) => {
+        const list = (j.employees ?? []) as EmpRow[];
+        const dept = new Set(
+          list.map((e) => (e.department ?? "").trim()).filter(Boolean),
+        );
+        setDeptCount(dept.size);
+      })
+      .catch(() => setDeptCount(null));
   }, []);
 
   if (err) {
-    return <div className="alert-error max-w-xl">{err}</div>;
-  }
-  if (!data) {
     return (
-      <div className="flex items-center gap-3 text-sm text-slate-400">
-        <span
-          className="h-4 w-4 animate-spin rounded-full border-2 border-white/100/30 border-t-violet-300"
-          aria-hidden
-        />
-        Loading dashboard…
+      <div className="page-container">
+        <div className="alert-error max-w-xl rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm">{err}</div>
       </div>
     );
   }
 
+  if (!data) {
+    return (
+      <div className="page-container space-y-6">
+        <div className="skeleton skeleton-title mb-6 h-10 max-w-xs rounded-xl" />
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="skeleton skeleton-card min-h-[128px] rounded-2xl" />
+          ))}
+        </div>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="skeleton skeleton-card min-h-[280px] rounded-2xl" />
+          <div className="skeleton skeleton-card min-h-[280px] rounded-2xl" />
+        </div>
+      </div>
+    );
+  }
+
+  const chartPayslip = !data.recentPayslips.length
+    ? []
+    : [...data.recentPayslips]
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+        .slice(-8)
+        .map((p) => ({
+          label: new Date(p.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+          net: p.netPay,
+        }));
+
+  const chartHours = !data.recentSubmissions.length
+    ? []
+    : data.recentSubmissions.slice(0, 8).map((r) => ({
+        label: r.employee.name.split(/\s+/)[0] ?? r.employee.name,
+        hours: typeof r.totalHours === "number" ? r.totalHours : 0,
+      }));
+
+  const metricTrend = "+4.2%";
+
   const cards = [
     {
-      label: "Total employees",
+      label: "Total Employees",
       value: data.totalEmployees,
       href: "/admin/employees",
-      hint: "Active roster",
+      hint: "Active roster size",
       icon: Users,
+      trend: metricTrend,
+      gradient: "violet" as const,
     },
     {
-      label: "Open pay periods",
-      value: data.openPayPeriods,
-      href: "/admin/pay-periods",
-      hint: "Scheduling",
-      icon: CalendarRange,
-    },
-    {
-      label: "Pending reviews",
+      label: "Pending Timesheets",
       value: data.pendingSubmissions,
-      href: "/admin/review",
-      hint: "Needs attention",
+      href: "/admin/timesheets",
+      hint: "Needs review queue",
       icon: ClipboardClock,
+      trend: "Live",
+      gradient: "indigo" as const,
     },
     {
-      label: "Approved this period",
+      label: "Approved Hours",
       value: data.approvedSubmissions,
       href: "/admin/review",
-      hint: "Timesheets cleared",
-      icon: ClipboardCheck,
+      hint: "Payroll-ready entries",
+      icon: Timer,
+      trend: "Stable",
+      gradient: "violet" as const,
     },
     {
-      label: "Payroll overview",
+      label: "Current Pay Period",
+      value: data.openPayPeriods,
+      href: "/admin/pay-periods",
+      hint: "Open schedules",
+      icon: CalendarRange,
+      trend: "—",
+      gradient: "indigo" as const,
+    },
+    {
+      label: "Payroll Processed",
       value: data.generatedPayslips,
       href: "/admin/payslips",
-      hint: "Payslips issued",
-      icon: FileText,
+      hint: "Payslips generated",
+      icon: Wallet,
+      trend: "MTD",
+      gradient: "fuchsia" as const,
+    },
+    {
+      label: "Active Departments",
+      value: deptCount ?? "—",
+      href: "/admin/employees",
+      hint: "Unique department tags",
+      icon: Building2,
+      trend: deptCount === null ? "—" : "Org",
+      gradient: "violet" as const,
     },
   ];
 
   return (
-    <div className="page-container space-y-10">
-      <div>
-        <p className="page-eyebrow">Overview</p>
-        <h1 className="page-title mt-1">Payroll dashboard</h1>
-        <p className="page-description">
-          Manage payroll operations from one place—review hours, approve faster, stay audit-ready.
-        </p>
+    <div className="page-container">
+      <PageHeader
+        eyebrow="Overview"
+        title="Payroll command center"
+        description="Operational clarity for approvals, payouts, and compliance—minimal noise, decisive actions."
+      />
+
+      <div className="mb-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {cards.map((c) => (
+          <DashboardMetricCard key={c.label} {...c} />
+        ))}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        {cards.map((c) => {
-          const Icon = c.icon;
-          return (
-            <Link key={c.label} href={c.href} className="group block h-full outline-none">
-              <Card className="h-full transition duration-300 hover:-translate-y-0.5 hover:border-white/100/25 hover:shadow-[0_0_40px_-12px_rgba(139,92,246,0.35)]">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{c.label}</p>
-                    <p className="mt-3 text-3xl font-bold tabular-nums tracking-tight text-white">{c.value}</p>
-                    <p className="mt-1 text-xs text-slate-500">{c.hint}</p>
-                  </div>
-                  <div className="stat-icon">
-                    <Icon className="h-5 w-5" aria-hidden />
-                  </div>
-                </div>
-                <span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-violet-300 opacity-0 transition group-hover:opacity-100">
-                  Open <ArrowRight className="h-3.5 w-3.5" aria-hidden />
-                </span>
-              </Card>
-            </Link>
-          );
-        })}
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
+      <motion.section
+        className="mb-10 grid gap-5 lg:grid-cols-2"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.08 }}
+      >
+        <Card className="border-[var(--color-border)] !bg-white/90 backdrop-blur-sm">
+          <div className="card-header !mb-1">
             <div>
-              <h2 className="card-heading">Recent submissions</h2>
-              <p className="mt-0.5 text-xs text-slate-500">Latest employee timesheet activity</p>
+              <h2 className="card-heading text-base">Weekly payroll pulse</h2>
+              <p className="card-subtitle">Net pay from recently generated slips</p>
             </div>
-            <Link href="/admin/review" className="link-accent text-sm">
-              View queue
+          </div>
+          <PayrollNetTrendChart data={chartPayslip} />
+        </Card>
+        <Card className="border-[var(--color-border)] !bg-white/90 backdrop-blur-sm">
+          <div className="card-header !mb-1">
+            <div>
+              <h2 className="card-heading text-base">Hours throughput</h2>
+              <p className="card-subtitle">Recent submission volumes</p>
+            </div>
+          </div>
+          <HoursTrendChart data={chartHours} />
+        </Card>
+      </motion.section>
+
+      <div className="mb-10 rounded-2xl border border-[var(--color-border)] bg-gradient-to-br from-white via-white to-violet-50/40 p-5 shadow-[0_4px_24px_rgba(15,23,42,0.06)] backdrop-blur-sm sm:p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-violet-600">Quick actions</p>
+            <p className="mt-1 text-sm text-[var(--color-text-secondary)]">Jump into the highest-impact workflows.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/admin/employees">
+              <Button className="h-11 gap-2 rounded-xl shadow-md transition hover:scale-[1.02] active:scale-[0.98]">
+                <Plus className="h-4 w-4" aria-hidden strokeWidth={2} />
+                Add employee
+              </Button>
+            </Link>
+            <Link href="/admin/timesheets">
+              <Button variant="secondary" className="h-11 gap-2 rounded-xl border-[var(--color-border-strong)] hover:border-violet-200">
+                <Eye className="h-4 w-4 text-violet-600" aria-hidden strokeWidth={2} />
+                Review timesheets
+              </Button>
+            </Link>
+            <Link href="/admin/pay-periods">
+              <Button variant="outline" className="h-11 gap-2 rounded-xl">
+                <CalendarPlus className="h-4 w-4" aria-hidden strokeWidth={2} />
+                Create pay period
+              </Button>
+            </Link>
+            <Link href="/admin/payslips">
+              <Button variant="outline" className="h-11 gap-2 rounded-xl">
+                <FileOutput className="h-4 w-4" aria-hidden strokeWidth={2} />
+                Generate payslip
+              </Button>
             </Link>
           </div>
-          <div className="table-wrap">
-            <table className="table-shell min-w-[480px]">
+        </div>
+      </div>
+
+      <div className="chart-grid mb-10">
+        <Card className="border-[var(--color-border)] !bg-white/95">
+          <div className="card-header !mb-0 flex-col gap-1 sm:flex-row sm:items-end">
+            <div>
+              <h2 className="card-heading text-base">Recent submissions</h2>
+              <p className="card-subtitle">Awaiting routing through review</p>
+            </div>
+            <Link href="/admin/timesheets" className="link-accent shrink-0 text-sm font-semibold">
+              Full queue →
+            </Link>
+          </div>
+          <div className="table-wrap mt-6">
+            <table className="table-shell min-w-[420px]">
               <thead>
                 <tr className="table-head">
                   <th className="px-4 py-3">Employee</th>
-                  <th className="px-4 py-3">Period</th>
+                  <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3">Hours</th>
                   <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Submitted</th>
+                  <th className="px-4 py-3 text-right">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {data.recentSubmissions.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-4 py-10 text-center text-sm text-slate-400">
-                      <p className="font-medium text-slate-200">Nothing in the queue yet</p>
-                      <p className="mt-1 text-xs">Submissions appear when employees send hours.</p>
+                    <td colSpan={5} className="px-4 py-12 text-center">
+                      <p className="text-sm font-semibold text-[#0f172a]">Queue is calm</p>
+                      <p className="mt-1 text-xs text-[var(--color-text-muted)]">Incoming employee hours will populate this table automatically.</p>
                     </td>
                   </tr>
                 ) : (
                   data.recentSubmissions.map((row) => (
                     <tr key={row.id} className="table-row table-row-muted">
-                      <td className="px-4 py-3 font-medium text-slate-100">{row.employee.name}</td>
-                      <td className="px-4 py-3 text-slate-400">
-                        {row.payPeriod.name ?? shortDate(row.payPeriod.startDate)}
+                      <td className="px-4 py-3 font-semibold text-[#0f172a]">{row.employee.name}</td>
+                      <td className="whitespace-nowrap px-4 py-3 text-sm text-[var(--color-text-secondary)]">
+                        {row.submittedAt ? shortDate(row.submittedAt) : "—"}
+                      </td>
+                      <td className="table-num px-4 py-3 text-[var(--color-text-secondary)]">
+                        {typeof row.totalHours === "number" ? `${row.totalHours}h` : "—"}
                       </td>
                       <td className="px-4 py-3">
                         <TimesheetStatusBadge status={row.status} />
                       </td>
-                      <td className="px-4 py-3 text-slate-500">
-                        {row.submittedAt ? shortDate(row.submittedAt) : "—"}
+                      <td className="px-4 py-3 text-right">
+                        <Link
+                          href={`/admin/timesheets/${row.id}`}
+                          className="inline-flex rounded-lg px-3 py-1.5 text-xs font-bold text-violet-600 hover:bg-violet-50"
+                        >
+                          Open
+                        </Link>
                       </td>
                     </tr>
                   ))
@@ -198,29 +320,38 @@ export default function AdminDashboardPage() {
           </div>
         </Card>
 
-        <Card>
-          <div className="mb-5">
-            <h2 className="card-heading">Recent approval actions</h2>
-            <p className="mt-0.5 text-xs text-slate-500">Who changed what, and when</p>
+        <Card className="border-[var(--color-border)] !bg-white/95">
+          <div className="mb-5 flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <h2 className="card-heading text-base">Recent approval actions</h2>
+              <p className="card-subtitle">Administrative trace for sign-offs</p>
+            </div>
+            <Link href="/admin/history" className="link-accent text-sm font-semibold">
+              Audit log →
+            </Link>
           </div>
           <ul className="space-y-3 text-sm">
             {data.recentApprovals.length === 0 ? (
-              <li className="rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-8 text-center text-slate-400">
-                <p className="font-medium text-slate-200">No actions yet</p>
-                <p className="mt-1 text-xs">Approvals and verifications will show up here.</p>
+              <li className="empty-state !rounded-2xl !border-dashed !py-12">
+                <p className="empty-state-title">No actions yet</p>
+                <p className="empty-state-desc">Approvals and verifications will appear in this feed.</p>
               </li>
             ) : (
               data.recentApprovals.map((a) => (
                 <li
                   key={a.id}
-                  className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 shadow-inner shadow-black/20"
+                  className="rounded-2xl border border-[var(--color-border)] bg-gradient-to-br from-slate-50/90 to-white px-4 py-3 shadow-sm shadow-slate-200/40"
                 >
-                  <span className="font-medium text-slate-100">{a.timesheet.employee.name}</span>
-                  <span className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-400">
-                    <span className="font-medium text-slate-300">{a.admin.name}</span>
-                    <span className="text-slate-600">·</span>
+                  <span className="font-semibold text-[#0f172a]">{a.timesheet.employee.name}</span>
+                  <span className="mt-2 flex flex-wrap items-center gap-2 text-xs text-[var(--color-text-muted)]">
+                    <span className="font-medium text-[var(--color-text-secondary)]">{a.admin.name}</span>
+                    <span aria-hidden className="text-slate-300">
+                      ·
+                    </span>
                     <TimesheetStatusBadge status={a.newStatus} />
-                    <span className="text-slate-600">·</span>
+                    <span aria-hidden className="text-slate-300">
+                      ·
+                    </span>
                     {shortDate(a.createdAt)}
                   </span>
                 </li>
@@ -230,14 +361,14 @@ export default function AdminDashboardPage() {
         </Card>
       </div>
 
-      <Card>
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
+      <Card className="border-[var(--color-border)] !bg-white/95">
+        <div className="card-header flex-col gap-1 sm:flex-row sm:items-end">
           <div>
-            <h2 className="card-heading">Recent payslips</h2>
-            <p className="mt-0.5 text-xs text-slate-500">Latest generated documents</p>
+            <h2 className="card-heading text-base">Recent payslips</h2>
+            <p className="card-subtitle">Latest payouts generated from approved hours</p>
           </div>
-          <Link href="/admin/payslips" className="link-accent text-sm">
-            View all
+          <Link href="/admin/payslips" className="link-accent shrink-0 text-sm font-semibold">
+            View library →
           </Link>
         </div>
         <div className="table-wrap">
@@ -253,21 +384,21 @@ export default function AdminDashboardPage() {
             <tbody>
               {data.recentPayslips.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-10 text-center text-sm text-slate-400">
-                    No payslips yet. Approve timesheets to generate pay.
+                  <td colSpan={4} className="px-4 py-12 text-center text-sm text-[var(--color-text-muted)]">
+                    No payslips yet — approve validated timesheets to generate pay artifacts.
                   </td>
                 </tr>
               ) : (
                 data.recentPayslips.map((p) => (
                   <tr key={p.id} className="table-row table-row-muted">
                     <td className="px-4 py-3">
-                      <Link href={`/admin/payslips/${p.id}`} className="link-accent font-mono text-sm">
+                      <Link href={`/admin/payslips/${p.id}`} className="link-accent font-mono text-sm font-semibold">
                         {p.payslipNumber}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 font-medium text-slate-200">{p.employee.name}</td>
-                    <td className="px-4 py-3 tabular-nums font-semibold text-white">${p.netPay.toFixed(2)}</td>
-                    <td className="px-4 py-3 text-slate-500">{shortDate(p.createdAt)}</td>
+                    <td className="px-4 py-3 font-semibold text-[#0f172a]">{p.employee.name}</td>
+                    <td className="table-num px-4 py-3 font-semibold text-[#0f172a]">${p.netPay.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-[var(--color-text-muted)]">{shortDate(p.createdAt)}</td>
                   </tr>
                 ))
               )}

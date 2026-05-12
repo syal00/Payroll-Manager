@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { prismaDatabaseUnavailableMessage } from "@/lib/prisma-errors";
 import { createSession } from "@/lib/session";
 import { z } from "zod";
 
@@ -51,20 +51,9 @@ export async function POST(req: Request) {
     if (e instanceof z.ZodError) {
       return NextResponse.json({ error: "Invalid request", issues: e.issues }, { status: 400 });
     }
-    if (e instanceof Prisma.PrismaClientInitializationError) {
-      return NextResponse.json(
-        {
-          error:
-            "Database is misconfigured. Use DATABASE_URL=file:./dev.db for local SQLite, then run: npx prisma migrate dev && npm run db:seed",
-        },
-        { status: 503 }
-      );
-    }
-    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P1001") {
-      return NextResponse.json(
-        { error: "Cannot connect to the database. Check DATABASE_URL and that the DB file or server exists." },
-        { status: 503 }
-      );
+    const dbUnavailable = prismaDatabaseUnavailableMessage(e);
+    if (dbUnavailable) {
+      return NextResponse.json({ error: dbUnavailable }, { status: 503 });
     }
     console.error(e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

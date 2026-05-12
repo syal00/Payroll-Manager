@@ -60,19 +60,19 @@ export default function PublicProfilePage({
       </div>
 
       <Card>
-        <h2 className="text-base font-semibold text-white">Employment</h2>
+        <h2 className="card-heading">Employment</h2>
         <dl className="mt-5 space-y-4 text-sm">
           <div className="flex justify-between gap-4 border-b border-violet-50 pb-3">
             <dt className="text-slate-500">Name</dt>
-            <dd className="text-right font-semibold text-white">{emp.name}</dd>
+            <dd className="text-right font-semibold text-[var(--color-text-primary)]">{emp.name}</dd>
           </div>
           <div className="flex justify-between gap-4 border-b border-violet-50 pb-3">
             <dt className="text-slate-500">Email</dt>
-            <dd className="text-right text-slate-200">{emp.email}</dd>
+            <dd className="text-right text-[var(--color-text-secondary)]">{emp.email}</dd>
           </div>
           <div className="flex justify-between gap-4 border-b border-violet-50 pb-3">
             <dt className="text-slate-500">Employee ID</dt>
-            <dd className="font-mono font-semibold text-white">{emp.employeeCode}</dd>
+            <dd className="font-mono font-semibold text-[var(--color-text-primary)]">{emp.employeeCode}</dd>
           </div>
           <div className="flex justify-between gap-4 border-b border-violet-50 pb-3">
             <dt className="text-slate-500">Hourly rate</dt>

@@ -248,7 +248,7 @@ export default function AdminTimesheetDetailPage({
           <p className="page-eyebrow mt-3">Timesheet detail</p>
           <h1 className="page-title mt-1">{ts.employee.name}</h1>
           <p className="page-description mt-1">
-            <span className="font-mono font-semibold text-slate-200">{ts.employee.employeeCode}</span>
+            <span className="font-mono font-semibold text-[var(--color-text-secondary)]">{ts.employee.employeeCode}</span>
             <span className="text-slate-300"> · </span>
             {ts.employee.email}
           </p>
@@ -262,32 +262,32 @@ export default function AdminTimesheetDetailPage({
       {msg && <div className="alert-success">{msg}</div>}
 
       <Card>
-        <h2 className="text-base font-semibold text-white">Pay period summary</h2>
+        <h2 className="card-heading">Pay period summary</h2>
         <p className="mt-1 text-sm text-slate-600">
           {ts.payPeriod.name ?? `${shortDate(ts.payPeriod.startDate)} – ${shortDate(ts.payPeriod.endDate)}`}
         </p>
         <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div className="rounded-xl border border-violet-100/80 bg-violet-50/40 px-3 py-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Regular</p>
-            <p className="mt-1 text-xl font-bold tabular-nums text-white">
+            <p className="mt-1 stat-card-value !text-xl">
               {canEditHours ? liveTotals.totalRegular : ts.totalRegular}h
             </p>
           </div>
           <div className="rounded-xl border border-violet-100/80 bg-violet-50/40 px-3 py-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Overtime</p>
-            <p className="mt-1 text-xl font-bold tabular-nums text-white">
+            <p className="mt-1 stat-card-value !text-xl">
               {canEditHours ? liveTotals.totalOvertime : ts.totalOvertime}h
             </p>
           </div>
           <div className="rounded-xl border border-violet-100/80 bg-violet-50/40 px-3 py-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Leave</p>
-            <p className="mt-1 text-xl font-bold tabular-nums text-white">
+            <p className="mt-1 stat-card-value !text-xl">
               {canEditHours ? liveTotals.totalLeave : ts.totalLeave}h
             </p>
           </div>
           <div className="rounded-xl border border-violet-100/80 bg-violet-50/40 px-3 py-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Total</p>
-            <p className="mt-1 text-xl font-bold tabular-nums text-white">
+            <p className="mt-1 stat-card-value !text-xl">
               {canEditHours ? liveTotals.totalHours : ts.totalHours}h
             </p>
           </div>
@@ -333,7 +333,7 @@ export default function AdminTimesheetDetailPage({
 
       {canEditHours && (
         <Card>
-          <h2 className="text-base font-semibold text-white">Edit timesheet</h2>
+          <h2 className="card-heading">Edit timesheet</h2>
           <p className="mt-1 text-xs text-slate-500">
             Adjust daily hours, period notes, and pay rates. Changes are logged and the employee receives a
             notification. Editing locks after a payslip exists.
@@ -377,7 +377,7 @@ export default function AdminTimesheetDetailPage({
 
       <Card padding={false} className="overflow-hidden">
         <div className="border-b border-white/10 px-5 py-4">
-          <h2 className="text-base font-semibold text-white">Daily breakdown</h2>
+          <h2 className="card-heading">Daily breakdown</h2>
           <p className="mt-0.5 text-xs text-slate-500">Day-by-day hours and notes</p>
         </div>
         <div className="overflow-x-auto">
@@ -395,7 +395,7 @@ export default function AdminTimesheetDetailPage({
             <tbody>
               {(canEditHours ? editEntries : ts.entries).map((e, i) => (
                 <tr key={e.id} className="table-row table-row-muted">
-                  <td className="px-4 py-2.5 font-medium text-slate-200">{shortDate(e.workDate)}</td>
+                  <td className="px-4 py-2.5 font-medium text-[var(--color-text-secondary)]">{shortDate(e.workDate)}</td>
                   {canEditHours ? (
                     <>
                       <td className="px-4 py-2.5">
@@ -448,9 +448,9 @@ export default function AdminTimesheetDetailPage({
                     </>
                   ) : (
                     <>
-                      <td className="px-4 py-2.5 tabular-nums text-slate-200">{e.regularHours}</td>
-                      <td className="px-4 py-2.5 tabular-nums text-slate-200">{e.overtimeHours}</td>
-                      <td className="px-4 py-2.5 tabular-nums text-slate-200">{e.leaveHours}</td>
+                      <td className="px-4 py-2.5 tabular-nums text-[var(--color-text-secondary)]">{e.regularHours}</td>
+                      <td className="px-4 py-2.5 tabular-nums text-[var(--color-text-secondary)]">{e.overtimeHours}</td>
+                      <td className="px-4 py-2.5 tabular-nums text-[var(--color-text-secondary)]">{e.leaveHours}</td>
                       <td className="max-w-[12rem] px-4 py-2.5 text-slate-400">
                         {e.location?.trim() || "—"}
                       </td>
@@ -467,7 +467,7 @@ export default function AdminTimesheetDetailPage({
       </Card>
 
       <Card>
-        <h2 className="text-base font-semibold text-white">Review &amp; decision</h2>
+        <h2 className="card-heading">Review &amp; decision</h2>
         <p className="mt-1 text-xs text-slate-500">
           Flow: Pending → Verified → Approved (or reject with a reason the employee will see).
         </p>
@@ -527,7 +527,7 @@ export default function AdminTimesheetDetailPage({
 
       {ts.status === TimesheetStatus.APPROVED && (
         <Card>
-          <h2 className="text-base font-semibold text-white">Generate payslip</h2>
+          <h2 className="card-heading">Generate payslip</h2>
           <p className="mt-1 text-xs text-slate-500">Available once the timesheet is approved.</p>
           {ts.payslip ? (
             <p className="mt-3 text-sm text-slate-600">
@@ -558,7 +558,7 @@ export default function AdminTimesheetDetailPage({
       )}
 
       <Card>
-        <h2 className="text-base font-semibold text-white">History &amp; comments</h2>
+        <h2 className="card-heading">History &amp; comments</h2>
         <ul className="mt-4 space-y-3 text-sm">
           {ts.approvals.length === 0 ? (
             <li className="rounded-xl border border-dashed border-white/12 px-4 py-8 text-center text-slate-500">

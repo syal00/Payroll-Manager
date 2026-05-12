@@ -64,8 +64,8 @@ export default function PublicPayslipDetailPage({
       </div>
 
       <Card className="print:border print:shadow-none">
-        <h2 className="text-base font-semibold text-white">Pay period</h2>
-        <p className="mt-2 text-sm font-medium text-slate-200">
+        <h2 className="card-heading">Pay period</h2>
+        <p className="mt-2 text-sm font-medium text-[var(--color-text-secondary)]">
           {p.payPeriod.name ?? `${shortDate(p.payPeriod.startDate)} – ${shortDate(p.payPeriod.endDate)}`}
         </p>
         <p className="mt-2 text-xs text-slate-500">
@@ -74,7 +74,7 @@ export default function PublicPayslipDetailPage({
         </p>
         <a
           href={`/api/public/employees/${employeeId}/payslips/${payslipId}/pdf`}
-          className="print-hidden mt-5 inline-flex h-10 items-center gap-2 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white shadow-md shadow-violet-600/20 transition hover:bg-violet-700"
+          className="print-hidden mt-5 btn btn-primary h-10 gap-2 px-4 shadow-sm"
         >
           <Download className="h-4 w-4" aria-hidden />
           Download PDF
@@ -82,17 +82,17 @@ export default function PublicPayslipDetailPage({
       </Card>
 
       <Card className="print:border print:shadow-none">
-        <h2 className="text-base font-semibold text-white">Earnings</h2>
+        <h2 className="card-heading">Earnings</h2>
         <ul className="mt-4 divide-y divide-violet-100/90 text-sm">
           {p.items.map((it, i) => (
             <li key={i} className="flex justify-between py-3 first:pt-0">
               <span className="text-slate-700">{it.label}</span>
-              <span className="tabular-nums font-semibold text-white">{money(it.amount)}</span>
+              <span className="tabular-nums font-semibold text-[var(--color-text-primary)]">{money(it.amount)}</span>
             </li>
           ))}
         </ul>
         <div className="mt-4 space-y-2 border-t border-white/12 pt-4 text-sm">
-          <div className="flex justify-between font-semibold text-white">
+          <div className="flex justify-between font-semibold text-[var(--color-text-primary)]">
             <span>Gross</span>
             <span className="tabular-nums">{money(p.grossPay)}</span>
           </div>
