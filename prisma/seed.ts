@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { addDays } from "date-fns";
 import { nextEmployeeCode, normalizeEmployeeEmail } from "../lib/employee-code";
+import { DEMO_ADMIN_PASSWORD } from "../lib/demo-credentials";
 
 const prisma = new PrismaClient();
 
@@ -18,23 +19,32 @@ async function main() {
   await prisma.employee.deleteMany();
   await prisma.user.deleteMany();
 
-  const adminAnmol = await prisma.user.create({
-    data: {
-      email: "anmolchahal871@gmail.com",
-      passwordHash: await bcrypt.hash("Anmol0065", 12),
-      name: "Anmol Singh",
+  /** Primary demo admins — upsert preserves behavior of the legacy `add-admins` helper if seed order changes. */
+  const adminPwHash = await bcrypt.hash(DEMO_ADMIN_PASSWORD, 12);
+  const primaryAdmins = [
+    { name: "Anmol Singh", email: "anmolchahal871@gmail.com" },
+    { name: "Rakesh Syal", email: "syalrakesh00@gmail.com" },
+  ] as const;
+  const admin = await prisma.user.upsert({
+    where: { email: primaryAdmins[0]!.email },
+    create: {
+      email: primaryAdmins[0]!.email,
+      passwordHash: adminPwHash,
+      name: primaryAdmins[0]!.name,
       role: "ADMIN",
     },
+    update: { passwordHash: adminPwHash, name: primaryAdmins[0]!.name, role: "ADMIN" },
   });
-  await prisma.user.create({
-    data: {
-      email: "syalrakesh00@gmail.com",
-      passwordHash: await bcrypt.hash("syal9878", 12),
-      name: "Rakesh Syal",
+  await prisma.user.upsert({
+    where: { email: primaryAdmins[1]!.email },
+    create: {
+      email: primaryAdmins[1]!.email,
+      passwordHash: adminPwHash,
+      name: primaryAdmins[1]!.name,
       role: "ADMIN",
     },
+    update: { passwordHash: adminPwHash, name: primaryAdmins[1]!.name, role: "ADMIN" },
   });
-  const admin = adminAnmol;
 
   const empSeed = [
     { email: "alex.morgan@nexusops.com", name: "Alex Morgan", rate: 42.5 },
@@ -218,9 +228,9 @@ async function main() {
   });
 
   console.log("Seed complete.");
-  console.log("Admins:");
-  console.log("  Anmol Singh  — anmolchahal871@gmail.com / Anmol0065");
-  console.log("  Rakesh Syal  — syalrakesh00@gmail.com / syal9878");
+  console.log("Admins (same password for demo):");
+  console.log(`  Anmol Singh — anmolchahal871@gmail.com / ${DEMO_ADMIN_PASSWORD}`);
+  console.log(`  Rakesh Syal — syalrakesh00@gmail.com / ${DEMO_ADMIN_PASSWORD}`);
   console.log("Demo employees: register or use employee access with the same emails (optional legacy User login still works).");
 }
 
