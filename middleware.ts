@@ -19,22 +19,9 @@ export async function middleware(request: NextRequest) {
   const token = request.cookies.get(COOKIE_NAME)?.value;
   const secret = process.env.AUTH_SECRET;
 
+  /* Marketing home at `/` is always the landing page (no auto-redirect when logged in). */
   if (pathname === "/") {
-    if (!token || !secret || secret.length < 32) {
-      return NextResponse.next();
-    }
-    try {
-      const key = new TextEncoder().encode(secret);
-      const { payload } = await jose.jwtVerify(token, key);
-      const role = payload.role as string;
-      if (role === "ADMIN") {
-        return NextResponse.redirect(new URL("/admin", request.url));
-      }
-      return NextResponse.redirect(new URL("/employee-access", request.url));
-    } catch (_e: unknown) {
-      void _e;
-      return NextResponse.next();
-    }
+    return NextResponse.next();
   }
 
   if (isPublicPath(pathname)) {

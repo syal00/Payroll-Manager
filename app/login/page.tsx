@@ -85,14 +85,7 @@ export default function LoginPage() {
 
       <div className="login-form-panel">
         <div className="login-mobile-hero md:hidden" aria-hidden>
-          <img
-            src="/bg-images/bg-image-admin-login.png"
-            alt=""
-            className="login-mobile-hero-img"
-            width={1200}
-            height={600}
-            decoding="async"
-          />
+          <div className="login-mobile-hero-gradient" />
           <div className="login-mobile-hero-overlay" />
         </div>
         <div className="login-mobile-brand-bar md:hidden">

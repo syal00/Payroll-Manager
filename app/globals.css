@@ -556,10 +556,7 @@ p {
   left: 0;
   right: 0;
   height: 200px;
-  background-image: url("/bg-images/bg-image-admin-login.png");
-  background-size: cover;
-  background-position: bottom center;
-  opacity: 0.06;
+  background: linear-gradient(185deg, transparent 0%, rgba(232, 101, 10, 0.06) 45%, rgba(26, 8, 0, 0.35) 100%);
   pointer-events: none;
   z-index: 0;
 }
@@ -1583,14 +1580,14 @@ p {
   min-width: 0;
 }
 
-.login-brand-illus-img {
+.login-brand-illus-bg {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: right center;
   z-index: 0;
+  background:
+    radial-gradient(120% 80% at 85% 20%, rgba(232, 101, 10, 0.35), transparent 55%),
+    radial-gradient(90% 60% at 10% 90%, rgba(80, 40, 20, 0.45), transparent 50%),
+    linear-gradient(145deg, #2a1208 0%, #1a0800 38%, #0d1420 100%);
 }
 
 .login-brand-overlay-main {
@@ -2867,14 +2864,16 @@ p {
   pointer-events: none;
 }
 
-.landing-hero-bg-img {
+.landing-hero-bg-gradient {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: left center;
   z-index: 0;
+  background:
+    radial-gradient(ellipse 85% 75% at 72% 28%, rgba(232, 101, 10, 0.28), transparent 58%),
+    radial-gradient(60% 50% at 15% 85%, rgba(60, 28, 14, 0.5), transparent 55%),
+    linear-gradient(155deg, #2a140a 0%, #1a0800 42%, #0a1528 100%);
 }
 
 .landing-hero-visual::before {
@@ -3307,12 +3306,14 @@ p {
     flex-shrink: 0;
   }
 
-  .login-mobile-hero-img {
+  .login-mobile-hero-gradient {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    object-position: center;
-    display: block;
+    background:
+      radial-gradient(100% 80% at 50% 0%, rgba(232, 101, 10, 0.22), transparent 55%),
+      linear-gradient(180deg, #2a1208 0%, #0d1420 100%);
   }
 
   .login-mobile-hero-overlay {
@@ -3547,7 +3548,7 @@ p {
     overflow: hidden;
   }
 
-  .landing-hero-bg-img {
+  .landing-hero-bg-gradient {
     position: absolute;
     inset: 0;
     height: 100%;
