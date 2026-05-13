@@ -49,6 +49,23 @@ export default function EmployeeAccessHubPage() {
       </div>
 
       <div className="login-form-panel">
+        <div className="login-mobile-hero md:hidden" aria-hidden>
+          <img
+            src="/bg-images/bg-image-admin-login.png"
+            alt=""
+            className="login-mobile-hero-img"
+            width={1200}
+            height={600}
+            decoding="async"
+          />
+          <div className="login-mobile-hero-overlay" />
+        </div>
+        <div className="login-mobile-brand-bar md:hidden">
+          <div className="login-brand-logo-icon h-9 w-9 shrink-0" aria-hidden>
+            <Zap className="h-5 w-5 text-white" strokeWidth={2.5} fill="white" />
+          </div>
+          <span className="login-mobile-brand-name">{brand}</span>
+        </div>
         <div className="login-form-box">
           <p className="login-form-eyebrow small-label">Employee Portal</p>
           <h2 className="login-form-title dashboard-title">Welcome</h2>

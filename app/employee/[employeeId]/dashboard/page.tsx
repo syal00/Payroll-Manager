@@ -92,7 +92,7 @@ export default function PublicEmployeeDashboardPage({
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="employee-dash-top gap-4">
         <Card className="card-violet shadow-[var(--shadow-violet)] transition hover:opacity-[0.98]">
           <div className="flex items-start gap-3">
             <div className="stat-icon !border-[rgba(255,255,255,0.3)] !bg-[rgba(255,255,255,0.2)] !text-white">
@@ -127,7 +127,7 @@ export default function PublicEmployeeDashboardPage({
             <div className="min-w-0 flex-1">
               <h2 className="card-heading">Your submissions</h2>
               <p className="card-subtitle">Quick snapshot by status</p>
-              <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+              <div className="employee-stat-inner mt-4 text-sm">
                 <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-page-bg)] px-3 py-3">
                   <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Pending review</p>
                   <p className="stat-card-value !text-[21px] !font-extrabold">{data.counts.pending}</p>
@@ -198,7 +198,7 @@ export default function PublicEmployeeDashboardPage({
         </div>
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="employee-dash-bottom-grid">
         <Card>
           <div className="card-header flex-wrap">
             <h2 className="card-heading">Notifications</h2>

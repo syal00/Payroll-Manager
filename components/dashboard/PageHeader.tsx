@@ -18,7 +18,7 @@ export function PageHeader({
         <h1 className="page-title dashboard-title mt-1">{title}</h1>
         {description ? <p className="page-description mt-2 max-w-2xl text-[var(--color-text-secondary)]">{description}</p> : null}
       </div>
-      {children ? <div className="flex flex-shrink-0 flex-wrap items-center gap-2">{children}</div> : null}
+      {children ? <div className="page-header-actions flex flex-shrink-0 flex-wrap items-center gap-2">{children}</div> : null}
     </header>
   );
 }

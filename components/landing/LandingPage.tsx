@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, Check, Clock3, ShieldCheck } from "lucide-react";
 import { DemoRequestModal } from "@/components/marketing/DemoRequestModal";
+import { MobileMenuHamburger, MobileSlideMenu } from "@/components/MobileMenu";
 
 export default function LandingPage() {
   const router = useRouter();
   const [demoOpen, setDemoOpen] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
   const brand = process.env.NEXT_PUBLIC_COMPANY_NAME ?? "Syal Operations Group";
   const brandUpper = brand.toUpperCase();
 
@@ -26,7 +28,7 @@ export default function LandingPage() {
           </div>
           <span className="landing-logo-text nav-brand">{brandUpper}</span>
         </div>
-        <div className="landing-nav-right">
+        <div className="landing-nav-right landing-nav-desktop-cta">
           <Link href="/login" className="landing-nav-signin btn-text">
             Sign in
           </Link>
@@ -34,7 +36,40 @@ export default function LandingPage() {
             Request a Demo
           </button>
         </div>
+        <MobileMenuHamburger
+          className="landing-nav-mobile-toggle"
+          open={navOpen}
+          onClick={() => setNavOpen((o) => !o)}
+        />
       </nav>
+
+      <MobileSlideMenu open={navOpen} onClose={() => setNavOpen(false)} title={brandUpper}>
+        <div className="landing-mobile-nav-stack">
+          <Link href="/login" className="landing-mobile-nav-link" onClick={() => setNavOpen(false)}>
+            Sign in
+          </Link>
+          <button
+            type="button"
+            className="landing-mobile-nav-link landing-mobile-nav-link-cta"
+            onClick={() => {
+              setNavOpen(false);
+              setDemoOpen(true);
+            }}
+          >
+            Request a Demo
+          </button>
+          <button
+            type="button"
+            className="landing-mobile-nav-link"
+            onClick={() => {
+              setNavOpen(false);
+              gotoEmployee();
+            }}
+          >
+            Employee portal
+          </button>
+        </div>
+      </MobileSlideMenu>
 
       <main className="landing-hero">
         <div className="landing-hero-text">

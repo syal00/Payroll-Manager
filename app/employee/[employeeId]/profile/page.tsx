@@ -61,7 +61,7 @@ export default function PublicProfilePage({
 
       <Card>
         <h2 className="card-heading">Employment</h2>
-        <dl className="mt-5 space-y-4 text-sm">
+        <dl className="profile-info-grid mt-5 text-sm">
           <div className="flex justify-between gap-4 border-b border-violet-50 pb-3">
             <dt className="text-slate-500">Name</dt>
             <dd className="text-right font-semibold text-[var(--color-text-primary)]">{emp.name}</dd>

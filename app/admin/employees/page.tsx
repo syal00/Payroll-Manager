@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { Eye, Archive } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -266,7 +267,7 @@ export default function AdminEmployeesPage() {
 
       <Card padding={false} className="overflow-hidden rounded-2xl border-[var(--color-border)] !bg-[var(--color-bg-card)]/95 backdrop-blur-sm">
         <div className="overflow-x-auto">
-          <table className="table-shell min-w-[900px]">
+          <table className="table-shell table-employees min-w-[900px]">
             <thead>
               <tr className="table-head">
                 <th className="px-4 py-3.5">Team member</th>
@@ -339,19 +340,23 @@ export default function AdminEmployeesPage() {
                         <div className="flex flex-wrap justify-end gap-2">
                           <Link
                             href={`/admin/employees/${r.id}`}
-                            className="inline-flex h-9 items-center rounded-xl border border-[var(--color-accent-tint)] bg-[var(--color-accent-soft)] px-3 text-xs font-semibold text-[var(--color-accent-light)] shadow-sm transition hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-tint)]"
+                            title="View employee"
+                            className="inline-flex h-9 min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-[var(--color-accent-tint)] bg-[var(--color-accent-soft)] px-3 text-xs font-semibold text-[var(--color-accent-light)] shadow-sm transition hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-tint)] md:px-3"
                           >
-                            View
+                            <Eye className="h-4 w-4 md:hidden" aria-hidden />
+                            <span className="hidden md:inline">View</span>
                           </Link>
                           {!isDeleted ? (
                             <Button
                               type="button"
                               variant="danger"
-                              className="h-9 px-3 text-xs"
+                              className="h-9 min-h-[44px] min-w-[44px] px-3 text-xs md:min-w-0"
                               disabled={pendingId === r.id}
                               onClick={() => setConfirmDelete(r)}
+                              title="Archive employee"
                             >
-                              Archive
+                              <Archive className="h-4 w-4 md:hidden" aria-hidden />
+                              <span className="hidden md:inline">Archive</span>
                             </Button>
                           ) : (
                             <Button

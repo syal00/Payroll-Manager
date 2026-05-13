@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { FileText } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -82,7 +83,7 @@ export default function AdminPayslipsPage() {
 
       <Card padding={false} className="overflow-hidden rounded-2xl border-[var(--color-border)] !bg-[var(--color-bg-card)]/95 backdrop-blur-sm">
         <div className="overflow-x-auto">
-          <table className="table-shell min-w-[640px]">
+          <table className="table-shell table-payslips min-w-[640px]">
             <thead>
               <tr className="table-head">
                 <th className="px-4 py-3.5">Number</th>
@@ -116,9 +117,11 @@ export default function AdminPayslipsPage() {
                     <td className="px-4 py-3.5 text-right">
                       <Link
                         href={`/admin/payslips/${p.id}`}
-                        className="inline-flex h-8 items-center rounded-lg bg-[var(--color-accent-tint)] px-3 text-sm font-semibold text-[var(--color-accent-light)] transition hover:bg-[var(--color-accent)] hover:text-white"
+                        title="Open payslip"
+                        className="inline-flex h-8 min-h-[44px] min-w-[44px] items-center justify-center rounded-lg bg-[var(--color-accent-tint)] px-3 text-sm font-semibold text-[var(--color-accent-light)] transition hover:bg-[var(--color-accent)] hover:text-white md:min-h-0 md:min-w-0"
                       >
-                        Open
+                        <FileText className="h-4 w-4 md:hidden" aria-hidden />
+                        <span className="hidden md:inline">Open</span>
                       </Link>
                     </td>
                   </tr>

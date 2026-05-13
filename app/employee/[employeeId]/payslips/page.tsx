@@ -37,9 +37,9 @@ export default function PublicPayslipsPage({
       </div>
 
       <Card padding={false} className="overflow-hidden">
-        <ul className="divide-y divide-violet-100/80">
+        <ul className="employee-payslip-grid">
           {items.length === 0 ? (
-            <li className="px-6 py-12 text-center text-sm text-slate-500">
+            <li className="col-span-full px-6 py-12 text-center text-sm text-slate-500">
               <p className="font-medium text-slate-700">No payslips yet</p>
               <p className="mt-1 text-xs">They&apos;ll appear here after payroll generates them.</p>
             </li>
@@ -47,7 +47,7 @@ export default function PublicPayslipsPage({
             items.map((p) => (
               <li
                 key={p.id}
-                className="flex flex-wrap items-center justify-between gap-4 px-6 py-4 transition hover:bg-[var(--color-accent-soft)]/40"
+                className="flex flex-wrap items-center justify-between gap-4 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-4 shadow-xs transition hover:bg-[var(--color-accent-soft)]/40"
               >
                 <div>
                   <p className="font-mono text-sm font-semibold text-[var(--color-text-primary)]">{p.payslipNumber}</p>

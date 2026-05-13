@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/Button";
 import type { AdminShellHeader } from "@/lib/admin-header";
 import { resolveAdminPageTitle } from "@/lib/admin-nav";
 import { UserMenu } from "@/components/dashboard/UserMenu";
+import { AdminMobileFab } from "@/components/dashboard/AdminMobileFab";
 
 const links = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -89,11 +90,12 @@ export function AdminShell({
             <Link
               key={href}
               href={href}
+              title={label}
               onClick={() => setOpen(false)}
               className={`sidebar-item ${isActive ? "active" : ""}`}
             >
               <Icon className="nav-icon" aria-hidden strokeWidth={2} />
-              {label}
+              <span className="sidebar-item-label">{label}</span>
             </Link>
           );
         })}
@@ -103,7 +105,7 @@ export function AdminShell({
 
   return (
     <div className="root-layout">
-      <aside className="sidebar relative hidden lg:flex">
+      <aside className="sidebar relative hidden md:flex">
         <div className="relative z-10 w-full shrink-0">
           <div className="sidebar-logo-area">
             <div className="sidebar-logo-icon shrink-0" aria-hidden>
@@ -111,13 +113,17 @@ export function AdminShell({
             </div>
             <div className="min-w-0 flex-1">
               <div className="sidebar-logo-text leading-tight">{brand}</div>
-              <div className="mt-1 text-[11px] font-medium leading-snug text-[var(--color-text-muted)]">{topBarSubtitle}</div>
+              <div className="sidebar-brand-sub mt-1 text-[11px] font-medium leading-snug text-[var(--color-text-muted)]">
+                {topBarSubtitle}
+              </div>
             </div>
           </div>
         </div>
         <div className="relative z-10 flex min-h-0 w-full flex-1 flex-col px-0">{navContent}</div>
         <div className="relative z-10 mt-auto flex w-full flex-col gap-1 border-t border-white/[0.06] px-3 py-3">
-          <p className="truncate px-1 text-[12px] font-semibold text-[var(--color-sidebar-text-active)]">{userName}</p>
+          <p className="sidebar-user-name truncate px-1 text-[12px] font-semibold text-[var(--color-sidebar-text-active)]">
+            {userName}
+          </p>
           <button
             type="button"
             className="sidebar-item border-0 bg-transparent text-left !text-[var(--color-sidebar-text)] hover:!text-white"
@@ -126,16 +132,18 @@ export function AdminShell({
             }}
           >
             <LogOut className="nav-icon" aria-hidden strokeWidth={2} />
-            Sign out
+            <span className="sidebar-item-label">Sign out</span>
           </button>
         </div>
       </aside>
 
       <div className="main-wrapper">
-        <header className="topbar lg:hidden">
+        <header className="topbar flex md:hidden">
           <div className="topbar-left min-w-0">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">{topBarOrg}</span>
-            <span className="topbar-greeting truncate text-base">{pageTitle}</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)] max-md:hidden">
+              {topBarOrg}
+            </span>
+            <span className="topbar-greeting topbar-greeting-mobile truncate text-base">{pageTitle}</span>
           </div>
           <button
             type="button"
@@ -148,7 +156,13 @@ export function AdminShell({
           </button>
         </header>
 
-        <header className="topbar !hidden lg:!flex">
+        <header className="topbar topbar-slim hidden md:flex lg:hidden">
+          <div className="topbar-left min-w-0 flex-1">
+            <span className="topbar-greeting truncate text-sm font-semibold">{pageTitle}</span>
+          </div>
+        </header>
+
+        <header className="topbar hidden lg:flex">
           <div className="topbar-left min-w-0">
             <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--color-accent)]">{topBarOrg}</span>
             <span className="topbar-greeting truncate text-[17px]">{pageTitle}</span>
@@ -171,8 +185,9 @@ export function AdminShell({
         </header>
 
         {open ? (
-          <div className="fixed inset-0 z-[110] bg-[var(--color-sidebar-bg)] lg:hidden" role="dialog" aria-modal="true">
-            <div className="flex h-full flex-col">
+          <div className="mobile-shell-drawer md:hidden" role="dialog" aria-modal="true">
+            <button type="button" className="mobile-shell-drawer-backdrop" aria-label="Close menu" onClick={() => setOpen(false)} />
+            <aside className="mobile-shell-drawer-panel sidebar flex flex-col">
               <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-4">
                 <div className="flex min-w-0 items-center gap-2">
                   <div className="sidebar-logo-icon !h-9 !w-9 shrink-0">
@@ -189,7 +204,7 @@ export function AdminShell({
                   <X className="h-5 w-5" strokeWidth={2} />
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto px-3 py-2">{navContent}</div>
+              <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-0">{navContent}</div>
               <div className="border-t border-[var(--color-border)] px-4 py-4">
                 <p className="text-sm font-semibold text-[var(--color-text-primary)]">{userName}</p>
                 <Button
@@ -201,11 +216,13 @@ export function AdminShell({
                   Sign out
                 </Button>
               </div>
-            </div>
+            </aside>
           </div>
         ) : null}
 
-        <main className="page-content">{children}</main>
+        <AdminMobileFab />
+
+        <main className="page-content page-body">{children}</main>
       </div>
     </div>
   );

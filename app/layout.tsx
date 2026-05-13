@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Manrope } from "next/font/google";
 import "./globals.css";
 
@@ -14,10 +14,26 @@ const manrope = Manrope({
   display: "swap",
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#1a0800",
+};
+
 export const metadata: Metadata = {
-  title: "Syal Operations Group — Intelligent Payroll on Autopilot",
-  description:
-    "Streamline your entire payroll lifecycle from hours-to-paycheck, eliminating spreadsheets and human error.",
+  title: "Syal Operations Group — Intelligent Payroll",
+  description: "Streamline your payroll lifecycle",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Syal Payroll",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "black-translucent",
+  },
 };
 
 export default function RootLayout({
