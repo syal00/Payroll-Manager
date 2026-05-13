@@ -3,14 +3,14 @@ export function LoginBrandIllustration() {
     <>
       <img
         src="/bg-images/bg-image-admin-login.png"
-        alt="Payroll illustration"
-        className="login-brand-illus-img hidden lg:block"
+        alt=""
+        className="login-brand-illus-img"
         width={1920}
         height={1080}
         decoding="async"
       />
-      <div className="login-brand-overlay-diag" aria-hidden />
-      <div className="login-brand-overlay-left" aria-hidden />
+      <div className="login-brand-overlay-main" aria-hidden />
+      <div className="login-brand-edge-fade" aria-hidden />
     </>
   );
 }

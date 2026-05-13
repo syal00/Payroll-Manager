@@ -1478,17 +1478,19 @@ p {
 .login-root {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 1.22fr 1fr; /* ≈ 55 / 45 */
+  grid-template-columns: 55fr 45fr;
+  overflow: hidden;
   background: var(--color-bg-primary);
 }
 
 .login-brand {
-  background: linear-gradient(135deg, #1a0608 0%, #0e0306 100%);
+  background: #1a0800;
   position: relative;
   display: flex;
   flex-direction: column;
   padding: 44px 48px;
   overflow: hidden;
+  min-width: 0;
 }
 
 .login-brand-illus-img {
@@ -1497,31 +1499,31 @@ p {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center top;
+  object-position: right center;
   z-index: 0;
 }
 
-.login-brand-overlay-diag {
+.login-brand-overlay-main {
   position: absolute;
   inset: 0;
   background: linear-gradient(
     135deg,
-    rgba(26, 8, 0, 0.6) 0%,
-    rgba(20, 5, 0, 0.45) 50%,
-    rgba(15, 3, 0, 0.3) 100%
+    rgba(15, 5, 0, 0.82) 0%,
+    rgba(20, 8, 0, 0.65) 40%,
+    rgba(10, 4, 0, 0.5) 100%
   );
   z-index: 1;
   pointer-events: none;
 }
 
-.login-brand-overlay-left {
+.login-brand-edge-fade {
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 0;
-  width: 30%;
-  background: linear-gradient(90deg, rgba(26, 8, 0, 0.6) 0%, transparent 100%);
-  z-index: 2;
+  right: 0;
+  width: 120px;
+  background: linear-gradient(90deg, transparent 0%, #0d1420 100%);
+  z-index: 3;
   pointer-events: none;
 }
 
@@ -1633,11 +1635,15 @@ p {
 }
 
 .login-form-panel {
-  background: var(--color-bg-secondary);
+  position: relative;
+  z-index: 20;
+  background: #0d1420;
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 48px 40px;
+  min-width: 0;
 }
 
 .login-form-box {
@@ -1815,6 +1821,7 @@ p {
     display: none;
   }
   .login-form-panel {
+    border-left: none;
     padding: 32px 24px;
     align-items: flex-start;
     padding-top: 60px;
@@ -2607,78 +2614,79 @@ p {
   flex: 1;
   position: relative;
   z-index: 1;
-  display: block;
-  padding: 60px 60px 40px;
+  width: 100%;
   max-width: 1320px;
   margin: 0 auto;
-  width: 100%;
   min-height: min(70vh, 640px);
+  padding: 60px 60px 40px;
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: stretch;
+  gap: 0;
+}
+
+.landing-hero-text {
+  position: relative;
+  z-index: 10;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  min-width: 0;
 }
 
 .landing-hero-visual {
   display: none;
+  position: relative;
+  overflow: hidden;
+  min-height: 280px;
   pointer-events: none;
-}
-
-@media (min-width: 1024px) {
-  .landing-hero-visual {
-    display: block;
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 55%;
-    height: 100%;
-    min-height: 420px;
-    z-index: 0;
-  }
 }
 
 .landing-hero-bg-img {
   position: absolute;
-  top: 0;
-  right: 0;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center;
-  opacity: 1;
+  object-position: left center;
+  z-index: 0;
 }
 
-.landing-hero-fade {
+.landing-hero-visual::before {
+  content: "";
   position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.landing-hero-fade-left {
-  background: linear-gradient(
-    90deg,
-    #1a0800 0%,
-    #1a0800 5%,
-    rgba(26, 8, 0, 0.6) 20%,
-    rgba(26, 8, 0, 0.2) 50%,
-    transparent 100%
-  );
-}
-
-.landing-hero-fade-bottom {
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 40%;
+  background: linear-gradient(90deg, #1a0800 0%, rgba(26, 8, 0, 0.8) 40%, transparent 100%);
   z-index: 2;
-  background: linear-gradient(180deg, transparent 60%, rgba(26, 8, 0, 0.6) 85%, #1a0800 100%);
+  pointer-events: none;
 }
 
-.landing-hero-content {
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
-  position: relative;
-  z-index: 10;
-  max-width: min(48vw, 560px);
+.landing-hero-visual::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40%;
+  background: linear-gradient(180deg, transparent 0%, #1a0800 100%);
+  z-index: 2;
+  pointer-events: none;
 }
 
 @media (min-width: 1024px) {
-  .landing-hero-content {
-    padding-right: 8px;
+  .landing-hero {
+    grid-template-columns: 1fr 1fr;
+    column-gap: 32px;
+    align-items: stretch;
+  }
+
+  .landing-hero-visual {
+    display: block;
+    min-height: 0;
   }
 }
 
@@ -2943,9 +2951,6 @@ p {
   .landing-hero {
     padding: 40px 32px 24px;
     min-height: 0;
-  }
-  .landing-hero-content {
-    max-width: 100%;
   }
   .landing-feature-cards {
     padding: 0 32px;

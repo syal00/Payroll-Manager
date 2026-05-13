@@ -36,19 +36,7 @@ export default function LandingPage() {
       </nav>
 
       <main className="landing-hero">
-        <div className="landing-hero-visual" aria-hidden>
-          <img
-            src="/bg-images/bg-image-landing.png"
-            alt="Payroll illustration"
-            className="landing-hero-bg-img"
-            width={1920}
-            height={1080}
-            decoding="async"
-          />
-          <div className="landing-hero-fade landing-hero-fade-left" />
-          <div className="landing-hero-fade landing-hero-fade-bottom" />
-        </div>
-        <div className="landing-hero-content">
+        <div className="landing-hero-text">
           <h1 className="landing-headline hero-headline">
             Intelligent Payroll,
             <br />
@@ -83,6 +71,16 @@ export default function LandingPage() {
               Employee portal
             </button>
           </div>
+        </div>
+        <div className="landing-hero-visual" aria-hidden>
+          <img
+            src="/bg-images/bg-image-landing.png"
+            alt=""
+            className="landing-hero-bg-img"
+            width={1920}
+            height={1080}
+            decoding="async"
+          />
         </div>
       </main>
 
