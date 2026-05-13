@@ -2,6 +2,16 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/api-auth";
 import { writeAuditLog } from "@/lib/audit";
+import { z } from "zod";
+
+const patchSchema = z
+  .object({
+    hourlyRate: z.number().positive().max(999_999).optional(),
+    overtimeRate: z.number().positive().max(999_999).optional(),
+  })
+  .refine((d) => d.hourlyRate !== undefined || d.overtimeRate !== undefined, {
+    message: "Provide hourlyRate and/or overtimeRate",
+  });
 
 export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   try {
@@ -39,6 +49,73 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
       },
     });
   } catch (e) {
+    const err = e as Error & { status?: number };
+    return NextResponse.json({ error: err.message }, { status: err.status ?? 500 });
+  }
+}
+
+export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await requireAdmin();
+    const { id } = await ctx.params;
+    const body = patchSchema.parse(await req.json());
+
+    const existing = await prisma.employee.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        deletedAt: true,
+        name: true,
+        email: true,
+        employeeCode: true,
+        hourlyRate: true,
+        overtimeRate: true,
+      },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+    }
+    if (existing.deletedAt) {
+      return NextResponse.json(
+        { error: "Cannot edit pay rates for a deactivated employee. Restore the profile first." },
+        { status: 400 }
+      );
+    }
+
+    const employee = await prisma.employee.update({
+      where: { id },
+      data: {
+        ...(body.hourlyRate !== undefined ? { hourlyRate: body.hourlyRate } : {}),
+        ...(body.overtimeRate !== undefined ? { overtimeRate: body.overtimeRate } : {}),
+      },
+    });
+
+    await writeAuditLog({
+      actorId: session.id,
+      action: "EMPLOYEE_PAY_RATES_UPDATED",
+      entityType: "Employee",
+      entityId: id,
+      details: {
+        employeeCode: employee.employeeCode,
+        previousHourly: existing.hourlyRate,
+        previousOvertime: existing.overtimeRate,
+        hourlyRate: employee.hourlyRate,
+        overtimeRate: employee.overtimeRate,
+      },
+    });
+
+    return NextResponse.json({
+      ok: true,
+      employee: {
+        id: employee.id,
+        hourlyRate: employee.hourlyRate,
+        overtimeRate: employee.overtimeRate,
+      },
+    });
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return NextResponse.json({ error: "Validation failed", issues: e.issues }, { status: 400 });
+    }
     const err = e as Error & { status?: number };
     return NextResponse.json({ error: err.message }, { status: err.status ?? 500 });
   }

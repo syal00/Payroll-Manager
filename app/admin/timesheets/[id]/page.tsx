@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TimesheetStatusBadge } from "@/components/status-badges";
-import { shortDate, money } from "@/lib/format";
+import { shortDate, money, parsePositiveRateInput } from "@/lib/format";
 import { TimesheetStatus } from "@/lib/enums";
 import { sumEntries } from "@/lib/timesheet-math";
 import { dispatchAdminStatsRefresh } from "@/lib/admin-stats-refresh";
@@ -156,16 +156,26 @@ export default function AdminTimesheetDetailPage({
     setErr(null);
     setMsg(null);
     setBusy(true);
-    const hr = parseFloat(editHourly);
-    const ot = parseFloat(editOT);
+    const hr = parsePositiveRateInput(editHourly);
+    const ot = parsePositiveRateInput(editOT);
+    if (editHourly.trim() !== "" && hr === undefined) {
+      setBusy(false);
+      setErr("Enter a valid hourly rate (e.g. 25 or 25,50).");
+      return;
+    }
+    if (editOT.trim() !== "" && ot === undefined) {
+      setBusy(false);
+      setErr("Enter a valid overtime rate (e.g. 37.5 or 37,5).");
+      return;
+    }
     const res = await fetch(`/api/admin/timesheets/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         notes: editNotes,
         editSummary: editSummary.trim() || null,
-        hourlyRate: Number.isFinite(hr) && hr > 0 ? hr : undefined,
-        overtimeRate: Number.isFinite(ot) && ot > 0 ? ot : undefined,
+        hourlyRate: hr,
+        overtimeRate: ot,
         entries: editEntries.map((e) => ({
           id: e.id,
           regularHours: e.regularHours,
@@ -316,14 +326,14 @@ export default function AdminTimesheetDetailPage({
               </label>
               <input
                 id="ts-hourly"
-                type="number"
-                step="0.01"
-                min={0}
+                type="text"
+                inputMode="decimal"
                 className="input-field mt-1.5"
                 value={editHourly}
                 onChange={(e) => setEditHourly(e.target.value)}
+                autoComplete="off"
               />
-              <p className="mt-1 text-xs text-slate-500">Used when calculating gross pay on the payslip.</p>
+              <p className="mt-1 text-xs text-slate-500">Used for payslip gross pay. Decimals: 25.50 or 25,50.</p>
             </div>
             <div>
               <label className="label-field" htmlFor="ts-ot">
@@ -331,12 +341,12 @@ export default function AdminTimesheetDetailPage({
               </label>
               <input
                 id="ts-ot"
-                type="number"
-                step="0.01"
-                min={0}
+                type="text"
+                inputMode="decimal"
                 className="input-field mt-1.5"
                 value={editOT}
                 onChange={(e) => setEditOT(e.target.value)}
+                autoComplete="off"
               />
             </div>
           </div>

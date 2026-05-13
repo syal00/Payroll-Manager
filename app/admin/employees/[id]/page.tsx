@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { money } from "@/lib/format";
+import { EmployeePayRatesEditor } from "@/components/admin/EmployeePayRatesEditor";
 
 export default async function AdminEmployeeDetailPage({
   params,
@@ -80,6 +81,12 @@ export default async function AdminEmployeeDetailPage({
             </div>
           )}
         </dl>
+        <EmployeePayRatesEditor
+          employeeId={employee.id}
+          initialHourly={employee.hourlyRate}
+          initialOvertime={employee.overtimeRate}
+          disabled={isDeleted}
+        />
       </Card>
 
       <Card>
