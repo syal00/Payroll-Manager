@@ -23,13 +23,13 @@ export default function LandingPage() {
           <div className="landing-logo-icon" aria-hidden>
             <LightningBolt />
           </div>
-          <span className="landing-logo-text">{brandUpper}</span>
+          <span className="landing-logo-text nav-brand">{brandUpper}</span>
         </div>
         <div className="landing-nav-right">
-          <button type="button" className="landing-nav-signin" onClick={gotoLogin}>
+          <button type="button" className="landing-nav-signin btn-text" onClick={gotoLogin}>
             Sign in
           </button>
-          <button type="button" className="landing-nav-cta" onClick={gotoLogin}>
+          <button type="button" className="landing-nav-cta btn-text" onClick={gotoLogin}>
             Request a Demo
           </button>
         </div>
@@ -49,7 +49,7 @@ export default function LandingPage() {
           <div className="landing-hero-fade landing-hero-fade-bottom" />
         </div>
         <div className="landing-hero-content">
-          <h1 className="landing-headline">
+          <h1 className="landing-headline hero-headline">
             Intelligent Payroll,
             <br />
             Perfectly on <span className="headline-accent">Autopilot</span>
@@ -75,11 +75,11 @@ export default function LandingPage() {
           </ul>
 
           <div className="landing-cta-row">
-            <button type="button" className="landing-primary-cta" onClick={gotoLogin}>
+            <button type="button" className="landing-primary-cta btn-text" onClick={gotoLogin}>
               Book a Demo
               <ArrowRight className="h-4 w-4" strokeWidth={2.5} aria-hidden />
             </button>
-            <button type="button" className="landing-secondary-cta" onClick={gotoEmployee}>
+            <button type="button" className="landing-secondary-cta btn-text" onClick={gotoEmployee}>
               Employee portal
             </button>
           </div>
@@ -91,7 +91,7 @@ export default function LandingPage() {
           <div className="landing-fcard-icon">
             <Clock3 className="h-5 w-5" strokeWidth={2} aria-hidden />
           </div>
-          <div className="landing-fcard-title">Real-Time Visibility</div>
+          <div className="landing-fcard-title section-title">Real-Time Visibility</div>
           <p className="landing-fcard-desc">
             Real-time timesheet visibility across your team
           </p>
@@ -100,7 +100,7 @@ export default function LandingPage() {
           <div className="landing-fcard-icon">
             <ShieldCheck className="h-5 w-5" strokeWidth={2} aria-hidden />
           </div>
-          <div className="landing-fcard-title">Audit Trail</div>
+          <div className="landing-fcard-title section-title">Audit Trail</div>
           <p className="landing-fcard-desc">
             Role-based access with a clean audit trail
           </p>
@@ -109,7 +109,7 @@ export default function LandingPage() {
           <div className="landing-fcard-icon">
             <Check className="h-5 w-5" strokeWidth={2.5} aria-hidden />
           </div>
-          <div className="landing-fcard-title">Precision Payslips</div>
+          <div className="landing-fcard-title section-title">Precision Payslips</div>
           <p className="landing-fcard-desc">
             Payslips generated from approved hours — not guesswork
           </p>
@@ -118,17 +118,17 @@ export default function LandingPage() {
 
       <section className="landing-stats" aria-label="Trust metrics">
         <div className="stat-pill">
-          <span className="stat-num stat-num-accent">99.9%</span>
+          <span className="stat-num stat-value stat-num-accent">99.9%</span>
           <span className="stat-label">Uptime</span>
         </div>
         <div className="stat-divider" aria-hidden />
         <div className="stat-pill">
-          <span className="stat-num">2 min</span>
+          <span className="stat-num stat-value">2 min</span>
           <span className="stat-label">Avg payroll run</span>
         </div>
         <div className="stat-divider" aria-hidden />
         <div className="stat-pill">
-          <span className="stat-num">0 errors</span>
+          <span className="stat-num stat-value">0 errors</span>
           <span className="stat-label">Calculation mistakes</span>
         </div>
       </section>

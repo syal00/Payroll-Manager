@@ -50,8 +50,8 @@ export default function EmployeeAccessHubPage() {
 
       <div className="login-form-panel">
         <div className="login-form-box">
-          <p className="login-form-eyebrow">Employee Portal</p>
-          <h2 className="login-form-title">Welcome</h2>
+          <p className="login-form-eyebrow small-label">Employee Portal</p>
+          <h2 className="login-form-title dashboard-title">Welcome</h2>
           <p className="login-form-sub">
             Choose how you&rsquo;d like to access your dashboard. New employees get a fresh ID;
             returning employees pick up right where they left off.

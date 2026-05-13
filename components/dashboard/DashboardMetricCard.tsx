@@ -51,8 +51,8 @@ export function DashboardMetricCard({ label, value, hint, href, icon: Icon, tren
         <div className="relative flex flex-1 flex-col justify-between gap-3">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">{label}</p>
-              <p className="font-display mt-2 text-3xl font-extrabold tracking-tight text-[var(--color-text-primary)] tabular-nums">
+              <p className="card-title text-[var(--color-text-muted)]">{label}</p>
+              <p className="stat-value mt-2 tabular-nums text-[var(--color-text-primary)]">
                 {value}
               </p>
               {hint ? <p className="mt-1 text-xs font-medium text-[var(--color-text-secondary)]">{hint}</p> : null}

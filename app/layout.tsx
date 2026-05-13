@@ -1,18 +1,16 @@
 import type { Metadata } from "next";
-import { DM_Sans, Syne } from "next/font/google";
+import { Inter, Manrope } from "next/font/google";
 import "./globals.css";
 
-const dmSans = DM_Sans({
-  variable: "--font-dm-sans",
+const inter = Inter({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
+  variable: "--font-inter",
   display: "swap",
 });
 
-const syne = Syne({
-  variable: "--font-syne",
+const manrope = Manrope({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-manrope",
   display: "swap",
 });
 
@@ -30,10 +28,13 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${dmSans.variable} ${syne.variable} h-full`}
+      className={`${inter.variable} ${manrope.variable} h-full`}
       suppressHydrationWarning
     >
-      <body className="min-h-full antialiased font-sans" suppressHydrationWarning>
+      <body
+        className={`${inter.variable} ${manrope.variable} min-h-full antialiased font-sans`}
+        suppressHydrationWarning
+      >
         {children}
       </body>
     </html>

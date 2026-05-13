@@ -82,8 +82,8 @@ export default function LoginPage() {
 
       <div className="login-form-panel">
         <div className="login-form-box">
-          <p className="login-form-eyebrow">Administrator</p>
-          <h2 className="login-form-title">Welcome back</h2>
+          <p className="login-form-eyebrow small-label">Administrator</p>
+          <h2 className="login-form-title dashboard-title">Welcome back</h2>
           <p className="login-form-sub">
             Sign in with your admin email and password. Employees use the portal separately—no shared password.
           </p>
@@ -151,7 +151,7 @@ export default function LoginPage() {
               <span className="text-sm text-[var(--color-text-muted)]">Forgot access? Contact your payroll owner.</span>
             </div>
 
-            <button type="submit" className="login-submit" disabled={loading}>
+            <button type="submit" className="login-submit btn-text" disabled={loading}>
               {loading ? (
                 <span className="inline-flex items-center justify-center gap-2">
                   <span
@@ -172,7 +172,7 @@ export default function LoginPage() {
             <div className="login-divider-line" />
           </div>
 
-          <Link href="/employee-access" className="login-sso-btn">
+          <Link href="/employee-access" className="login-sso-btn btn-text">
             Continue to employee portal
           </Link>
 

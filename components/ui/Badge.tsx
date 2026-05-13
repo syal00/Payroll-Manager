@@ -1,10 +1,10 @@
 const variants: Record<string, string> = {
-  default: "design-badge design-badge-neutral",
-  success: "design-badge design-badge-success",
-  warning: "design-badge design-badge-warning",
-  danger: "design-badge design-badge-danger",
-  info: "design-badge design-badge-info",
-  navy: "design-badge design-badge-violet",
+  default: "design-badge design-badge-neutral badge-text",
+  success: "design-badge design-badge-success badge-text",
+  warning: "design-badge design-badge-warning badge-text",
+  danger: "design-badge design-badge-danger badge-text",
+  info: "design-badge design-badge-info badge-text",
+  navy: "design-badge design-badge-violet badge-text",
 };
 
 export function Badge({
