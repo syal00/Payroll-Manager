@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/api-auth";
+import { requireStaff } from "@/lib/api-auth";
+import { assertStaffCanAccessEmployee } from "@/lib/manager-scope";
 import { writeAuditLog } from "@/lib/audit";
 import { format } from "date-fns";
 
@@ -13,7 +14,7 @@ export async function POST(
   ctx: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await requireAdmin();
+    const session = await requireStaff();
     const { id } = await ctx.params;
     const payslip = await prisma.payslip.findUnique({
       where: { id },
@@ -23,6 +24,9 @@ export async function POST(
       },
     });
     if (!payslip) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (!(await assertStaffCanAccessEmployee(session, payslip.employeeId))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const company = process.env.NEXT_PUBLIC_COMPANY_NAME ?? "Company";
     const to = payslip.employee.email;

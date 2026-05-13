@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/api-auth";
+import { requireStaff } from "@/lib/api-auth";
 import { writeAuditLog } from "@/lib/audit";
 import { z } from "zod";
 
@@ -12,7 +12,7 @@ const patchSchema = z.object({
 
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
   try {
-    const session = await requireAdmin();
+    const session = await requireStaff();
     const { id } = await ctx.params;
     const body = patchSchema.parse(await req.json());
     const existing = await prisma.payPeriod.findUnique({ where: { id } });

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/api-auth";
+import { requireMainAdmin } from "@/lib/api-auth";
 import { writeAuditLog } from "@/lib/audit";
 import { z } from "zod";
 
@@ -13,7 +13,7 @@ export async function PATCH(
   ctx: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await requireAdmin();
+    const session = await requireMainAdmin();
     const { id } = await ctx.params;
     const body = bodySchema.parse(await req.json());
 

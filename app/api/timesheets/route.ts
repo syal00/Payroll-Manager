@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/api-auth";
+import { requireStaff } from "@/lib/api-auth";
+import { timesheetWhereForStaff } from "@/lib/manager-scope";
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 
@@ -16,23 +17,28 @@ const querySchema = z.object({
 
 export async function GET(req: Request) {
   try {
-    await requireAdmin();
+    const session = await requireStaff();
     const url = new URL(req.url);
     const q = querySchema.parse(Object.fromEntries(url.searchParams.entries()));
-    const where: Prisma.TimesheetWhereInput = {};
-    if (q.payPeriodId) where.payPeriodId = q.payPeriodId;
-    if (q.status) where.status = q.status;
+    const staffScope = timesheetWhereForStaff(session);
+    const parts: Prisma.TimesheetWhereInput[] = [];
+    if (Object.keys(staffScope).length > 0) parts.push(staffScope);
+    if (q.payPeriodId) parts.push({ payPeriodId: q.payPeriodId });
+    if (q.status) parts.push({ status: q.status });
     if (q.q?.trim()) {
       const term = q.q.trim();
-      where.employee = {
-        OR: [
-          { name: { contains: term } },
-          { email: { contains: term } },
-          { employeeCode: { contains: term } },
-          { user: { name: { contains: term } } },
-        ],
-      };
+      parts.push({
+        employee: {
+          OR: [
+            { name: { contains: term } },
+            { email: { contains: term } },
+            { employeeCode: { contains: term } },
+            { user: { name: { contains: term } } },
+          ],
+        },
+      });
     }
+    const where: Prisma.TimesheetWhereInput = parts.length === 0 ? {} : parts.length === 1 ? parts[0]! : { AND: parts };
     const skip = (q.page - 1) * q.pageSize;
     const [items, total] = await Promise.all([
       prisma.timesheet.findMany({

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Bell, Palette, Shield, Sparkles } from "lucide-react";
+import { Bell, Palette, Shield, Sparkles, UserCog } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -55,6 +55,28 @@ export default function AdminSettingsPage() {
       />
 
       <div className="space-y-5">
+        <Card className="border-[var(--color-border)] !border-[var(--color-accent)]/35 !bg-[var(--color-bg-card)]/90 p-6 backdrop-blur-md">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex items-start gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--color-accent-soft)] text-[var(--color-accent-light)]">
+                <UserCog className="h-5 w-5" strokeWidth={2} aria-hidden />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-[var(--color-text-primary)]">Management accounts</h2>
+                <p className="mt-1 max-w-xl text-sm text-[var(--color-text-muted)]">
+                  Add manager logins with their work email and a temporary password. You share credentials with them yourself; the app does not send email yet. Managers use the same admin sign-in page, then only see assigned employees.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/admin/managers"
+              className="shrink-0 rounded-xl border border-[var(--color-accent-tint)] bg-[var(--color-accent-soft)] px-4 py-2.5 text-center text-sm font-semibold text-[var(--color-accent-light)] transition hover:bg-[var(--color-accent)]/20 hover:text-[var(--color-text-primary)]"
+            >
+              Create managers
+            </Link>
+          </div>
+        </Card>
+
         <Card className="border-[var(--color-border)] !bg-[var(--color-bg-card)]/80 backdrop-blur-md">
           <h2 className="text-base font-bold text-[var(--color-text-primary)]">Tax rate (%)</h2>
           <p className="mt-1 text-sm text-[var(--color-text-muted)]">

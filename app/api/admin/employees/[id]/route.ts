@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/api-auth";
+import { requireStaff } from "@/lib/api-auth";
+import { assertStaffCanAccessEmployee } from "@/lib/manager-scope";
 import { writeAuditLog } from "@/lib/audit";
 import { z } from "zod";
 
@@ -15,7 +16,7 @@ const patchSchema = z
 
 export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   try {
-    await requireAdmin();
+    const session = await requireStaff();
     const { id } = await ctx.params;
 
     const employee = await prisma.employee.findUnique({
@@ -28,6 +29,9 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
 
     if (!employee) {
       return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+    }
+    if (!(await assertStaffCanAccessEmployee(session, employee.id))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     return NextResponse.json({
@@ -56,7 +60,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
 
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
   try {
-    const session = await requireAdmin();
+    const session = await requireStaff();
     const { id } = await ctx.params;
     const body = patchSchema.parse(await req.json());
 
@@ -74,6 +78,9 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     });
     if (!existing) {
       return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+    }
+    if (!(await assertStaffCanAccessEmployee(session, existing.id))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     if (existing.deletedAt) {
       return NextResponse.json(
@@ -123,7 +130,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
 
 export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   try {
-    const session = await requireAdmin();
+    const session = await requireStaff();
     const { id } = await ctx.params;
 
     const employee = await prisma.employee.findUnique({
@@ -133,6 +140,9 @@ export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string 
 
     if (!employee) {
       return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+    }
+    if (!(await assertStaffCanAccessEmployee(session, employee.id))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     if (employee.deletedAt) {
       return NextResponse.json({ error: "Employee is already deactivated." }, { status: 400 });

@@ -7,8 +7,9 @@ export function TimesheetStatusBadge({ status }: { status: string }) {
       return <Badge variant="default">Draft</Badge>;
     case TimesheetStatus.PENDING:
       return <Badge variant="warning">Pending</Badge>;
-    case TimesheetStatus.VERIFIED:
-      return <Badge variant="info">Verified</Badge>;
+    case TimesheetStatus.UNDER_REVIEW:
+    case "VERIFIED":
+      return <Badge variant="info">Under review</Badge>;
     case TimesheetStatus.APPROVED:
       return <Badge variant="success">Approved</Badge>;
     case TimesheetStatus.REJECTED:

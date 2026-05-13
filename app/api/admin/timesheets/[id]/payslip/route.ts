@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/api-auth";
+import { requireStaff } from "@/lib/api-auth";
+import { assertStaffCanAccessEmployee } from "@/lib/manager-scope";
 import { getTaxRatePercent } from "@/lib/app-settings";
-import { TimesheetStatus, PayslipItemType } from "@/lib/enums";
+import { TimesheetStatus, PayslipItemType, canonicalTimesheetStatus } from "@/lib/enums";
 import { writeAuditLog } from "@/lib/audit";
 import { z } from "zod";
 
@@ -29,7 +30,7 @@ export async function POST(
   ctx: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await requireAdmin();
+    const session = await requireStaff();
     const { id: timesheetId } = await ctx.params;
     const body = bodySchema.parse(await req.json().catch(() => ({})));
 
@@ -43,7 +44,10 @@ export async function POST(
     });
 
     if (!ts) return NextResponse.json({ error: "Timesheet not found" }, { status: 404 });
-    if (ts.status !== TimesheetStatus.APPROVED) {
+    if (!(await assertStaffCanAccessEmployee(session, ts.employeeId))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    if (canonicalTimesheetStatus(ts.status) !== TimesheetStatus.APPROVED) {
       return NextResponse.json(
         { error: "Only approved timesheets can generate a payslip." },
         { status: 400 }
@@ -60,25 +64,6 @@ export async function POST(
             "No approved hours found for this employee in the selected period. Approve timesheets first before generating a payslip.",
         },
         { status: 400 }
-      );
-    }
-
-    const overlap = await prisma.payslip.findFirst({
-      where: {
-        employeeId: ts.employeeId,
-        payPeriod: {
-          AND: [{ startDate: { lte: ts.payPeriod.endDate } }, { endDate: { gte: ts.payPeriod.startDate } }],
-        },
-      },
-      select: { id: true, payslipNumber: true },
-    });
-    if (overlap) {
-      return NextResponse.json(
-        {
-          error:
-            "A payslip already exists for this employee covering this period. Cancel the existing one first.",
-        },
-        { status: 409 }
       );
     }
 

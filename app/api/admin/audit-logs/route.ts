@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/api-auth";
+import { requireMainAdmin } from "@/lib/api-auth";
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 
@@ -15,7 +15,7 @@ const querySchema = z.object({
 
 export async function GET(req: Request) {
   try {
-    await requireAdmin();
+    await requireMainAdmin();
     const url = new URL(req.url);
     const q = querySchema.parse(Object.fromEntries(url.searchParams.entries()));
     const skip = (q.page - 1) * q.pageSize;

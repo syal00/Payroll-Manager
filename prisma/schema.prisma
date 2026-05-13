@@ -12,20 +12,24 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
-  passwordHash  String
-  name          String
-  role          String // ADMIN | EMPLOYEE
-  phone         String?
-  tokenVersion  Int      @default(0) @map("token_version")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id                String    @id @default(cuid())
+  email             String    @unique
+  passwordHash      String
+  name              String
+  role              String // MAIN_ADMIN | MANAGER | EMPLOYEE (legacy ADMIN → migrated to MAIN_ADMIN)
+  phone             String?
+  tokenVersion      Int       @default(0) @map("token_version")
+  createdById       String?   @map("created_by_id")
+  createdBy         User?     @relation("ManagerAccountsCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  managersCreated   User[]    @relation("ManagerAccountsCreatedBy")
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
-  employee      Employee?
-  notifications Notification[]
-  auditLogs     AuditLog[]  @relation("ActorAuditLogs")
-  approvals     Approval[]
+  employee          Employee?
+  assignedEmployees Employee[] @relation("EmployeeAssignedManager")
+  notifications     Notification[]
+  auditLogs         AuditLog[] @relation("ActorAuditLogs")
+  approvals         Approval[]
 }
 
 model Employee {
@@ -35,6 +39,8 @@ model Employee {
   email          String    @unique
   userId         String?   @unique
   user           User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  managerUserId  String?   @map("manager_user_id")
+  managerUser    User?     @relation("EmployeeAssignedManager", fields: [managerUserId], references: [id], onDelete: SetNull)
   hourlyRate     Float     @default(28)
   overtimeRate   Float     @default(42)
   department     String?
@@ -51,6 +57,7 @@ model Employee {
 
   @@index([deletedAt])
   @@index([isApproved])
+  @@index([managerUserId])
 }
 
 model PayPeriod {
@@ -75,7 +82,7 @@ model Timesheet {
   employee      Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   payPeriodId   String
   payPeriod     PayPeriod @relation(fields: [payPeriodId], references: [id], onDelete: Cascade)
-  status        String    @default("DRAFT") // DRAFT | PENDING | VERIFIED | APPROVED | REJECTED
+  status        String    @default("DRAFT") // DRAFT | PENDING | UNDER_REVIEW | APPROVED | REJECTED
   notes         String?
   totalRegular  Float     @default(0)
   totalOvertime Float     @default(0)

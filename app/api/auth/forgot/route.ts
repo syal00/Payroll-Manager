@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     }
 
     const admin = await prisma.user.findFirst({
-      where: { role: "ADMIN" },
+      where: { role: { in: ["MAIN_ADMIN", "ADMIN"] } },
       orderBy: { createdAt: "asc" },
       select: { email: true },
     });

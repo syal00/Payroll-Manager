@@ -5,6 +5,7 @@ import { prismaDatabaseUnavailableMessage } from "@/lib/prisma-errors";
 import { createSession } from "@/lib/session";
 import { checkLoginRateLimit, clearLoginRateLimit, clientIpFromRequest } from "@/lib/login-rate-limit";
 import { DEMO_CREDENTIALS } from "@/lib/demo-credentials";
+import { isStaffRole } from "@/lib/roles";
 import { z } from "zod";
 
 const schema = z.object({
@@ -46,7 +47,7 @@ export async function POST(req: Request) {
     if (!ok) {
       return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
     }
-    if (user.role !== "ADMIN") {
+    if (!isStaffRole(user.role)) {
       return NextResponse.json(
         {
           error:
@@ -58,7 +59,7 @@ export async function POST(req: Request) {
     await createSession({
       id: user.id,
       email: user.email,
-      role: "ADMIN",
+      role: user.role as "MAIN_ADMIN" | "MANAGER" | "ADMIN",
       name: user.name,
     });
     clearLoginRateLimit(ip);

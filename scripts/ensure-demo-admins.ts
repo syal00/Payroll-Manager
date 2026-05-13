@@ -12,26 +12,41 @@ const prisma = new PrismaClient();
 async function main() {
   const passwordHash = await bcrypt.hash(DEMO_ADMIN_PASSWORD, 12);
   const admins = [
-    { name: "Operations Admin", email: DEMO_CREDENTIALS.admin.email },
-    { name: "Payroll Manager", email: DEMO_CREDENTIALS.manager.email },
+    { name: "Operations Admin", email: DEMO_CREDENTIALS.admin.email, role: "MAIN_ADMIN" as const },
+    { name: "Payroll Manager", email: DEMO_CREDENTIALS.manager.email, role: "MANAGER" as const },
   ] as const;
 
-  for (const a of admins) {
-    await prisma.user.upsert({
-      where: { email: a.email },
-      create: {
-        email: a.email,
-        passwordHash,
-        name: a.name,
-        role: "ADMIN",
-      },
-      update: {
-        passwordHash,
-        name: a.name,
-        role: "ADMIN",
-      },
-    });
-  }
+  const primary = await prisma.user.upsert({
+    where: { email: admins[0]!.email },
+    create: {
+      email: admins[0]!.email,
+      passwordHash,
+      name: admins[0]!.name,
+      role: admins[0]!.role,
+    },
+    update: {
+      passwordHash,
+      name: admins[0]!.name,
+      role: admins[0]!.role,
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { email: admins[1]!.email },
+    create: {
+      email: admins[1]!.email,
+      passwordHash,
+      name: admins[1]!.name,
+      role: admins[1]!.role,
+      createdById: primary.id,
+    },
+    update: {
+      passwordHash,
+      name: admins[1]!.name,
+      role: admins[1]!.role,
+      createdById: primary.id,
+    },
+  });
 
   console.log("[ensure-demo-admins] OK:", admins.map((x) => x.email).join(", "));
 }

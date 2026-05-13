@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/api-auth";
+import { requireStaff } from "@/lib/api-auth";
+import { assertStaffCanAccessEmployee } from "@/lib/manager-scope";
 
 export async function GET(
   _req: Request,
   ctx: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAdmin();
+    const session = await requireStaff();
     const { id } = await ctx.params;
     const timesheet = await prisma.timesheet.findUnique({
       where: { id },
@@ -20,6 +21,9 @@ export async function GET(
       },
     });
     if (!timesheet) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (!(await assertStaffCanAccessEmployee(session, timesheet.employeeId))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
     return NextResponse.json({ timesheet });
   } catch (e) {
     const err = e as Error & { status?: number };

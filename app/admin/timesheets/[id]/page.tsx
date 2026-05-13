@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TimesheetStatusBadge } from "@/components/status-badges";
 import { shortDate, money, parsePositiveRateInput } from "@/lib/format";
-import { TimesheetStatus } from "@/lib/enums";
+import { TimesheetStatus, canonicalTimesheetStatus } from "@/lib/enums";
 import { sumEntries } from "@/lib/timesheet-math";
 import { dispatchAdminStatsRefresh } from "@/lib/admin-stats-refresh";
 
@@ -84,8 +84,13 @@ export default function AdminTimesheetDetailPage({
     fetch(`/api/timesheets/${id}`)
       .then((r) => r.json())
       .then((j) => {
-        if (j.error) setErr(j.error);
-        else setTs(j.timesheet);
+        if (j.error) {
+          setErr(j.error);
+          setTs(null);
+        } else {
+          setErr(null);
+          setTs(j.timesheet);
+        }
       });
   }
 
@@ -95,7 +100,7 @@ export default function AdminTimesheetDetailPage({
   }, [id]);
 
   useEffect(() => {
-    if (!ts || ts.status !== TimesheetStatus.APPROVED) return;
+    if (!ts || canonicalTimesheetStatus(ts.status) !== TimesheetStatus.APPROVED) return;
     fetch("/api/admin/settings")
       .then((r) => r.json())
       .then((j) => {
@@ -197,57 +202,75 @@ export default function AdminTimesheetDetailPage({
     setTs(j.timesheet);
   }
 
-  async function approveAction(newStatus: "VERIFIED" | "APPROVED" | "REJECTED") {
+  async function approveAction(newStatus: "UNDER_REVIEW" | "APPROVED" | "REJECTED") {
     setErr(null);
     setMsg(null);
     setBusy(true);
-    const res = await fetch(`/api/admin/timesheets/${id}/approval`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        newStatus,
-        comment: comment || null,
-        rejectionReason: newStatus === "REJECTED" ? rejectReason : null,
-      }),
-    });
-    const j = await res.json();
-    setBusy(false);
-    if (!res.ok) {
-      setErr(j.error ?? "Failed");
-      return;
+    try {
+      const res = await fetch(`/api/admin/timesheets/${id}/approval`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          newStatus,
+          comment: comment || null,
+          rejectionReason: newStatus === "REJECTED" ? rejectReason : null,
+        }),
+      });
+      let j: { error?: string } = {};
+      try {
+        j = await res.json();
+      } catch {
+        setErr("Unexpected response from server.");
+        return;
+      }
+      if (!res.ok) {
+        setErr(typeof j.error === "string" ? j.error : "Failed");
+        return;
+      }
+      setMsg("Status updated.");
+      setComment("");
+      setRejectReason("");
+      load();
+      dispatchAdminStatsRefresh();
+    } finally {
+      setBusy(false);
     }
-    setMsg("Status updated.");
-    setComment("");
-    setRejectReason("");
-    load();
-    dispatchAdminStatsRefresh();
   }
 
   async function genPayslip() {
     setErr(null);
     setMsg(null);
     setBusy(true);
-    const d = parseFloat(deduction);
-    const payload =
-      deduction.trim() === "" || !Number.isFinite(d)
-        ? {}
-        : { deductionTotal: Math.max(0, d) };
-    const res = await fetch(`/api/admin/timesheets/${id}/payslip`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    const j = await res.json();
-    setBusy(false);
-    if (!res.ok) {
-      setErr(j.error ?? "Failed");
-      return;
-    }
-    setMsg("Payslip generated.");
-    dispatchAdminStatsRefresh();
-    load();
-    if (j.payslip?.id) {
-      window.location.href = `/admin/payslips/${j.payslip.id}`;
+    try {
+      const d = parseFloat(deduction);
+      const payload =
+        deduction.trim() === "" || !Number.isFinite(d)
+          ? {}
+          : { deductionTotal: Math.max(0, d) };
+      const res = await fetch(`/api/admin/timesheets/${id}/payslip`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      let j: { error?: string; payslip?: { id: string } } = {};
+      try {
+        j = await res.json();
+      } catch {
+        setErr("Unexpected response from server.");
+        return;
+      }
+      if (!res.ok) {
+        setErr(typeof j.error === "string" ? j.error : "Failed");
+        return;
+      }
+      setMsg("Payslip generated.");
+      dispatchAdminStatsRefresh();
+      load();
+      if (j.payslip?.id) {
+        window.location.href = `/admin/payslips/${j.payslip.id}`;
+      }
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -263,6 +286,8 @@ export default function AdminTimesheetDetailPage({
       </div>
     );
   }
+
+  const workflowStatus = canonicalTimesheetStatus(ts.status);
 
   return (
     <div className="page-container max-w-5xl space-y-8">
@@ -495,8 +520,14 @@ export default function AdminTimesheetDetailPage({
       <Card>
         <h2 className="card-heading">Review &amp; decision</h2>
         <p className="mt-1 text-xs text-slate-500">
-          Flow: Pending â†’ Verified â†’ Approved (or reject with a reason the employee will see).
+          Flow: Pending → Under review → Approved (or reject with a reason the employee will see).
         </p>
+        {workflowStatus === TimesheetStatus.APPROVED ? (
+          <p className="mt-4 rounded-xl border border-[var(--color-accent-tint)] bg-[var(--color-accent-soft)]/40 px-4 py-3 text-sm text-[var(--color-text-secondary)]">
+            This timesheet is already approved, so these actions are closed. Use <strong>Generate payslip</strong> below
+            (or open the existing payslip link if one was created).
+          </p>
+        ) : null}
         <label className="label-field mt-4" htmlFor="ts-comment">
           Comment (optional)
         </label>
@@ -521,16 +552,16 @@ export default function AdminTimesheetDetailPage({
         />
         <div className="mt-4 flex flex-wrap gap-2">
           <Button
-            disabled={busy || ts.status !== TimesheetStatus.PENDING}
+            disabled={busy || workflowStatus !== TimesheetStatus.PENDING}
             variant="secondary"
-            onClick={() => approveAction("VERIFIED")}
+            onClick={() => approveAction("UNDER_REVIEW")}
           >
-            Mark verified
+            Move to under review
           </Button>
           <Button
             disabled={
               busy ||
-              (ts.status !== TimesheetStatus.PENDING && ts.status !== TimesheetStatus.VERIFIED)
+              (workflowStatus !== TimesheetStatus.PENDING && workflowStatus !== TimesheetStatus.UNDER_REVIEW)
             }
             onClick={() => approveAction("APPROVED")}
           >
@@ -539,9 +570,9 @@ export default function AdminTimesheetDetailPage({
           <Button
             disabled={
               busy ||
-              ts.status === TimesheetStatus.DRAFT ||
-              ts.status === TimesheetStatus.APPROVED ||
-              ts.status === TimesheetStatus.REJECTED
+              workflowStatus === TimesheetStatus.DRAFT ||
+              workflowStatus === TimesheetStatus.APPROVED ||
+              workflowStatus === TimesheetStatus.REJECTED
             }
             variant="danger"
             onClick={() => approveAction("REJECTED")}
@@ -551,7 +582,7 @@ export default function AdminTimesheetDetailPage({
         </div>
       </Card>
 
-      {ts.status === TimesheetStatus.APPROVED && (
+      {workflowStatus === TimesheetStatus.APPROVED && (
         <Card>
           <h2 className="card-heading">Generate payslip</h2>
           <p className="mt-1 text-xs text-slate-500">Available once the timesheet is approved.</p>

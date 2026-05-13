@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/api-auth";
+import { requireMainAdmin, requireStaff } from "@/lib/api-auth";
 import { getTaxRatePercent, setTaxRatePercent } from "@/lib/app-settings";
 import { z } from "zod";
 
 export async function GET() {
   try {
-    await requireAdmin();
+    await requireStaff();
     const taxRate = await getTaxRatePercent();
     return NextResponse.json({ taxRate });
   } catch (e) {
@@ -20,7 +20,7 @@ const patchSchema = z.object({
 
 export async function PATCH(req: Request) {
   try {
-    await requireAdmin();
+    await requireMainAdmin();
     const body = patchSchema.parse(await req.json());
     await setTaxRatePercent(body.taxRate);
     return NextResponse.json({ ok: true, taxRate: body.taxRate });

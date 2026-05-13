@@ -1,16 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin, requireSession } from "@/lib/api-auth";
+import { requireSession, requireStaff } from "@/lib/api-auth";
 import { PayPeriodStatus } from "@/lib/enums";
 import { isValidFourteenDayWindow } from "@/lib/pay-period-utils";
 import { writeAuditLog } from "@/lib/audit";
 import { z } from "zod";
-import { Role } from "@/lib/enums";
+import { isStaffRole } from "@/lib/roles";
 
 export async function GET() {
   try {
     const session = await requireSession();
-    if (session.role === Role.ADMIN) {
+    if (isStaffRole(session.role)) {
       const rows = await prisma.payPeriod.findMany({
         orderBy: { startDate: "desc" },
         include: {
@@ -44,7 +44,7 @@ const createSchema = z.object({
 
 export async function POST(req: Request) {
   try {
-    const session = await requireAdmin();
+    const session = await requireStaff();
     const body = createSchema.parse(await req.json());
     const start = new Date(body.startDate);
     const end = new Date(body.endDate);

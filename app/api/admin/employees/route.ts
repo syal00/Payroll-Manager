@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/api-auth";
+import { requireStaff } from "@/lib/api-auth";
+import { employeeWhereForStaff } from "@/lib/manager-scope";
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 
@@ -10,7 +11,7 @@ const querySchema = z.object({
 
 export async function GET(req: Request) {
   try {
-    await requireAdmin();
+    const session = await requireStaff();
     const url = new URL(req.url);
     const { status } = querySchema.parse(Object.fromEntries(url.searchParams.entries()));
 
@@ -24,6 +25,11 @@ export async function GET(req: Request) {
       where.isApproved = false;
     }
     if (status === "deleted") where.deletedAt = { not: null };
+
+    const scope = employeeWhereForStaff(session);
+    if (scope) {
+      Object.assign(where, scope);
+    }
 
     const employees = await prisma.employee.findMany({
       where,

@@ -13,6 +13,7 @@ export function resolveAdminPageTitle(pathname: string): string {
 
   const map = new Map<string, string>([
     ["/admin/settings", "Settings"],
+    ["/admin/managers", "Managers"],
     ["/admin/profile", "Profile"],
     ["/admin/reports", "Reports"],
     ["/admin/history", "History"],

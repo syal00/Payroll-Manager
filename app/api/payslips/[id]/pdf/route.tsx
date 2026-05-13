@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/api-auth";
 import { Role } from "@/lib/enums";
 import { getEmployeeRecord } from "@/lib/employee-scope";
+import { isStaffRole } from "@/lib/roles";
+import { assertStaffCanAccessEmployee } from "@/lib/manager-scope";
 import { renderToBuffer } from "@react-pdf/renderer";
 import React from "react";
 import { PayslipDocument } from "@/components/pdf/PayslipDocument";
@@ -32,6 +34,12 @@ export async function GET(
       if (!emp || payslip.employeeId !== emp.id) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
+    } else if (isStaffRole(session.role)) {
+      if (!(await assertStaffCanAccessEmployee(session, payslip.employeeId))) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    } else {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const company = process.env.NEXT_PUBLIC_COMPANY_NAME ?? "Company";

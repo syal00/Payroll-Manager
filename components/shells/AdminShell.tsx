@@ -12,6 +12,7 @@ import {
   History,
   BarChart3,
   UserCircle,
+  UserCog,
   Settings,
   LogOut,
   Menu,
@@ -29,30 +30,34 @@ import { resolveAdminPageTitle } from "@/lib/admin-nav";
 import { UserMenu } from "@/components/dashboard/UserMenu";
 import { AdminMobileFab } from "@/components/dashboard/AdminMobileFab";
 
-const links = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/employees", label: "Employees", icon: Users },
-  { href: "/admin/timesheets", label: "Timesheets", icon: Clock3 },
-  { href: "/admin/pay-periods", label: "Pay periods", icon: CalendarDays },
-  { href: "/admin/review", label: "Review", icon: ClipboardCheck },
-  { href: "/admin/payslips", label: "Payslips", icon: Receipt },
-  { href: "/admin/history", label: "History", icon: History },
-  { href: "/admin/reports", label: "Reports", icon: BarChart3 },
-  { href: "/admin/audit", label: "Audit log", icon: ClipboardList },
-  { href: "/admin/demo-requests", label: "Demo requests", icon: Inbox },
-  { href: "/admin/profile", label: "Profile", icon: UserCircle },
-  { href: "/admin/settings", label: "Settings", icon: Settings },
-];
+const allNavLinks = [
+  { href: "/admin", label: "Dashboard", icon: LayoutDashboard, mainAdminOnly: false },
+  { href: "/admin/employees", label: "Employees", icon: Users, mainAdminOnly: false },
+  { href: "/admin/timesheets", label: "Timesheets", icon: Clock3, mainAdminOnly: false },
+  { href: "/admin/pay-periods", label: "Pay periods", icon: CalendarDays, mainAdminOnly: false },
+  { href: "/admin/review", label: "Review", icon: ClipboardCheck, mainAdminOnly: false },
+  { href: "/admin/payslips", label: "Payslips", icon: Receipt, mainAdminOnly: false },
+  { href: "/admin/history", label: "History", icon: History, mainAdminOnly: false },
+  { href: "/admin/reports", label: "Reports", icon: BarChart3, mainAdminOnly: false },
+  { href: "/admin/audit", label: "Audit log", icon: ClipboardList, mainAdminOnly: true },
+  { href: "/admin/demo-requests", label: "Demo requests", icon: Inbox, mainAdminOnly: true },
+  { href: "/admin/managers", label: "Managers", icon: UserCog, mainAdminOnly: true },
+  { href: "/admin/profile", label: "Profile", icon: UserCircle, mainAdminOnly: false },
+  { href: "/admin/settings", label: "Settings", icon: Settings, mainAdminOnly: true },
+] as const;
 
 export function AdminShell({
   userName,
   userEmail,
   header,
+  isMainAdmin = true,
   children,
 }: {
   userName: string;
   userEmail?: string;
   header?: AdminShellHeader;
+  /** Main Admin sees tenant-wide settings, audit, demo requests, manager assignment. Staff (including managers) share payroll workflows scoped to role. */
+  isMainAdmin?: boolean;
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -78,6 +83,11 @@ export function AdminShell({
     await fetch("/api/auth/logout", { method: "POST" });
     window.location.href = "/login";
   }
+
+  const links = useMemo(
+    () => allNavLinks.filter((l) => isMainAdmin || !l.mainAdminOnly),
+    [isMainAdmin],
+  );
 
   const navContent = (
     <>

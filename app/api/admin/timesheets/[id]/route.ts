@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/api-auth";
+import { requireStaff } from "@/lib/api-auth";
+import { assertStaffCanAccessEmployee } from "@/lib/manager-scope";
 import { writeAuditLog } from "@/lib/audit";
 import { validateTimesheetWorkDatePolicy } from "@/lib/timesheet-work-date-policy";
 import { sumEntries, validateDayEntry } from "@/lib/timesheet-math";
@@ -30,7 +31,7 @@ export async function PATCH(
   ctx: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await requireAdmin();
+    const session = await requireStaff();
     const { id } = await ctx.params;
     const body = patchSchema.parse(await req.json());
 
@@ -45,6 +46,10 @@ export async function PATCH(
 
     if (!ts) {
       return NextResponse.json({ error: "Timesheet not found" }, { status: 404 });
+    }
+
+    if (!(await assertStaffCanAccessEmployee(session, ts.employeeId))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     if (ts.payslip) {

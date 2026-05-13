@@ -23,8 +23,8 @@ async function main() {
   /** Primary demo admins — upsert preserves behavior of the legacy `add-admins` helper if seed order changes. */
   const adminPwHash = await bcrypt.hash(DEMO_ADMIN_PASSWORD, 12);
   const primaryAdmins = [
-    { name: "Operations Admin", email: DEMO_CREDENTIALS.admin.email },
-    { name: "Payroll Manager", email: DEMO_CREDENTIALS.manager.email },
+    { name: "Operations Admin", email: DEMO_CREDENTIALS.admin.email, role: "MAIN_ADMIN" as const },
+    { name: "Payroll Manager", email: DEMO_CREDENTIALS.manager.email, role: "MANAGER" as const },
   ] as const;
   const admin = await prisma.user.upsert({
     where: { email: primaryAdmins[0]!.email },
@@ -32,19 +32,25 @@ async function main() {
       email: primaryAdmins[0]!.email,
       passwordHash: adminPwHash,
       name: primaryAdmins[0]!.name,
-      role: "ADMIN",
+      role: primaryAdmins[0]!.role,
     },
-    update: { passwordHash: adminPwHash, name: primaryAdmins[0]!.name, role: "ADMIN" },
+    update: { passwordHash: adminPwHash, name: primaryAdmins[0]!.name, role: primaryAdmins[0]!.role },
   });
-  await prisma.user.upsert({
+  const managerUser = await prisma.user.upsert({
     where: { email: primaryAdmins[1]!.email },
     create: {
       email: primaryAdmins[1]!.email,
       passwordHash: adminPwHash,
       name: primaryAdmins[1]!.name,
-      role: "ADMIN",
+      role: primaryAdmins[1]!.role,
+      createdById: admin.id,
     },
-    update: { passwordHash: adminPwHash, name: primaryAdmins[1]!.name, role: "ADMIN" },
+    update: {
+      passwordHash: adminPwHash,
+      name: primaryAdmins[1]!.name,
+      role: primaryAdmins[1]!.role,
+      createdById: admin.id,
+    },
   });
 
   const empSeed = [
@@ -56,7 +62,8 @@ async function main() {
     user: { id: string };
     employee: { id: string; hourlyRate: number; overtimeRate: number };
   }[] = [];
-  for (const u of empSeed) {
+  for (let i = 0; i < empSeed.length; i++) {
+    const u = empSeed[i]!;
     const user = await prisma.user.create({
       data: {
         email: u.email,
@@ -73,6 +80,7 @@ async function main() {
         name: u.name,
         email: normalizeEmployeeEmail(u.email),
         userId: user.id,
+        managerUserId: i < 2 ? managerUser.id : null,
         hourlyRate: u.rate,
         overtimeRate: ot,
         department: "Operations",
@@ -142,7 +150,7 @@ async function main() {
     data: {
       timesheetId: approvedSheet.id,
       adminId: admin.id,
-      previousStatus: "VERIFIED",
+      previousStatus: "UNDER_REVIEW",
       newStatus: "APPROVED",
       comment: "Hours align with schedule. Approved for payroll.",
     },

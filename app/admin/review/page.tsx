@@ -65,7 +65,7 @@ export default function AdminReviewPage() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, payPeriodId, sort, order]);
+  }, [page, payPeriodId, sort, order, status]);
 
   return (
     <div className="page-container max-w-7xl space-y-8">
@@ -111,7 +111,7 @@ export default function AdminReviewPage() {
               <option value="">Any status</option>
               <option value="DRAFT">Draft</option>
               <option value="PENDING">Pending</option>
-              <option value="VERIFIED">Verified</option>
+              <option value="UNDER_REVIEW">Under review</option>
               <option value="APPROVED">Approved</option>
               <option value="REJECTED">Rejected</option>
             </select>

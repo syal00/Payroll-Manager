@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/api-auth";
-import { TimesheetStatus } from "@/lib/enums";
+import { requireStaff } from "@/lib/api-auth";
+import { TimesheetStatus, canonicalTimesheetStatus } from "@/lib/enums";
+import { assertStaffCanAccessEmployee } from "@/lib/manager-scope";
 import { writeAuditLog } from "@/lib/audit";
 import { z } from "zod";
 
 const bodySchema = z.object({
-  newStatus: z.enum(["VERIFIED", "APPROVED", "REJECTED"]),
+  newStatus: z.enum(["UNDER_REVIEW", "APPROVED", "REJECTED"]),
   comment: z.string().optional().nullable(),
   rejectionReason: z.string().optional().nullable(),
 });
@@ -16,7 +17,7 @@ export async function POST(
   ctx: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await requireAdmin();
+    const session = await requireStaff();
     const { id } = await ctx.params;
     const body = bodySchema.parse(await req.json());
 
@@ -33,14 +34,18 @@ export async function POST(
     });
     if (!ts) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    const prev = ts.status;
+    if (!(await assertStaffCanAccessEmployee(session, ts.employeeId))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const prev = canonicalTimesheetStatus(ts.status);
 
     const validTransition = (() => {
-      if (body.newStatus === "VERIFIED") return prev === TimesheetStatus.PENDING;
+      if (body.newStatus === "UNDER_REVIEW") return prev === TimesheetStatus.PENDING;
       if (body.newStatus === "APPROVED")
-        return prev === TimesheetStatus.VERIFIED || prev === TimesheetStatus.PENDING;
+        return prev === TimesheetStatus.UNDER_REVIEW || prev === TimesheetStatus.PENDING;
       if (body.newStatus === "REJECTED")
-        return prev === TimesheetStatus.PENDING || prev === TimesheetStatus.VERIFIED;
+        return prev === TimesheetStatus.PENDING || prev === TimesheetStatus.UNDER_REVIEW;
       return false;
     })();
 
@@ -88,13 +93,13 @@ export async function POST(
           body: `Reason: ${body.rejectionReason}`,
         },
       });
-    } else if (empUserId && body.newStatus === "VERIFIED") {
+    } else if (empUserId && body.newStatus === "UNDER_REVIEW") {
       await prisma.notification.create({
         data: {
           userId: empUserId,
-          type: "TIMESHEET_VERIFIED",
-          title: "Timesheet verified",
-          body: "An administrator verified your hours. Final approval may follow.",
+          type: "TIMESHEET_UNDER_REVIEW",
+          title: "Timesheet under review",
+          body: "A reviewer is verifying your submitted hours. You will be notified when it is approved or needs changes.",
         },
       });
     }
@@ -104,7 +109,7 @@ export async function POST(
         ? "APPROVE_TIMESHEET"
         : body.newStatus === "REJECTED"
           ? "REJECT_TIMESHEET"
-          : "VERIFY_TIMESHEET";
+          : "TIMESHEET_UNDER_REVIEW";
 
     await writeAuditLog({
       actorId: session.id,

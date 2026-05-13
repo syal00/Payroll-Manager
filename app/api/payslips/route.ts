@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/api-auth";
-import { Role } from "@/lib/enums";
+import { isMainAdminRole, isStaffRole } from "@/lib/roles";
 import { getEmployeeRecord } from "@/lib/employee-scope";
+import { payslipWhereForStaff } from "@/lib/manager-scope";
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 
@@ -20,7 +21,7 @@ export async function GET(req: Request) {
     const q = querySchema.parse(Object.fromEntries(url.searchParams.entries()));
     const skip = (q.page - 1) * q.pageSize;
 
-    if (session.role === Role.ADMIN) {
+    if (isMainAdminRole(session.role)) {
       const where: Prisma.PayslipWhereInput = {};
       if (q.payPeriodId) where.payPeriodId = q.payPeriodId;
       if (q.q?.trim()) {
@@ -34,6 +35,41 @@ export async function GET(req: Request) {
           ],
         };
       }
+      const [items, total] = await Promise.all([
+        prisma.payslip.findMany({
+          where,
+          orderBy: { createdAt: "desc" },
+          skip,
+          take: q.pageSize,
+          include: {
+            employee: { include: { user: true } },
+            payPeriod: true,
+            timesheet: true,
+          },
+        }),
+        prisma.payslip.count({ where }),
+      ]);
+      return NextResponse.json({ items, total, page: q.page, pageSize: q.pageSize });
+    }
+
+    if (isStaffRole(session.role)) {
+      const scope = payslipWhereForStaff(session);
+      const parts: Prisma.PayslipWhereInput[] = [scope];
+      if (q.payPeriodId) parts.push({ payPeriodId: q.payPeriodId });
+      if (q.q?.trim()) {
+        const term = q.q.trim();
+        parts.push({
+          employee: {
+            OR: [
+              { name: { contains: term } },
+              { email: { contains: term } },
+              { employeeCode: { contains: term } },
+              { user: { name: { contains: term } } },
+            ],
+          },
+        });
+      }
+      const where: Prisma.PayslipWhereInput = parts.length === 1 ? parts[0]! : { AND: parts };
       const [items, total] = await Promise.all([
         prisma.payslip.findMany({
           where,

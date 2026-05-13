@@ -7,7 +7,7 @@ const COOKIE_NAME = "hr_session";
 export type SessionUser = {
   id: string;
   email: string;
-  role: "ADMIN" | "EMPLOYEE";
+  role: "MAIN_ADMIN" | "MANAGER" | "EMPLOYEE" | "ADMIN";
   name: string;
 };
 
@@ -63,7 +63,7 @@ export async function getSession(): Promise<SessionUser | null> {
     return {
       id,
       email: dbUser.email,
-      role: dbUser.role as "ADMIN" | "EMPLOYEE",
+      role: dbUser.role as SessionUser["role"],
       name: dbUser.name,
     };
   } catch {

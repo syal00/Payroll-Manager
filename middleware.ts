@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import * as jose from "jose";
+import { isStaffRole } from "@/lib/roles";
 
 const COOKIE_NAME = "hr_session";
 
@@ -45,13 +46,13 @@ export async function middleware(request: NextRequest) {
     const role = payload.role as string;
 
     if (pathname === "/login") {
-      if (role === "ADMIN") {
+      if (isStaffRole(role)) {
         return NextResponse.redirect(new URL("/admin", request.url));
       }
       return NextResponse.redirect(new URL("/employee-access", request.url));
     }
 
-    if (pathname.startsWith("/admin") && role !== "ADMIN") {
+    if (pathname.startsWith("/admin") && !isStaffRole(role)) {
       return NextResponse.redirect(new URL("/employee-access", request.url));
     }
 
