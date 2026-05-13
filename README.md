@@ -42,21 +42,15 @@ Password for both admins: **`PayrollDemo2026!`** (from `lib/demo-credentials.ts`
    - **`DIRECT_URL`** — Neon **direct** URL (host without `-pooler`). **Both** are required for builds that run `prisma migrate deploy`.
    - **`AUTH_SECRET`** — 32+ random characters.
    - Optional: **`NEXT_PUBLIC_COMPANY_NAME`**
-4. Deploy. The build runs `prisma generate`, `prisma migrate deploy`, and `next build`.
-5. **Seed production once** from your machine (or any environment with the same `DATABASE_URL` / `DIRECT_URL`):
-
-```bash
-npm run setup
-```
-
-Or: `npx prisma migrate deploy` then `npm run db:seed`.
+4. Deploy. The build runs `prisma generate`, `prisma migrate deploy`, **`tsx scripts/ensure-demo-admins.ts`** (creates/updates the two demo admin accounts — no full data wipe), then `next build`.
+5. Optional: run **`npm run setup`** or **`npm run db:seed`** from your machine if you want the full demo dataset (employees, timesheets, etc.). Demo admin login works after step 4 alone.
 
 ## Scripts
 
 | Command | Description |
 |--------|-------------|
 | `npm run dev` | Validates `.env`, then starts Next.js dev server |
-| `npm run build` | Generate client, migrate, production build |
+| `npm run build` | Generate client, migrate, **ensure demo admins**, production build |
 | `npm run start` | Production server |
 | `npm run setup` | Generate + migrate + seed (local/staging bootstrap) |
 | `npm run db:migrate` | `prisma migrate deploy` |

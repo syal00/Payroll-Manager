@@ -212,7 +212,8 @@ export default function LoginPage() {
               </li>
             </ul>
             <p className="mt-2 text-[11px] text-[var(--color-text-muted)]">
-              Run <code className="font-mono">npm run setup</code> or <code className="font-mono">npm run db:seed</code> to refresh demo data.
+              Production (Vercel): demo admins are created on each deploy. For full sample data, run{" "}
+              <code className="font-mono">npm run setup</code> locally against the same database.
             </p>
           </div>
 

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { prismaDatabaseUnavailableMessage } from "@/lib/prisma-errors";
 import { createSession } from "@/lib/session";
 import { checkLoginRateLimit, clearLoginRateLimit, clientIpFromRequest } from "@/lib/login-rate-limit";
+import { DEMO_CREDENTIALS } from "@/lib/demo-credentials";
 import { z } from "zod";
 
 const schema = z.object({
@@ -30,7 +31,16 @@ export async function POST(req: Request) {
     const body = schema.parse(json);
     const user = await prisma.user.findUnique({ where: { email: body.email } });
     if (!user) {
-      return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
+      const isDemoAdminEmail =
+        body.email === DEMO_CREDENTIALS.admin.email || body.email === DEMO_CREDENTIALS.manager.email;
+      return NextResponse.json(
+        {
+          error: isDemoAdminEmail
+            ? "No admin account in the database yet. Wait for the latest deploy to finish, or run: npm run setup (or npx tsx scripts/ensure-demo-admins.ts)."
+            : "Invalid email or password.",
+        },
+        { status: 401 }
+      );
     }
     const ok = await bcrypt.compare(body.password, user.passwordHash);
     if (!ok) {
