@@ -18,10 +18,6 @@ export default function LandingPage() {
 
   return (
     <div className="landing-root">
-      <div className="blob blob-1" aria-hidden />
-      <div className="blob blob-2" aria-hidden />
-      <div className="blob blob-3" aria-hidden />
-
       <nav className="landing-nav">
         <div className="landing-logo-row">
           <div className="landing-logo-icon" aria-hidden>
@@ -40,6 +36,18 @@ export default function LandingPage() {
       </nav>
 
       <main className="landing-hero">
+        <div className="landing-hero-visual" aria-hidden>
+          <img
+            src="/bg-images/bg-image-landing.png"
+            alt="Payroll illustration"
+            className="landing-hero-bg-img"
+            width={1920}
+            height={1080}
+            decoding="async"
+          />
+          <div className="landing-hero-fade landing-hero-fade-left" />
+          <div className="landing-hero-fade landing-hero-fade-bottom" />
+        </div>
         <div className="landing-hero-content">
           <h1 className="landing-headline">
             Intelligent Payroll,
@@ -75,10 +83,6 @@ export default function LandingPage() {
               Employee portal
             </button>
           </div>
-        </div>
-
-        <div className="landing-hero-illustration" aria-hidden>
-          <HeroIllustration />
         </div>
       </main>
 
@@ -131,13 +135,6 @@ export default function LandingPage() {
 
       <section className="landing-logos" aria-label="Customers">
         <div className="landing-logos-title">Trusted by leaders across industries</div>
-        <div className="landing-logos-row">
-          <PlaceholderLogo variant="cloud" />
-          <PlaceholderLogo variant="bank" />
-          <PlaceholderLogo variant="bolt" />
-          <PlaceholderLogo variant="music" />
-          <PlaceholderLogo variant="diamond" />
-        </div>
       </section>
     </div>
   );
@@ -154,198 +151,3 @@ function LightningBolt() {
   );
 }
 
-function HeroIllustration() {
-  return (
-    <svg
-      className="landing-illustration-svg"
-      viewBox="0 0 560 480"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      role="img"
-      aria-label="Orbiting payroll automation illustration"
-    >
-      <defs>
-        <radialGradient id="sunGrad" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0%" stopColor="#ffc78b" stopOpacity="0.95" />
-          <stop offset="55%" stopColor="#f07828" stopOpacity="0.8" />
-          <stop offset="100%" stopColor="#c4540a" stopOpacity="0" />
-        </radialGradient>
-        <linearGradient id="planeGrad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#fff7ec" />
-          <stop offset="100%" stopColor="#ffd5a7" />
-        </linearGradient>
-        <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#f07828" stopOpacity="0.95" />
-          <stop offset="100%" stopColor="#c4540a" stopOpacity="0.45" />
-        </linearGradient>
-      </defs>
-
-      {/* Glow sun */}
-      <circle cx="335" cy="240" r="170" fill="url(#sunGrad)" opacity="0.85" />
-      <circle cx="335" cy="240" r="44" fill="#ffae6b" opacity="0.95" />
-      <circle cx="335" cy="240" r="22" fill="#fff2dc" opacity="0.95" />
-
-      {/* Orbits */}
-      <ellipse
-        cx="335"
-        cy="240"
-        rx="200"
-        ry="80"
-        stroke="url(#ringGrad)"
-        strokeWidth="1.5"
-        strokeDasharray="2 6"
-        opacity="0.85"
-        transform="rotate(-18 335 240)"
-      />
-      <ellipse
-        cx="335"
-        cy="240"
-        rx="240"
-        ry="100"
-        stroke="url(#ringGrad)"
-        strokeWidth="1.2"
-        strokeDasharray="2 7"
-        opacity="0.55"
-        transform="rotate(18 335 240)"
-      />
-      <ellipse
-        cx="335"
-        cy="240"
-        rx="155"
-        ry="62"
-        stroke="#f07828"
-        strokeWidth="1"
-        strokeDasharray="1 5"
-        opacity="0.75"
-        transform="rotate(8 335 240)"
-      />
-
-      {/* Orbiting icons — gear */}
-      <g transform="translate(190 130)" opacity="0.95">
-        <circle r="20" fill="#1c0e0a" stroke="#f07828" strokeWidth="1.4" />
-        <g stroke="#ffa563" strokeWidth="1.8" strokeLinecap="round">
-          <path d="M0 -14 v6" />
-          <path d="M0 14 v-6" />
-          <path d="M-14 0 h6" />
-          <path d="M14 0 h-6" />
-          <path d="M-10 -10 l4 4" />
-          <path d="M10 10 l-4 -4" />
-          <path d="M-10 10 l4 -4" />
-          <path d="M10 -10 l-4 4" />
-        </g>
-        <circle r="5" fill="#f07828" />
-      </g>
-
-      {/* Orbiting icons — document */}
-      <g transform="translate(490 200)" opacity="0.95">
-        <rect x="-18" y="-22" width="36" height="44" rx="5" fill="#1c0e0a" stroke="#f07828" strokeWidth="1.4" />
-        <path d="M-10 -10 h20 M-10 -2 h20 M-10 6 h14 M-10 14 h10" stroke="#ffa563" strokeWidth="1.6" strokeLinecap="round" />
-      </g>
-
-      {/* Orbiting icons — checkmark badge */}
-      <g transform="translate(485 350)" opacity="0.95">
-        <circle r="22" fill="#1c0e0a" stroke="#22c55e" strokeWidth="1.6" />
-        <path d="M-9 1 l6 6 l12 -12" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-      </g>
-
-      {/* Orbiting icons — chart bars */}
-      <g transform="translate(170 340)" opacity="0.95">
-        <rect x="-22" y="-20" width="44" height="40" rx="5" fill="#1c0e0a" stroke="#f07828" strokeWidth="1.4" />
-        <rect x="-14" y="-2" width="6" height="14" fill="#ffa563" rx="1" />
-        <rect x="-4" y="-10" width="6" height="22" fill="#f07828" rx="1" />
-        <rect x="6" y="-6" width="6" height="18" fill="#ffa563" rx="1" />
-      </g>
-
-      {/* Paper plane — flagship icon */}
-      <g transform="translate(165 195) rotate(-18)">
-        <path
-          d="M0 0 L150 30 L60 60 L70 105 L40 70 L0 0 Z"
-          fill="url(#planeGrad)"
-          stroke="#f07828"
-          strokeWidth="1.5"
-          strokeLinejoin="round"
-        />
-        <path d="M0 0 L60 60" stroke="#c4540a" strokeWidth="1.3" opacity="0.7" />
-        <path d="M40 70 L60 60" stroke="#c4540a" strokeWidth="1.3" opacity="0.7" />
-        <path
-          d="M-30 -8 q-20 20 -50 18 M-40 4 q-26 14 -64 24 M-32 18 q-22 10 -56 32"
-          stroke="#f07828"
-          strokeWidth="1.4"
-          strokeLinecap="round"
-          fill="none"
-          opacity="0.55"
-        />
-      </g>
-
-      {/* Sparkles */}
-      <g fill="#ffa563" opacity="0.85">
-        <circle cx="120" cy="220" r="2.2" />
-        <circle cx="530" cy="120" r="2.5" />
-        <circle cx="80" cy="380" r="1.8" />
-        <circle cx="540" cy="430" r="2" />
-        <circle cx="280" cy="80" r="1.6" />
-        <circle cx="420" cy="430" r="1.8" />
-      </g>
-    </svg>
-  );
-}
-
-function PlaceholderLogo({ variant }: { variant: "cloud" | "bank" | "bolt" | "music" | "diamond" }) {
-  switch (variant) {
-    case "cloud":
-      return (
-        <svg width="44" height="32" viewBox="0 0 44 32" fill="none" aria-hidden>
-          <path
-            d="M11 26h22a7 7 0 0 0 1.5-13.84A10 10 0 0 0 15.5 9.5 8 8 0 0 0 11 26z"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinejoin="round"
-          />
-        </svg>
-      );
-    case "bank":
-      return (
-        <svg width="44" height="32" viewBox="0 0 44 32" fill="none" aria-hidden>
-          <path d="M22 4l18 8H4l18-8z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-          <path
-            d="M8 14v10M16 14v10M28 14v10M36 14v10M4 26h36"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-          />
-        </svg>
-      );
-    case "bolt":
-      return (
-        <svg width="34" height="34" viewBox="0 0 34 34" fill="none" aria-hidden>
-          <circle cx="17" cy="17" r="14" stroke="currentColor" strokeWidth="1.8" />
-          <path
-            d="M18 7l-7 11h6l-1 9 8-12h-6l1-8z"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinejoin="round"
-          />
-        </svg>
-      );
-    case "music":
-      return (
-        <svg width="34" height="34" viewBox="0 0 34 34" fill="none" aria-hidden>
-          <path d="M13 23V7l14-3v16" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-          <circle cx="11" cy="24" r="3.5" stroke="currentColor" strokeWidth="1.8" />
-          <circle cx="25" cy="21" r="3.5" stroke="currentColor" strokeWidth="1.8" />
-        </svg>
-      );
-    case "diamond":
-      return (
-        <svg width="34" height="34" viewBox="0 0 34 34" fill="none" aria-hidden>
-          <path
-            d="M17 4l11 9-11 17L6 13l11-9z"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinejoin="round"
-          />
-          <path d="M6 13h22M17 4v26" stroke="currentColor" strokeWidth="1.8" />
-        </svg>
-      );
-  }
-}

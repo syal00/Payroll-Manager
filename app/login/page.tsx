@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AlertCircle, Eye, EyeOff, Lock, Mail, Shield, Timer, Zap } from "lucide-react";
+import { LoginBrandIllustration } from "@/components/auth/LoginBrandIllustration";
 import { DEMO_ADMIN_PASSWORD } from "@/lib/demo-credentials";
 
 export default function LoginPage() {
@@ -40,40 +41,43 @@ export default function LoginPage() {
   return (
     <div className="login-root">
       <div className="login-brand">
-        <div className="login-brand-logo-row">
-          <div className="login-brand-logo-icon" aria-hidden>
-            <Zap className="h-5 w-5 text-white" strokeWidth={2.5} fill="white" />
-          </div>
-          <span className="login-brand-logo-name">{brand}</span>
-        </div>
-
-        <div className="login-brand-body">
-          <h1 className="login-brand-headline">
-            Intelligent Payroll,
-            <br />
-            Perfectly on <span>Autopilot</span>
-          </h1>
-          <p className="login-brand-desc">
-            Streamline your entire payroll lifecycle from hours-to-paycheck, eliminating spreadsheets and human error.
-          </p>
-
-          <div className="login-features">
-            <div className="login-feature">
-              <div className="login-feature-icon">
-                <Timer className="h-4 w-4" aria-hidden />
-              </div>
-              <span>Real-time timesheet visibility across your team</span>
+        <LoginBrandIllustration />
+        <div className="login-brand-content">
+          <div className="login-brand-logo-row">
+            <div className="login-brand-logo-icon" aria-hidden>
+              <Zap className="h-5 w-5 text-white" strokeWidth={2.5} fill="white" />
             </div>
-            <div className="login-feature">
-              <div className="login-feature-icon">
-                <Shield className="h-4 w-4" aria-hidden />
+            <span className="login-brand-logo-name">{brand}</span>
+          </div>
+
+          <div className="login-brand-body">
+            <h1 className="login-brand-headline">
+              Intelligent Payroll,
+              <br />
+              Perfectly on <span>Autopilot</span>
+            </h1>
+            <p className="login-brand-desc">
+              Streamline your entire payroll lifecycle from hours-to-paycheck, eliminating spreadsheets and human error.
+            </p>
+
+            <div className="login-features">
+              <div className="login-feature">
+                <div className="login-feature-icon">
+                  <Timer className="h-4 w-4" aria-hidden />
+                </div>
+                <span>Real-time timesheet visibility across your team</span>
               </div>
-              <span>Role-based access with a clean audit trail</span>
+              <div className="login-feature">
+                <div className="login-feature-icon">
+                  <Shield className="h-4 w-4" aria-hidden />
+                </div>
+                <span>Role-based access with a clean audit trail</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <p className="login-brand-footer">Encrypted session · Built for modern teams</p>
+          <p className="login-brand-footer">Encrypted session · Built for modern teams</p>
+        </div>
       </div>
 
       <div className="login-form-panel">

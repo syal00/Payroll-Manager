@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Mail, Shield, UserPlus, Zap } from "lucide-react";
+import { LoginBrandIllustration } from "@/components/auth/LoginBrandIllustration";
 
 export default function EmployeeAccessHubPage() {
   const brand = (process.env.NEXT_PUBLIC_COMPANY_NAME ?? "Syal Operations Group").toUpperCase();
@@ -7,41 +8,44 @@ export default function EmployeeAccessHubPage() {
   return (
     <div className="login-root">
       <div className="login-brand">
-        <div className="login-brand-logo-row">
-          <div className="login-brand-logo-icon" aria-hidden>
-            <Zap className="h-5 w-5 text-white" strokeWidth={2.5} fill="white" />
-          </div>
-          <span className="login-brand-logo-name">{brand}</span>
-        </div>
-
-        <div className="login-brand-body">
-          <h1 className="login-brand-headline">
-            Your Work,
-            <br />
-            Your Hours, <span>Your Pay</span>
-          </h1>
-          <p className="login-brand-desc">
-            Log into the employee portal with just your work email — no passwords to remember.
-            Submit hours, track approvals, and download payslips, all in one place.
-          </p>
-
-          <div className="login-features">
-            <div className="login-feature">
-              <div className="login-feature-icon">
-                <Mail className="h-4 w-4" aria-hidden />
-              </div>
-              <span>Sign in with your work email — no password required</span>
+        <LoginBrandIllustration />
+        <div className="login-brand-content">
+          <div className="login-brand-logo-row">
+            <div className="login-brand-logo-icon" aria-hidden>
+              <Zap className="h-5 w-5 text-white" strokeWidth={2.5} fill="white" />
             </div>
-            <div className="login-feature">
-              <div className="login-feature-icon">
-                <Shield className="h-4 w-4" aria-hidden />
+            <span className="login-brand-logo-name">{brand}</span>
+          </div>
+
+          <div className="login-brand-body">
+            <h1 className="login-brand-headline">
+              Your Work,
+              <br />
+              Your Hours, <span>Your Pay</span>
+            </h1>
+            <p className="login-brand-desc">
+              Log into the employee portal with just your work email — no passwords to remember.
+              Submit hours, track approvals, and download payslips, all in one place.
+            </p>
+
+            <div className="login-features">
+              <div className="login-feature">
+                <div className="login-feature-icon">
+                  <Mail className="h-4 w-4" aria-hidden />
+                </div>
+                <span>Sign in with your work email — no password required</span>
               </div>
-              <span>Your data is private to you and your payroll administrator</span>
+              <div className="login-feature">
+                <div className="login-feature-icon">
+                  <Shield className="h-4 w-4" aria-hidden />
+                </div>
+                <span>Your data is private to you and your payroll administrator</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <p className="login-brand-footer">Encrypted session · Employee privacy first</p>
+          <p className="login-brand-footer">Encrypted session · Employee privacy first</p>
+        </div>
       </div>
 
       <div className="login-form-panel">
