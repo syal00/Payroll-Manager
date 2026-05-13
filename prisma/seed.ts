@@ -3,11 +3,12 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { addDays } from "date-fns";
 import { nextEmployeeCode, normalizeEmployeeEmail } from "../lib/employee-code";
-import { DEMO_ADMIN_PASSWORD } from "../lib/demo-credentials";
+import { DEMO_ADMIN_PASSWORD, DEMO_CREDENTIALS } from "../lib/demo-credentials";
 
 const prisma = new PrismaClient();
 
 async function main() {
+  await prisma.demoRequest.deleteMany();
   await prisma.auditLog.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.payslipItem.deleteMany();
@@ -22,8 +23,8 @@ async function main() {
   /** Primary demo admins — upsert preserves behavior of the legacy `add-admins` helper if seed order changes. */
   const adminPwHash = await bcrypt.hash(DEMO_ADMIN_PASSWORD, 12);
   const primaryAdmins = [
-    { name: "Anmol Singh", email: "anmolchahal871@gmail.com" },
-    { name: "Rakesh Syal", email: "syalrakesh00@gmail.com" },
+    { name: "Operations Admin", email: DEMO_CREDENTIALS.admin.email },
+    { name: "Payroll Manager", email: DEMO_CREDENTIALS.manager.email },
   ] as const;
   const admin = await prisma.user.upsert({
     where: { email: primaryAdmins[0]!.email },
@@ -76,6 +77,7 @@ async function main() {
         overtimeRate: ot,
         department: "Operations",
         jobTitle: "Specialist",
+        isApproved: true,
       },
     });
     empUsers.push({ user, employee });
@@ -227,10 +229,16 @@ async function main() {
     },
   });
 
+  await prisma.setting.upsert({
+    where: { key: "tax_rate" },
+    create: { key: "tax_rate", value: "20" },
+    update: {},
+  });
+
   console.log("Seed complete.");
   console.log("Admins (same password for demo):");
-  console.log(`  Anmol Singh — anmolchahal871@gmail.com / ${DEMO_ADMIN_PASSWORD}`);
-  console.log(`  Rakesh Syal — syalrakesh00@gmail.com / ${DEMO_ADMIN_PASSWORD}`);
+  console.log(`  ${primaryAdmins[0]!.name} — ${primaryAdmins[0]!.email} / ${DEMO_ADMIN_PASSWORD}`);
+  console.log(`  ${primaryAdmins[1]!.name} — ${primaryAdmins[1]!.email} / ${DEMO_ADMIN_PASSWORD}`);
   console.log("Demo employees: register or use employee access with the same emails (optional legacy User login still works).");
 }
 

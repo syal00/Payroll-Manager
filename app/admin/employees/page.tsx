@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { dispatchAdminStatsRefresh } from "@/lib/admin-stats-refresh";
 
 type Row = {
   id: string;
@@ -13,6 +14,7 @@ type Row = {
   email: string;
   employeeCode: string;
   deletedAt: string | null;
+  isApproved?: boolean;
   timesheetCount: number;
   payslipCount: number;
   department: string | null;
@@ -36,6 +38,14 @@ export default function AdminEmployeesPage() {
   const [err, setErr] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Row | null>(null);
+  const [pendingRows, setPendingRows] = useState<Row[]>([]);
+
+  const loadPending = useCallback(() => {
+    fetch(`/api/admin/employees?status=pending`)
+      .then((r) => r.json())
+      .then((j) => setPendingRows((j.employees ?? []) as Row[]))
+      .catch(() => setPendingRows([]));
+  }, []);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -51,8 +61,59 @@ export default function AdminEmployeesPage() {
   }, [status]);
 
   useEffect(() => {
+    loadPending();
+  }, [loadPending]);
+
+  useEffect(() => {
     load();
   }, [load]);
+
+  async function approvePending(id: string) {
+    setPendingId(id);
+    setErr(null);
+    try {
+      const res = await fetch(`/api/admin/employees/${id}/approve`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "approve" }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setErr(data.error ?? "Approve failed");
+        return;
+      }
+      loadPending();
+      load();
+      dispatchAdminStatsRefresh();
+    } catch {
+      setErr("Network error");
+    } finally {
+      setPendingId(null);
+    }
+  }
+
+  async function rejectPending(id: string) {
+    setPendingId(id);
+    setErr(null);
+    try {
+      const res = await fetch(`/api/admin/employees/${id}/approve`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "reject" }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setErr(data.error ?? "Reject failed");
+        return;
+      }
+      loadPending();
+      dispatchAdminStatsRefresh();
+    } catch {
+      setErr("Network error");
+    } finally {
+      setPendingId(null);
+    }
+  }
 
   const filteredRows = rows.filter((r) => {
     const query = q.trim().toLowerCase();
@@ -76,6 +137,8 @@ export default function AdminEmployeesPage() {
       }
       setConfirmDelete(null);
       load();
+      loadPending();
+      dispatchAdminStatsRefresh();
     } catch {
       setErr("Network error");
     } finally {
@@ -93,6 +156,8 @@ export default function AdminEmployeesPage() {
         return;
       }
       load();
+      loadPending();
+      dispatchAdminStatsRefresh();
     } catch {
       setErr("Network error");
     } finally {
@@ -109,6 +174,46 @@ export default function AdminEmployeesPage() {
       >
         <Button className="h-11 rounded-xl shadow-md shadow-violet-500/20">Add employee</Button>
       </PageHeader>
+
+      {pendingRows.length > 0 && (
+        <Card className="rounded-2xl border-[var(--color-border)] !border-amber-200/80 !bg-amber-50/40 p-5">
+          <h2 className="text-base font-bold text-[var(--color-text-primary)]">Pending approvals</h2>
+          <p className="mt-1 text-sm text-slate-600">New self-registrations awaiting your decision.</p>
+          <ul className="mt-4 space-y-3">
+            {pendingRows.map((r) => (
+              <li
+                key={r.id}
+                className="flex flex-col gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div>
+                  <p className="font-semibold text-[var(--color-text-primary)]">{r.name}</p>
+                  <p className="text-xs text-slate-600">{r.email}</p>
+                  <p className="mt-1 font-mono text-xs font-bold text-[var(--color-accent-light)]">{r.employeeCode}</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    className="h-9 px-3 text-xs"
+                    disabled={pendingId === r.id}
+                    onClick={() => void approvePending(r.id)}
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="danger"
+                    className="h-9 px-3 text-xs"
+                    disabled={pendingId === r.id}
+                    onClick={() => void rejectPending(r.id)}
+                  >
+                    Reject
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       <Card className="rounded-2xl border-[var(--color-border)] !bg-[var(--color-bg-card)]/95 shadow-[0_4px_22px_rgba(15,23,42,0.05)] backdrop-blur-sm">
         <div className="flex flex-col gap-4">
@@ -195,6 +300,7 @@ export default function AdminEmployeesPage() {
               ) : (
                 filteredRows.map((r) => {
                   const isDeleted = Boolean(r.deletedAt);
+                  const needsApproval = r.isApproved === false && !isDeleted;
                   return (
                     <tr key={r.id} className="table-row table-row-muted">
                       <td className="px-4 py-3.5">
@@ -221,10 +327,12 @@ export default function AdminEmployeesPage() {
                       <td className="px-4 py-3.5">
                         {isDeleted ? (
                           <Badge variant="danger">Inactive</Badge>
+                        ) : needsApproval ? (
+                          <Badge variant="warning">Awaiting approval</Badge>
                         ) : r.timesheetCount > 0 ? (
                           <Badge variant="success">Active</Badge>
                         ) : (
-                          <Badge variant="warning">Pending</Badge>
+                          <Badge variant="warning">No timesheets</Badge>
                         )}
                       </td>
                       <td className="px-4 py-3.5 text-right">
@@ -243,7 +351,7 @@ export default function AdminEmployeesPage() {
                               disabled={pendingId === r.id}
                               onClick={() => setConfirmDelete(r)}
                             >
-                              Deactivate
+                              Archive
                             </Button>
                           ) : (
                             <Button
@@ -276,11 +384,11 @@ export default function AdminEmployeesPage() {
         >
           <Card className="modal w-full max-w-md !shadow-[var(--shadow-modal)] border-[var(--color-border)]">
             <h2 id="delete-employee-title" className="modal-title text-lg">
-              Deactivate employee?
+              Archive employee?
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-slate-600">
-              They won&apos;t be able to use the portal until restored. All timesheets, payslips, and audit
-              history stay on file.
+              This will archive {confirmDelete.name} and hide them from active employees. Their timesheet and payslip
+              history will be preserved. This cannot be undone easily.
             </p>
             <p className="mt-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-page-bg)] px-3 py-2 text-sm text-[var(--color-text-secondary)]">
               <span className="font-semibold">{confirmDelete.name}</span>
@@ -302,7 +410,7 @@ export default function AdminEmployeesPage() {
                 disabled={pendingId === confirmDelete.id}
                 onClick={confirmSoftDelete}
               >
-                {pendingId === confirmDelete.id ? "Workingâ€¦" : "Deactivate"}
+                {pendingId === confirmDelete.id ? "Working…" : "Archive employee"}
               </Button>
             </div>
           </Card>

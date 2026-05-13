@@ -1,6 +1,11 @@
 import { getSession, type SessionUser } from "@/lib/session";
 import { Role } from "@/lib/enums";
 
+/**
+ * Authenticated session for API routes. Prefer `requireAdmin` / `requireSession` / `requireEmployee`
+ * for consistent 401/403 handling; `verifyAuth` in `lib/auth.ts` wraps the same session lookup.
+ */
+
 export async function requireSession(): Promise<SessionUser> {
   const s = await getSession();
   if (!s) {

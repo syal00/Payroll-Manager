@@ -14,7 +14,7 @@ export async function POST(req: Request) {
 
     const employee = await prisma.employee.findUnique({
       where: { email },
-      select: { employeeCode: true, deletedAt: true },
+      select: { employeeCode: true, deletedAt: true, isApproved: true },
     });
 
     if (!employee) {
@@ -29,6 +29,16 @@ export async function POST(req: Request) {
         {
           error: "Your account has been deactivated. Please contact admin.",
           deactivated: true,
+        },
+        { status: 403 }
+      );
+    }
+
+    if (!employee.isApproved) {
+      return NextResponse.json(
+        {
+          error: "Your account is pending admin approval.",
+          pendingApproval: true,
         },
         { status: 403 }
       );

@@ -8,6 +8,7 @@ import { TimesheetStatusBadge } from "@/components/status-badges";
 import { shortDate, money } from "@/lib/format";
 import { TimesheetStatus } from "@/lib/enums";
 import { sumEntries } from "@/lib/timesheet-math";
+import { dispatchAdminStatsRefresh } from "@/lib/admin-stats-refresh";
 
 type Entry = {
   id: string;
@@ -58,9 +59,10 @@ export default function AdminTimesheetDetailPage({
   const [err, setErr] = useState<string | null>(null);
   const [comment, setComment] = useState("");
   const [rejectReason, setRejectReason] = useState("");
-  const [deduction, setDeduction] = useState("400");
+  const [deduction, setDeduction] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [taxPct, setTaxPct] = useState<number>(20);
 
   const [editNotes, setEditNotes] = useState("");
   const [editSummary, setEditSummary] = useState("");
@@ -91,6 +93,16 @@ export default function AdminTimesheetDetailPage({
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- reload when id changes only
   }, [id]);
+
+  useEffect(() => {
+    if (!ts || ts.status !== TimesheetStatus.APPROVED) return;
+    fetch("/api/admin/settings")
+      .then((r) => r.json())
+      .then((j) => {
+        if (typeof j.taxRate === "number") setTaxPct(j.taxRate);
+      })
+      .catch(() => {});
+  }, [ts]);
 
   useEffect(() => {
     if (!ts) return;
@@ -198,6 +210,7 @@ export default function AdminTimesheetDetailPage({
     setComment("");
     setRejectReason("");
     load();
+    dispatchAdminStatsRefresh();
   }
 
   async function genPayslip() {
@@ -205,12 +218,14 @@ export default function AdminTimesheetDetailPage({
     setMsg(null);
     setBusy(true);
     const d = parseFloat(deduction);
+    const payload =
+      deduction.trim() === "" || !Number.isFinite(d)
+        ? {}
+        : { deductionTotal: Math.max(0, d) };
     const res = await fetch(`/api/admin/timesheets/${id}/payslip`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        deductionTotal: Number.isFinite(d) && d >= 0 ? d : 0,
-      }),
+      body: JSON.stringify(payload),
     });
     const j = await res.json();
     setBusy(false);
@@ -219,6 +234,7 @@ export default function AdminTimesheetDetailPage({
       return;
     }
     setMsg("Payslip generated.");
+    dispatchAdminStatsRefresh();
     load();
     if (j.payslip?.id) {
       window.location.href = `/admin/payslips/${j.payslip.id}`;
@@ -538,7 +554,7 @@ export default function AdminTimesheetDetailPage({
             </p>
           ) : (
             <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
-              <div>
+              <div className="min-w-0 flex-1 space-y-2">
                 <label className="label-field" htmlFor="ts-deduction">
                   Total deductions (USD)
                 </label>
@@ -547,7 +563,12 @@ export default function AdminTimesheetDetailPage({
                   className="input-field mt-1.5 sm:w-44"
                   value={deduction}
                   onChange={(e) => setDeduction(e.target.value)}
+                  placeholder="Leave blank for auto"
                 />
+                <p className="text-xs text-slate-500">
+                  Note: Deductions are estimated at {taxPct}% including income tax and statutory contributions. Actual
+                  amounts may vary. Leave blank to use the configured rate on gross pay.
+                </p>
               </div>
               <Button disabled={busy} onClick={genPayslip}>
                 Generate payslip

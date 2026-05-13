@@ -14,7 +14,7 @@ export async function findEmployeeByCodeAnyStatus(employeeCode: string) {
 export async function getPublicEmployeeByCode(employeeCode: string) {
   const code = normalizeEmployeeCode(employeeCode);
   return prisma.employee.findFirst({
-    where: { employeeCode: code, deletedAt: null },
+    where: { employeeCode: code, deletedAt: null, isApproved: true },
     include: { user: true },
   });
 }

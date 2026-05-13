@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import * as jose from "jose";
+import { prisma } from "@/lib/prisma";
 
 const COOKIE_NAME = "hr_session";
 
@@ -11,11 +12,17 @@ export type SessionUser = {
 };
 
 export async function createSession(user: SessionUser) {
+  const dbUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { tokenVersion: true },
+  });
+  const tv = dbUser?.tokenVersion ?? 0;
   const secret = new TextEncoder().encode(getSecret());
   const token = await new jose.SignJWT({
     email: user.email,
     role: user.role,
     name: user.name,
+    tv,
   })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(user.id)
@@ -45,11 +52,19 @@ export async function getSession(): Promise<SessionUser | null> {
   try {
     const secret = new TextEncoder().encode(getSecret());
     const { payload } = await jose.jwtVerify(token, secret);
+    const id = payload.sub as string;
+    const tvClaim = Number(payload.tv ?? 0);
+    const dbUser = await prisma.user.findUnique({
+      where: { id },
+      select: { tokenVersion: true, email: true, role: true, name: true },
+    });
+    if (!dbUser) return null;
+    if (dbUser.tokenVersion !== tvClaim) return null;
     return {
-      id: payload.sub as string,
-      email: payload.email as string,
-      role: payload.role as "ADMIN" | "EMPLOYEE",
-      name: payload.name as string,
+      id,
+      email: dbUser.email,
+      role: dbUser.role as "ADMIN" | "EMPLOYEE",
+      name: dbUser.name,
     };
   } catch {
     return null;

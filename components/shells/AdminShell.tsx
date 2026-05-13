@@ -19,6 +19,8 @@ import {
   Zap,
   Search,
   Bell,
+  ClipboardList,
+  Inbox,
 } from "lucide-react";
 import { useState, type ReactNode, useMemo } from "react";
 import { Button } from "@/components/ui/Button";
@@ -35,6 +37,8 @@ const links = [
   { href: "/admin/payslips", label: "Payslips", icon: Receipt },
   { href: "/admin/history", label: "History", icon: History },
   { href: "/admin/reports", label: "Reports", icon: BarChart3 },
+  { href: "/admin/audit", label: "Audit log", icon: ClipboardList },
+  { href: "/admin/demo-requests", label: "Demo requests", icon: Inbox },
   { href: "/admin/profile", label: "Profile", icon: UserCircle },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];

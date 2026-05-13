@@ -47,6 +47,7 @@ export async function POST(req: Request) {
           email,
           hourlyRate: 28,
           overtimeRate: 42,
+          isApproved: false,
         },
       });
     });
@@ -61,8 +62,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       ok: true,
+      pendingApproval: true,
       employeeCode: employee.employeeCode,
-      redirect: `/employee/${employee.employeeCode}/dashboard`,
+      message: "Pending admin approval. You will be able to sign in after an administrator approves your profile.",
     });
   } catch (e) {
     if (e instanceof z.ZodError) {

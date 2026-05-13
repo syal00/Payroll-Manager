@@ -27,6 +27,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
         email: employee.email,
         employeeCode: employee.employeeCode,
         deletedAt: employee.deletedAt?.toISOString() ?? null,
+        isApproved: employee.isApproved,
         hourlyRate: employee.hourlyRate,
         overtimeRate: employee.overtimeRate,
         department: employee.department,
@@ -68,7 +69,7 @@ export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string 
 
     await writeAuditLog({
       actorId: session.id,
-      action: "EMPLOYEE_SOFT_DELETED",
+      action: "ARCHIVE_EMPLOYEE",
       entityType: "Employee",
       entityId: id,
       details: {

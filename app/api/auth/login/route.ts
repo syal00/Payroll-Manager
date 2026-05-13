@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { prismaDatabaseUnavailableMessage } from "@/lib/prisma-errors";
 import { createSession } from "@/lib/session";
+import { checkLoginRateLimit, clearLoginRateLimit, clientIpFromRequest } from "@/lib/login-rate-limit";
 import { z } from "zod";
 
 const schema = z.object({
@@ -11,7 +12,15 @@ const schema = z.object({
 });
 
 export async function POST(req: Request) {
+  const ip = clientIpFromRequest(req);
   try {
+    if (!checkLoginRateLimit(ip)) {
+      return NextResponse.json(
+        { error: "Too many login attempts. Try again in 15 minutes." },
+        { status: 429 }
+      );
+    }
+
     let json: unknown;
     try {
       json = await req.json();
@@ -42,6 +51,7 @@ export async function POST(req: Request) {
       role: "ADMIN",
       name: user.name,
     });
+    clearLoginRateLimit(ip);
     return NextResponse.json({
       ok: true,
       role: user.role,

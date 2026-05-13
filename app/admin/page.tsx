@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -14,6 +14,7 @@ import {
   Eye,
   CalendarPlus,
   FileOutput,
+  RefreshCw,
 } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { DashboardMetricCard } from "@/components/dashboard/DashboardMetricCard";
@@ -22,6 +23,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TimesheetStatusBadge } from "@/components/status-badges";
 import { shortDate } from "@/lib/format";
+import { ADMIN_STATS_REFRESH_EVENT } from "@/lib/admin-stats-refresh";
 
 type Stats = {
   totalEmployees: number;
@@ -64,26 +66,45 @@ export default function AdminDashboardPage() {
   const [data, setData] = useState<Stats | null>(null);
   const [deptCount, setDeptCount] = useState<number | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [statsRefreshing, setStatsRefreshing] = useState(false);
+
+  const loadStats = useCallback(async (opts?: { manual?: boolean }) => {
+    if (opts?.manual) setStatsRefreshing(true);
+    setErr(null);
+    try {
+      const [statsRes, empRes] = await Promise.all([
+        fetch("/api/admin/stats"),
+        fetch("/api/admin/employees?status=active"),
+      ]);
+      const j = await statsRes.json();
+      if (!statsRes.ok || j.error) {
+        setErr(j.error ?? "Failed to load");
+        setData(null);
+        return;
+      }
+      setData(j);
+      const empJ = await empRes.json();
+      const list = (empJ.employees ?? []) as EmpRow[];
+      const dept = new Set(list.map((e) => (e.department ?? "").trim()).filter(Boolean));
+      setDeptCount(dept.size);
+    } catch {
+      setErr("Failed to load");
+      setData(null);
+    } finally {
+      if (opts?.manual) setStatsRefreshing(false);
+    }
+  }, []);
 
   useEffect(() => {
-    fetch("/api/admin/stats")
-      .then((r) => r.json())
-      .then((j) => {
-        if (j.error) setErr(j.error);
-        else setData(j);
-      })
-      .catch(() => setErr("Failed to load"));
-    fetch("/api/admin/employees?status=active")
-      .then((r) => r.json())
-      .then((j) => {
-        const list = (j.employees ?? []) as EmpRow[];
-        const dept = new Set(
-          list.map((e) => (e.department ?? "").trim()).filter(Boolean),
-        );
-        setDeptCount(dept.size);
-      })
-      .catch(() => setDeptCount(null));
-  }, []);
+    void loadStats();
+    const interval = setInterval(() => void loadStats(), 30000);
+    const onRefresh = () => void loadStats();
+    window.addEventListener(ADMIN_STATS_REFRESH_EVENT, onRefresh);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener(ADMIN_STATS_REFRESH_EVENT, onRefresh);
+    };
+  }, [loadStats]);
 
   if (err) {
     return (
@@ -191,8 +212,18 @@ export default function AdminDashboardPage() {
       <PageHeader
         eyebrow="Overview"
         title="Payroll command center"
-        description="Operational clarity for approvals, payouts, and complianceâ€”minimal noise, decisive actions."
-      />
+        description="Operational clarity for approvals, payouts, and compliance—minimal noise, decisive actions."
+      >
+        <button
+          type="button"
+          className="icon-btn border border-[var(--color-border)] bg-[var(--color-bg-card)]"
+          aria-label="Refresh dashboard stats"
+          title="Refresh stats"
+          onClick={() => void loadStats({ manual: true })}
+        >
+          <RefreshCw className={`h-[18px] w-[18px] ${statsRefreshing ? "animate-spin" : ""}`} strokeWidth={2} />
+        </button>
+      </PageHeader>
 
       <div className="mb-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {cards.map((c) => (

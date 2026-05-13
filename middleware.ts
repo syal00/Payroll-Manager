@@ -6,6 +6,7 @@ const COOKIE_NAME = "hr_session";
 
 function isPublicPath(pathname: string) {
   if (pathname.startsWith("/api/auth/login") || pathname.startsWith("/api/auth/logout")) return true;
+  if (pathname.startsWith("/api/auth/forgot")) return true;
   if (pathname.startsWith("/api/public/")) return true;
   if (pathname === "/login" || pathname === "/employees") return true;
   if (pathname === "/employee-access" || pathname.startsWith("/employee-access/")) return true;
@@ -42,6 +43,10 @@ export async function middleware(request: NextRequest) {
 
   if (!token || !secret || secret.length < 32) {
     if (pathname.startsWith("/api/")) {
+      if (!secret || secret.length < 32) {
+        console.error("FATAL: AUTH_SECRET not set or too short");
+        return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
+      }
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     return NextResponse.redirect(new URL("/login", request.url));

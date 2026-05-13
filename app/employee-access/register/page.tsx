@@ -11,6 +11,7 @@ export default function EmployeeRegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [existsInfo, setExistsInfo] = useState<{ employeeCode: string; redirect: string } | null>(null);
   const [deactivated, setDeactivated] = useState(false);
+  const [pendingInfo, setPendingInfo] = useState<{ employeeCode: string; message: string } | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
@@ -18,6 +19,7 @@ export default function EmployeeRegisterPage() {
     setError(null);
     setExistsInfo(null);
     setDeactivated(false);
+    setPendingInfo(null);
     setLoading(true);
     try {
       const res = await fetch("/api/public/employees/register", {
@@ -37,6 +39,15 @@ export default function EmployeeRegisterPage() {
           data.error ??
             "This email belongs to a deactivated profile. Contact an administrator to restore access."
         );
+        return;
+      }
+      if (res.ok && data.pendingApproval) {
+        setPendingInfo({
+          employeeCode: data.employeeCode as string,
+          message:
+            (data.message as string) ??
+            "Your account is pending admin approval. You will be able to sign in after an administrator approves your profile.",
+        });
         return;
       }
       if (!res.ok) {
@@ -78,6 +89,16 @@ export default function EmployeeRegisterPage() {
                 role="alert"
               >
                 {error}
+              </div>
+            )}
+            {pendingInfo && (
+              <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-4 text-sm text-violet-950">
+                <p className="font-semibold">Pending admin approval</p>
+                <p className="mt-2 text-violet-900/90">{pendingInfo.message}</p>
+                <p className="mt-3 font-mono text-xs font-bold text-violet-950">Employee ID: {pendingInfo.employeeCode}</p>
+                <p className="mt-2 text-xs text-violet-800/90">
+                  Save this ID. An administrator must approve your profile before you can use the employee portal.
+                </p>
               </div>
             )}
             {existsInfo && (

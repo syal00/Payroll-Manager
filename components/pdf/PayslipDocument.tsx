@@ -117,7 +117,7 @@ export function PayslipDocument(p: PayslipPdfProps) {
           <Text>${p.grossPay.toFixed(2)}</Text>
         </View>
         <View style={styles.line}>
-          <Text>Total deductions</Text>
+          <Text>Total deductions (Est. tax & contributions)</Text>
           <Text>- ${p.totalDeductions.toFixed(2)}</Text>
         </View>
         <View style={styles.totalRow}>
@@ -137,7 +137,8 @@ export function PayslipDocument(p: PayslipPdfProps) {
         </View>
 
         <Text style={styles.footer}>
-          Generated electronically. This document is valid without signature unless local law requires
+          Deductions are estimates only. Consult your employer for exact figures. Generated electronically. This
+          document is valid without signature unless local law requires
           otherwise.
         </Text>
       </Page>

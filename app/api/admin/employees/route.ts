@@ -5,7 +5,7 @@ import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 
 const querySchema = z.object({
-  status: z.enum(["active", "deleted", "all"]).default("active"),
+  status: z.enum(["active", "deleted", "all", "pending"]).default("active"),
 });
 
 export async function GET(req: Request) {
@@ -15,7 +15,14 @@ export async function GET(req: Request) {
     const { status } = querySchema.parse(Object.fromEntries(url.searchParams.entries()));
 
     const where: Prisma.EmployeeWhereInput = {};
-    if (status === "active") where.deletedAt = null;
+    if (status === "active") {
+      where.deletedAt = null;
+      where.isApproved = true;
+    }
+    if (status === "pending") {
+      where.deletedAt = null;
+      where.isApproved = false;
+    }
     if (status === "deleted") where.deletedAt = { not: null };
 
     const employees = await prisma.employee.findMany({
@@ -34,6 +41,7 @@ export async function GET(req: Request) {
         email: e.email,
         employeeCode: e.employeeCode,
         deletedAt: e.deletedAt?.toISOString() ?? null,
+        isApproved: e.isApproved,
         department: e.department,
         jobTitle: e.jobTitle,
         timesheetCount: e._count.timesheets,

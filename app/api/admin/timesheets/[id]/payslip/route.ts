@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/api-auth";
+import { getTaxRatePercent } from "@/lib/app-settings";
 import { TimesheetStatus, PayslipItemType } from "@/lib/enums";
 import { writeAuditLog } from "@/lib/audit";
 import { z } from "zod";
@@ -13,8 +14,8 @@ const itemSchema = z.object({
 
 const bodySchema = z.object({
   extraDeductions: z.array(itemSchema).optional(),
-  /** Single aggregate deduction line (optional shortcut) */
-  deductionTotal: z.number().min(0).optional(),
+  /** Single aggregate deduction line (optional shortcut). Omit or null to use configured tax %. */
+  deductionTotal: z.number().min(0).nullable().optional(),
 });
 
 function nextPayslipNumber(): string {
@@ -52,6 +53,35 @@ export async function POST(
       return NextResponse.json({ error: "A payslip already exists for this timesheet." }, { status: 400 });
     }
 
+    if (ts.totalRegular + ts.totalOvertime === 0) {
+      return NextResponse.json(
+        {
+          error:
+            "No approved hours found for this employee in the selected period. Approve timesheets first before generating a payslip.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const overlap = await prisma.payslip.findFirst({
+      where: {
+        employeeId: ts.employeeId,
+        payPeriod: {
+          AND: [{ startDate: { lte: ts.payPeriod.endDate } }, { endDate: { gte: ts.payPeriod.startDate } }],
+        },
+      },
+      select: { id: true, payslipNumber: true },
+    });
+    if (overlap) {
+      return NextResponse.json(
+        {
+          error:
+            "A payslip already exists for this employee covering this period. Cancel the existing one first.",
+        },
+        { status: 409 }
+      );
+    }
+
     const { hourlyRate, overtimeRate } = ts.employee;
     const regPay = ts.totalRegular * hourlyRate;
     const otPay = ts.totalOvertime * overtimeRate;
@@ -62,18 +92,31 @@ export async function POST(
       { label: "Overtime earnings", amount: otPay, type: PayslipItemType.EARNING },
     ];
     const extra = body.extraDeductions ?? [];
-    const deductions =
-      extra.length > 0
-        ? extra.filter((i) => i.type === "DEDUCTION")
-        : body.deductionTotal != null && body.deductionTotal > 0
-          ? [
-              {
-                label: "Deductions (aggregate)",
-                amount: body.deductionTotal,
-                type: "DEDUCTION" as const,
-              },
-            ]
-          : [];
+    const taxPct = await getTaxRatePercent();
+    const taxRate = taxPct / 100;
+    let deductions: { label: string; amount: number; type: string }[] = [];
+    if (extra.length > 0) {
+      deductions = extra.filter((i) => i.type === "DEDUCTION");
+    } else if (body.deductionTotal != null && body.deductionTotal > 0) {
+      deductions = [
+        {
+          label: "Deductions (Est. tax & contributions)",
+          amount: body.deductionTotal,
+          type: "DEDUCTION" as const,
+        },
+      ];
+    } else {
+      const amt = Math.round(grossPay * taxRate * 100) / 100;
+      if (amt > 0) {
+        deductions = [
+          {
+            label: `Deductions (${taxPct}% est. tax & contributions)`,
+            amount: amt,
+            type: "DEDUCTION" as const,
+          },
+        ];
+      }
+    }
     const totalDeductions = deductions.reduce((s, i) => s + i.amount, 0);
     const netPay = grossPay - totalDeductions;
 
@@ -123,10 +166,10 @@ export async function POST(
 
     await writeAuditLog({
       actorId: session.id,
-      action: "PAYSLIP_GENERATED",
+      action: "GENERATE_PAYSLIP",
       entityType: "Payslip",
       entityId: payslip.id,
-      details: { timesheetId, payslipNumber: payslip.payslipNumber },
+      details: { timesheetId, payslipNumber: payslip.payslipNumber, netPay: payslip.netPay },
     });
 
     if (ts.employee.userId) {

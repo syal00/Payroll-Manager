@@ -1,16 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { ArrowRight, Check, Clock3, ShieldCheck } from "lucide-react";
+import { DemoRequestModal } from "@/components/marketing/DemoRequestModal";
 
 export default function LandingPage() {
   const router = useRouter();
+  const [demoOpen, setDemoOpen] = useState(false);
   const brand = process.env.NEXT_PUBLIC_COMPANY_NAME ?? "Syal Operations Group";
   const brandUpper = brand.toUpperCase();
-
-  function gotoLogin() {
-    router.push("/login");
-  }
 
   function gotoEmployee() {
     router.push("/employee-access");
@@ -18,6 +18,7 @@ export default function LandingPage() {
 
   return (
     <div className="landing-root">
+      <DemoRequestModal open={demoOpen} onClose={() => setDemoOpen(false)} />
       <nav className="landing-nav">
         <div className="landing-logo-row">
           <div className="landing-logo-icon" aria-hidden>
@@ -26,10 +27,10 @@ export default function LandingPage() {
           <span className="landing-logo-text nav-brand">{brandUpper}</span>
         </div>
         <div className="landing-nav-right">
-          <button type="button" className="landing-nav-signin btn-text" onClick={gotoLogin}>
+          <Link href="/login" className="landing-nav-signin btn-text">
             Sign in
-          </button>
-          <button type="button" className="landing-nav-cta btn-text" onClick={gotoLogin}>
+          </Link>
+          <button type="button" className="landing-nav-cta btn-text" onClick={() => setDemoOpen(true)}>
             Request a Demo
           </button>
         </div>
@@ -63,7 +64,7 @@ export default function LandingPage() {
           </ul>
 
           <div className="landing-cta-row">
-            <button type="button" className="landing-primary-cta btn-text" onClick={gotoLogin}>
+            <button type="button" className="landing-primary-cta btn-text" onClick={() => setDemoOpen(true)}>
               Book a Demo
               <ArrowRight className="h-4 w-4" strokeWidth={2.5} aria-hidden />
             </button>

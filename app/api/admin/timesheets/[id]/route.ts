@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/api-auth";
 import { writeAuditLog } from "@/lib/audit";
+import { validateTimesheetWorkDatePolicy } from "@/lib/timesheet-work-date-policy";
 import { sumEntries, validateDayEntry } from "@/lib/timesheet-math";
 import { normalizeEntryLocation } from "@/lib/timesheet-entry-fields";
 import { updateTimesheetEntryHours } from "@/lib/timesheet-entry-hours-update";
@@ -69,6 +70,8 @@ export async function PATCH(
         if (!existing) {
           return NextResponse.json({ error: "Invalid entry id in payload." }, { status: 400 });
         }
+        const dateErr = validateTimesheetWorkDatePolicy(existing.workDate);
+        if (dateErr) return NextResponse.json({ error: dateErr }, { status: 400 });
         const v = validateDayEntry({
           regularHours: row.regularHours,
           overtimeHours: row.overtimeHours,

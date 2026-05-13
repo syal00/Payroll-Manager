@@ -99,9 +99,16 @@ export async function POST(
       });
     }
 
+    const auditAction =
+      body.newStatus === "APPROVED"
+        ? "APPROVE_TIMESHEET"
+        : body.newStatus === "REJECTED"
+          ? "REJECT_TIMESHEET"
+          : "VERIFY_TIMESHEET";
+
     await writeAuditLog({
       actorId: session.id,
-      action: "TIMESHEET_STATUS_CHANGED",
+      action: auditAction,
       entityType: "Timesheet",
       entityId: id,
       details: {

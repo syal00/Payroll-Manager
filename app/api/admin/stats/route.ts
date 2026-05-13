@@ -13,7 +13,7 @@ export async function GET() {
       approvedSubmissions,
       generatedPayslips,
     ] = await Promise.all([
-      prisma.employee.count({ where: { deletedAt: null } }),
+      prisma.employee.count({ where: { deletedAt: null, isApproved: true } }),
       prisma.payPeriod.count({ where: { status: PayPeriodStatus.OPEN } }),
       prisma.timesheet.count({ where: { status: TimesheetStatus.PENDING } }),
       prisma.timesheet.count({ where: { status: TimesheetStatus.APPROVED } }),

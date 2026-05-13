@@ -6,6 +6,9 @@ import type { Prisma } from "@prisma/client";
 
 const querySchema = z.object({
   q: z.string().optional(),
+  action: z.string().optional(),
+  from: z.string().optional(),
+  to: z.string().optional(),
   page: z.coerce.number().min(1).default(1),
   pageSize: z.coerce.number().min(1).max(100).default(25),
 });
@@ -23,6 +26,21 @@ export async function GET(req: Request) {
         { action: { contains: q.q.trim() } },
         { entityType: { contains: q.q.trim() } },
       ];
+    }
+    if (q.action?.trim()) {
+      where.action = { equals: q.action.trim() };
+    }
+    if (q.from || q.to) {
+      const createdAt: Prisma.DateTimeFilter = {};
+      if (q.from) {
+        const t = Date.parse(q.from);
+        if (!Number.isNaN(t)) createdAt.gte = new Date(t);
+      }
+      if (q.to) {
+        const t = Date.parse(q.to);
+        if (!Number.isNaN(t)) createdAt.lte = new Date(t);
+      }
+      if (Object.keys(createdAt).length > 0) where.createdAt = createdAt;
     }
 
     const [items, total] = await Promise.all([

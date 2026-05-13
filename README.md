@@ -30,8 +30,8 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 
 Password for both admins: **`PayrollDemo2026!`** (from `lib/demo-credentials.ts`)
 
-- `syalrakesh00@gmail.com`
-- `anmolchahal871@gmail.com`
+- `admin@syaloperations.com`
+- `manager@syaloperations.com`
 
 ## Deploy on Vercel
 

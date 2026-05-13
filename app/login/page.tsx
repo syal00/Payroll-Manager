@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { AlertCircle, Eye, EyeOff, Lock, Mail, Shield, Timer, Zap } from "lucide-react";
 import { LoginBrandIllustration } from "@/components/auth/LoginBrandIllustration";
-import { DEMO_ADMIN_PASSWORD } from "@/lib/demo-credentials";
+import { DEMO_ADMIN_PASSWORD, DEMO_CREDENTIALS } from "@/lib/demo-credentials";
+import { ForgotAccessModal } from "@/components/auth/ForgotAccessModal";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -12,6 +13,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -40,6 +42,7 @@ export default function LoginPage() {
 
   return (
     <div className="login-root">
+      <ForgotAccessModal open={forgotOpen} onClose={() => setForgotOpen(false)} />
       <div className="login-brand">
         <LoginBrandIllustration />
         <div className="login-brand-content">
@@ -148,7 +151,13 @@ export default function LoginPage() {
             </div>
 
             <div className="login-forgot-row">
-              <span className="text-sm text-[var(--color-text-muted)]">Forgot access? Contact your payroll owner.</span>
+              <button
+                type="button"
+                className="text-sm text-[var(--color-accent-light)] underline decoration-[var(--color-accent-tint)] underline-offset-2 hover:text-[var(--color-accent)]"
+                onClick={() => setForgotOpen(true)}
+              >
+                Forgot access? Contact your payroll owner.
+              </button>
             </div>
 
             <button type="submit" className="login-submit btn-text" disabled={loading}>
@@ -186,10 +195,10 @@ export default function LoginPage() {
             </p>
             <ul className="mt-2 space-y-1 text-left text-xs">
               <li>
-                <code className="font-mono text-[var(--color-text-secondary)]">syalrakesh00@gmail.com</code>
+                <code className="font-mono text-[var(--color-text-secondary)]">{DEMO_CREDENTIALS.admin.email}</code>
               </li>
               <li>
-                <code className="font-mono text-[var(--color-text-secondary)]">anmolchahal871@gmail.com</code>
+                <code className="font-mono text-[var(--color-text-secondary)]">{DEMO_CREDENTIALS.manager.email}</code>
               </li>
             </ul>
             <p className="mt-2 text-[11px] text-[var(--color-text-muted)]">

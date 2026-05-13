@@ -21,6 +21,8 @@ export function resolveAdminPageTitle(pathname: string): string {
     ["/admin/pay-periods", "Pay periods"],
     ["/admin/timesheets", "Timesheets"],
     ["/admin/employees", "Employees"],
+    ["/admin/audit", "Audit log"],
+    ["/admin/demo-requests", "Demo requests"],
     ["/admin", "Dashboard"],
   ]);
 

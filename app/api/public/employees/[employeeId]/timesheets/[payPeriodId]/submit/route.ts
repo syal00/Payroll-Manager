@@ -7,6 +7,7 @@ import { normalizeEntryLocation } from "@/lib/timesheet-entry-fields";
 import { updateTimesheetEntryHours } from "@/lib/timesheet-entry-hours-update";
 import { writeAuditLog } from "@/lib/audit";
 import { validateTimesheetRowsAgainstPeriod } from "@/lib/timesheet-submit-validation";
+import { validateTimesheetWorkDatePolicy } from "@/lib/timesheet-work-date-policy";
 import { timesheetSaveRequestSchema } from "@/lib/timesheet-save-payload";
 import {
   readTimesheetJsonBody,
@@ -58,6 +59,11 @@ export async function POST(
     for (let i = 0; i < n; i++) {
       const v = validateDayEntry(body.entries[i]!);
       if (v) return NextResponse.json({ error: v }, { status: 400 });
+      const row = sortedExisting[i];
+      if (row) {
+        const dateErr = validateTimesheetWorkDatePolicy(row.workDate);
+        if (dateErr) return NextResponse.json({ error: dateErr }, { status: 400 });
+      }
     }
 
     const totals = sumEntries(body.entries);

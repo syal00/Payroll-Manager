@@ -97,14 +97,17 @@ export default function PublicPayslipDetailPage({
             <span className="tabular-nums">{money(p.grossPay)}</span>
           </div>
           <div className="flex justify-between text-slate-600">
-            <span>Deductions</span>
-            <span className="tabular-nums">âˆ’ {money(p.totalDeductions)}</span>
+            <span>Deductions (Est. tax & contributions)</span>
+            <span className="tabular-nums">− {money(p.totalDeductions)}</span>
           </div>
           <div className="flex justify-between border-t border-[var(--color-accent-tint)] pt-3 text-lg font-bold text-[var(--color-accent-light)]">
             <span>Net pay</span>
             <span className="tabular-nums">{money(p.netPay)}</span>
           </div>
         </div>
+        <p className="mt-4 text-xs text-slate-500">
+          * Deductions are estimates only. Consult your employer for exact figures.
+        </p>
         <p className="mt-5 border-t border-violet-50 pt-4 text-xs text-slate-500">
           Approved by {p.adminSignoff ?? "â€”"} Â· {p.approvalDate ? shortDate(p.approvalDate) : "â€”"}
         </p>
