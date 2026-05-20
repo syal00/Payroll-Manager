@@ -6,6 +6,8 @@ import { AlertCircle, Eye, EyeOff, Lock, Mail, Shield, Timer, Zap } from "lucide
 import { LoginBrandIllustration } from "@/components/auth/LoginBrandIllustration";
 import { DEMO_ADMIN_PASSWORD, DEMO_CREDENTIALS } from "@/lib/demo-credentials";
 import { ForgotAccessModal } from "@/components/auth/ForgotAccessModal";
+import { LoginBrandTrustCard } from "@/components/auth/LoginBrandTrustCard";
+import { isDevEnvironment } from "@/lib/dev-mode";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -77,6 +79,8 @@ export default function LoginPage() {
                 <span>Role-based access with a clean audit trail</span>
               </div>
             </div>
+
+            <LoginBrandTrustCard />
           </div>
 
           <p className="login-brand-footer">Encrypted session · Built for modern teams</p>
@@ -195,27 +199,28 @@ export default function LoginPage() {
             Continue to employee portal
           </Link>
 
-          <div className="login-signup-row text-balance">
-            <p className="font-medium text-[var(--color-text-secondary)]">Demo admin accounts (after seed)</p>
-            <p className="mt-2 text-xs leading-relaxed">
-              Password for both:{" "}
-              <code className="rounded bg-[var(--color-accent-soft)] border border-[var(--color-accent-tint)] px-1.5 py-0.5 font-mono font-semibold text-[var(--color-accent-light)]">
-                {DEMO_ADMIN_PASSWORD}
-              </code>
-            </p>
-            <ul className="mt-2 space-y-1 text-left text-xs">
-              <li>
-                <code className="font-mono text-[var(--color-text-secondary)]">{DEMO_CREDENTIALS.admin.email}</code>
-              </li>
-              <li>
-                <code className="font-mono text-[var(--color-text-secondary)]">{DEMO_CREDENTIALS.manager.email}</code>
-              </li>
-            </ul>
-            <p className="mt-2 text-[11px] text-[var(--color-text-muted)]">
-              Production (Vercel): demo admins are created on each deploy. For full sample data, run{" "}
-              <code className="font-mono">npm run setup</code> locally against the same database.
-            </p>
-          </div>
+          {isDevEnvironment() ? (
+            <div className="login-signup-row text-balance">
+              <p className="font-medium text-[var(--color-text-secondary)]">Development — demo admin accounts</p>
+              <p className="mt-2 text-xs leading-relaxed">
+                Password for both:{" "}
+                <code className="rounded border border-[var(--color-border)] bg-[var(--color-bg-primary)] px-1.5 py-0.5 font-mono font-semibold text-[var(--color-accent)]">
+                  {DEMO_ADMIN_PASSWORD}
+                </code>
+              </p>
+              <ul className="mt-2 space-y-1 text-left text-xs">
+                <li>
+                  <code className="font-mono text-[var(--color-text-secondary)]">{DEMO_CREDENTIALS.admin.email}</code>
+                </li>
+                <li>
+                  <code className="font-mono text-[var(--color-text-secondary)]">{DEMO_CREDENTIALS.manager.email}</code>
+                </li>
+              </ul>
+              <p className="mt-2 text-[11px] text-[var(--color-text-muted)]">
+                Run <code className="font-mono">npm run setup</code> locally for full sample data.
+              </p>
+            </div>
+          ) : null}
 
           <div className="login-back-home">
             <Link href="/" className="login-back-home-link">

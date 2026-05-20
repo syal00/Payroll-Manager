@@ -67,6 +67,7 @@ export function AdminShell({
   const topBarOrg = (header?.organization ?? brand).toUpperCase();
   const topBarSubtitle = header?.roleTitle ?? "Admin Panel";
   const pageTitle = resolveAdminPageTitle(pathname);
+  const isDashboardHome = pathname === "/admin";
 
   const formattedDate = useMemo(
     () =>
@@ -115,7 +116,7 @@ export function AdminShell({
 
   return (
     <div className="root-layout">
-      <aside className="sidebar relative hidden md:flex">
+      <aside className="sidebar sidebar-gradient relative hidden md:flex">
         <div className="relative z-10 w-full shrink-0">
           <div className="sidebar-logo-area">
             <div className="sidebar-logo-icon shrink-0" aria-hidden>
@@ -148,56 +149,60 @@ export function AdminShell({
       </aside>
 
       <div className="main-wrapper">
-        <header className="topbar flex md:hidden">
-          <div className="topbar-left min-w-0">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)] max-md:hidden">
-              {topBarOrg}
-            </span>
-            <span className="topbar-greeting topbar-greeting-mobile truncate text-base">{pageTitle}</span>
-          </div>
-          <button
-            type="button"
-            className="icon-btn border-0"
-            aria-label={open ? "Close menu" : "Open menu"}
-            aria-expanded={open}
-            onClick={() => setOpen((o) => !o)}
-          >
-            {open ? <X className="h-5 w-5" strokeWidth={2} /> : <Menu className="h-5 w-5" strokeWidth={2} />}
-          </button>
-        </header>
-
-        <header className="topbar topbar-slim hidden md:flex lg:hidden">
-          <div className="topbar-left min-w-0 flex-1">
-            <span className="topbar-greeting truncate text-sm font-semibold">{pageTitle}</span>
-          </div>
-        </header>
-
-        <header className="topbar hidden lg:flex">
-          <div className="topbar-left min-w-0">
-            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--color-accent)]">{topBarOrg}</span>
-            <span className="topbar-greeting truncate text-[17px]">{pageTitle}</span>
-            <span className="topbar-date text-[11px] text-[var(--color-text-muted)]">{formattedDate}</span>
-          </div>
-          <div className="topbar-search mx-4 hidden max-w-md flex-1 xl:flex" role="search">
-            <Search className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" aria-hidden strokeWidth={2} />
-            <input type="search" readOnly placeholder="Search payroll, employees, periods…" tabIndex={-1} aria-label="Search (placeholder)" />
-          </div>
-          <div className="topbar-right ml-auto flex items-center gap-1 sm:gap-2">
+        <header className={`topbar ${isDashboardHome ? "topbar-dashboard" : ""}`}>
+          {/* Mobile: title + menu only */}
+          <div className="topbar-mobile flex w-full items-center justify-between gap-3 md:hidden">
+            <div className="min-w-0">
+              <span className="topbar-eyebrow">{topBarOrg}</span>
+              <p className="topbar-greeting-mobile truncate text-base font-semibold text-[var(--color-text-primary)]">
+                {isDashboardHome ? "Payroll Command Center" : pageTitle}
+              </p>
+            </div>
             <button
               type="button"
-              className="icon-btn hidden md:flex"
-              aria-label="Notifications"
+              className="icon-btn shrink-0 border-0"
+              aria-label={open ? "Close menu" : "Open menu"}
+              aria-expanded={open}
+              onClick={() => setOpen((o) => !o)}
             >
-              <Bell className="h-[18px] w-[18px]" strokeWidth={2} />
+              {open ? <X className="h-5 w-5" strokeWidth={2} /> : <Menu className="h-5 w-5" strokeWidth={2} />}
             </button>
-            <UserMenu userName={userName} emailHint={userEmail} onLogout={() => void logout()} />
+          </div>
+
+          {/* Tablet/desktop: single header row */}
+          <div className="topbar-desktop hidden w-full items-center gap-4 md:flex">
+            <div className="topbar-left min-w-0 shrink-0">
+              <span className="topbar-eyebrow">{topBarOrg}</span>
+              <h1 className={isDashboardHome ? "topbar-dashboard-title" : "topbar-page-title"}>
+                {isDashboardHome ? "Payroll Command Center" : pageTitle}
+              </h1>
+              <time className="topbar-date" dateTime={new Date().toISOString().slice(0, 10)}>
+                {formattedDate}
+              </time>
+            </div>
+            <div className="topbar-search mx-2 hidden min-w-0 max-w-md flex-1 lg:flex" role="search">
+              <Search className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" aria-hidden strokeWidth={2} />
+              <input
+                type="search"
+                readOnly
+                placeholder="Search payroll, employees, periods…"
+                tabIndex={-1}
+                aria-label="Search (placeholder)"
+              />
+            </div>
+            <div className="topbar-right ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
+              <button type="button" className="icon-btn hidden md:flex" aria-label="Notifications">
+                <Bell className="h-[18px] w-[18px]" strokeWidth={2} />
+              </button>
+              <UserMenu userName={userName} emailHint={userEmail} onLogout={() => void logout()} />
+            </div>
           </div>
         </header>
 
         {open ? (
           <div className="mobile-shell-drawer md:hidden" role="dialog" aria-modal="true">
             <button type="button" className="mobile-shell-drawer-backdrop" aria-label="Close menu" onClick={() => setOpen(false)} />
-            <aside className="mobile-shell-drawer-panel sidebar flex flex-col">
+            <aside className="mobile-shell-drawer-panel sidebar sidebar-gradient flex flex-col">
               <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-4">
                 <div className="flex min-w-0 items-center gap-2">
                   <div className="sidebar-logo-icon !h-9 !w-9 shrink-0">

@@ -24,7 +24,7 @@ export function resolveAdminPageTitle(pathname: string): string {
     ["/admin/employees", "Employees"],
     ["/admin/audit", "Audit log"],
     ["/admin/demo-requests", "Demo requests"],
-    ["/admin", "Dashboard"],
+    ["/admin", "Payroll Command Center"],
   ]);
 
   let best = "Dashboard";

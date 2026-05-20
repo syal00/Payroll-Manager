@@ -1,8 +1,9 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
+import { staggerContainer } from "@/lib/motion";
 import {
   Users,
   CalendarRange,
@@ -16,7 +17,6 @@ import {
   FileOutput,
   RefreshCw,
 } from "lucide-react";
-import { PageHeader } from "@/components/dashboard/PageHeader";
 import { DashboardMetricCard } from "@/components/dashboard/DashboardMetricCard";
 import { PayrollNetTrendChart, HoursTrendChart } from "@/components/dashboard/DashboardCharts";
 import { Card } from "@/components/ui/Card";
@@ -63,6 +63,7 @@ type EmpRow = {
 };
 
 export default function AdminDashboardPage() {
+  const reduceMotion = useReducedMotion();
   const [data, setData] = useState<Stats | null>(null);
   const [deptCount, setDeptCount] = useState<number | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -158,7 +159,6 @@ export default function AdminDashboardPage() {
       hint: "Active roster size",
       icon: Users,
       trend: metricTrend,
-      gradient: "violet" as const,
     },
     {
       label: "Pending Timesheets",
@@ -167,7 +167,6 @@ export default function AdminDashboardPage() {
       hint: "Needs review queue",
       icon: ClipboardClock,
       trend: "Live",
-      gradient: "indigo" as const,
     },
     {
       label: "Approved Hours",
@@ -176,7 +175,6 @@ export default function AdminDashboardPage() {
       hint: "Payroll-ready entries",
       icon: Timer,
       trend: "Stable",
-      gradient: "violet" as const,
     },
     {
       label: "Current Pay Period",
@@ -184,8 +182,7 @@ export default function AdminDashboardPage() {
       href: "/admin/pay-periods",
       hint: "Open schedules",
       icon: CalendarRange,
-      trend: "â€”",
-      gradient: "indigo" as const,
+      trend: "—",
     },
     {
       label: "Payroll Processed",
@@ -194,42 +191,44 @@ export default function AdminDashboardPage() {
       hint: "Payslips generated",
       icon: Wallet,
       trend: "MTD",
-      gradient: "fuchsia" as const,
     },
     {
       label: "Active Departments",
-      value: deptCount ?? "â€”",
+      value: deptCount ?? "—",
       href: "/admin/employees",
       hint: "Unique department tags",
       icon: Building2,
-      trend: deptCount === null ? "â€”" : "Org",
-      gradient: "violet" as const,
+      trend: deptCount === null ? "—" : "Org",
     },
   ];
 
   return (
     <div className="page-container">
-      <PageHeader
-        eyebrow="Overview"
-        title="Payroll command center"
-        description="Operational clarity for approvals, payouts, and compliance—minimal noise, decisive actions."
-      >
+      <div className="admin-dashboard-intro mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <p className="page-description max-w-2xl">
+          Operational clarity for approvals, payouts, and compliance—minimal noise, decisive actions.
+        </p>
         <button
           type="button"
-          className="icon-btn border border-[var(--color-border)] bg-[var(--color-bg-card)]"
+          className="icon-btn shrink-0"
           aria-label="Refresh dashboard stats"
           title="Refresh stats"
           onClick={() => void loadStats({ manual: true })}
         >
           <RefreshCw className={`h-[18px] w-[18px] ${statsRefreshing ? "animate-spin" : ""}`} strokeWidth={2} />
         </button>
-      </PageHeader>
+      </div>
 
-      <div className="mb-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <motion.div
+        className="mb-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
+        variants={reduceMotion ? undefined : staggerContainer}
+        initial={reduceMotion ? false : "hidden"}
+        animate={reduceMotion ? false : "visible"}
+      >
         {cards.map((c) => (
           <DashboardMetricCard key={c.label} {...c} />
         ))}
-      </div>
+      </motion.div>
 
       <motion.section
         className="mb-10 grid gap-5 lg:grid-cols-2"
@@ -237,7 +236,7 @@ export default function AdminDashboardPage() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.08 }}
       >
-        <Card className="border-[var(--color-border)] !bg-[var(--color-bg-card)]/90 backdrop-blur-sm">
+        <Card className="ui-panel">
           <div className="card-header !mb-1">
             <div>
               <h2 className="card-heading text-base">Weekly payroll pulse</h2>
@@ -246,7 +245,7 @@ export default function AdminDashboardPage() {
           </div>
           <PayrollNetTrendChart data={chartPayslip} />
         </Card>
-        <Card className="border-[var(--color-border)] !bg-[var(--color-bg-card)]/90 backdrop-blur-sm">
+        <Card className="ui-panel">
           <div className="card-header !mb-1">
             <div>
               <h2 className="card-heading text-base">Hours throughput</h2>
@@ -257,10 +256,10 @@ export default function AdminDashboardPage() {
         </Card>
       </motion.section>
 
-      <div className="mb-10 rounded-2xl border border-[var(--color-border)] bg-gradient-to-br from-[var(--color-bg-card)] via-[var(--color-bg-card)] to-[var(--color-accent-soft)] p-5 shadow-[0_4px_24px_rgba(0,0,0,0.4)] backdrop-blur-sm sm:p-6">
+      <div className="dashboard-cta-band mb-10 sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-accent-light)]">Quick actions</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-accent-warm)]">Quick actions</p>
             <p className="mt-1 text-sm text-[var(--color-text-secondary)]">Jump into the highest-impact workflows.</p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -300,7 +299,7 @@ export default function AdminDashboardPage() {
               <p className="card-subtitle">Awaiting routing through review</p>
             </div>
             <Link href="/admin/timesheets" className="link-accent shrink-0 text-sm font-semibold">
-              Full queue â†’
+              Full queue →
             </Link>
           </div>
           <div className="table-wrap mt-6">
@@ -327,10 +326,10 @@ export default function AdminDashboardPage() {
                     <tr key={row.id} className="table-row table-row-muted">
                       <td className="px-4 py-3 font-semibold text-[var(--color-text-primary)]">{row.employee.name}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-sm text-[var(--color-text-secondary)]">
-                        {row.submittedAt ? shortDate(row.submittedAt) : "â€”"}
+                        {row.submittedAt ? shortDate(row.submittedAt) : "—"}
                       </td>
                       <td className="table-num px-4 py-3 text-[var(--color-text-secondary)]">
-                        {typeof row.totalHours === "number" ? `${row.totalHours}h` : "â€”"}
+                        {typeof row.totalHours === "number" ? `${row.totalHours}h` : "—"}
                       </td>
                       <td className="px-4 py-3">
                         <TimesheetStatusBadge status={row.status} />
@@ -358,7 +357,7 @@ export default function AdminDashboardPage() {
               <p className="card-subtitle">Administrative trace for sign-offs</p>
             </div>
             <Link href="/admin/history" className="link-accent text-sm font-semibold">
-              Audit log â†’
+              Audit log →
             </Link>
           </div>
           <ul className="space-y-3 text-sm">
@@ -377,11 +376,11 @@ export default function AdminDashboardPage() {
                   <span className="mt-2 flex flex-wrap items-center gap-2 text-xs text-[var(--color-text-muted)]">
                     <span className="font-medium text-[var(--color-text-secondary)]">{a.admin.name}</span>
                     <span aria-hidden className="text-slate-300">
-                      Â·
+                      ·
                     </span>
                     <TimesheetStatusBadge status={a.newStatus} />
                     <span aria-hidden className="text-slate-300">
-                      Â·
+                      ·
                     </span>
                     {shortDate(a.createdAt)}
                   </span>
@@ -399,7 +398,7 @@ export default function AdminDashboardPage() {
             <p className="card-subtitle">Latest payouts generated from approved hours</p>
           </div>
           <Link href="/admin/payslips" className="link-accent shrink-0 text-sm font-semibold">
-            View library â†’
+            View library →
           </Link>
         </div>
         <div className="table-wrap">
@@ -416,7 +415,7 @@ export default function AdminDashboardPage() {
               {data.recentPayslips.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-4 py-12 text-center text-sm text-[var(--color-text-muted)]">
-                    No payslips yet â€” approve validated timesheets to generate pay artifacts.
+                    No payslips yet — approve validated timesheets to generate pay artifacts.
                   </td>
                 </tr>
               ) : (
