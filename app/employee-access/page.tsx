@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { ArrowRight, Mail, Shield, UserPlus, Zap } from "lucide-react";
+import { ArrowRight, Mail, Shield, UserPlus } from "lucide-react";
 import { LoginBrandIllustration } from "@/components/auth/LoginBrandIllustration";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 
 export default function EmployeeAccessHubPage() {
   const brand = (process.env.NEXT_PUBLIC_COMPANY_NAME ?? "Syal Operations Group").toUpperCase();
@@ -10,12 +11,16 @@ export default function EmployeeAccessHubPage() {
       <div className="login-brand">
         <LoginBrandIllustration />
         <div className="login-brand-content">
-          <div className="login-brand-logo-row">
-            <div className="login-brand-logo-icon" aria-hidden>
-              <Zap className="h-5 w-5 text-white" strokeWidth={2.5} fill="white" />
-            </div>
-            <span className="login-brand-logo-name">{brand}</span>
-          </div>
+          <BrandLogo
+            size={44}
+            showTag={false}
+            nameLine1={brand}
+            wrapperClassName="login-brand-logo-row"
+            imageClassName="brand-logo-img login-brand-logo-img"
+            textWrapperClassName="login-brand-logo-text"
+            nameClassName="login-brand-logo-name"
+            tagClassName="login-brand-logo-tag"
+          />
 
           <div className="login-brand-body">
             <h1 className="login-brand-headline">
@@ -54,10 +59,16 @@ export default function EmployeeAccessHubPage() {
           <div className="login-mobile-hero-overlay" />
         </div>
         <div className="login-mobile-brand-bar md:hidden">
-          <div className="login-brand-logo-icon h-9 w-9 shrink-0" aria-hidden>
-            <Zap className="h-5 w-5 text-white" strokeWidth={2.5} fill="white" />
-          </div>
-          <span className="login-mobile-brand-name">{brand}</span>
+          <BrandLogo
+            size={36}
+            showTag={false}
+            nameLine1={brand}
+            wrapperClassName="login-brand-logo-row"
+            imageClassName="brand-logo-img login-brand-logo-img"
+            nameClassName="login-mobile-brand-name"
+            showText
+            textWrapperClassName="min-w-0"
+          />
         </div>
         <div className="login-form-box">
           <p className="login-form-eyebrow small-label">Employee Portal</p>

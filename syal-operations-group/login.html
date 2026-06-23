@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In — Syal Operations Group</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/login.css">
+</head>
+<body>
+
+  <canvas id="particles" aria-hidden="true"></canvas>
+  <div class="glow-orb glow-orb--1" aria-hidden="true"></div>
+  <div class="glow-orb glow-orb--2" aria-hidden="true"></div>
+  <div class="glow-orb glow-orb--3" aria-hidden="true"></div>
+
+  <div class="page-wrap login-page">
+    <div class="login-layout">
+
+      <!-- Branding panel -->
+      <div class="login-brand login-stagger">
+        <a href="index.html" class="logo">
+          <div class="logo-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+            </svg>
+          </div>
+          <span class="logo-name">Syal Operations Group</span>
+        </a>
+
+        <h1 class="login-brand__headline">Welcome back.</h1>
+        <p class="login-brand__subtitle">Your payroll command center is ready.</p>
+
+        <div class="login-brand__pills">
+          <span class="login-pill">
+            <span class="login-pill__icon" aria-hidden="true">⚡</span>
+            Instant payroll runs
+          </span>
+          <span class="login-pill">
+            <span class="login-pill__icon" aria-hidden="true">🔒</span>
+            Secure &amp; audited
+          </span>
+          <span class="login-pill">
+            <span class="login-pill__icon" aria-hidden="true">📊</span>
+            Live dashboards
+          </span>
+        </div>
+      </div>
+
+      <!-- Login card -->
+      <div class="login-card">
+        <h2 class="login-card__title">Sign in to your account</h2>
+        <p class="login-card__subtitle">Enter your credentials to access the admin portal.</p>
+
+        <div class="social-btns">
+          <button type="button" class="social-btn" aria-label="Sign in with Google">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Continue with Google
+          </button>
+          <button type="button" class="social-btn" aria-label="Sign in with Microsoft">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="1" y="1" width="10" height="10" fill="#F25022"/>
+              <rect x="13" y="1" width="10" height="10" fill="#7FBA00"/>
+              <rect x="1" y="13" width="10" height="10" fill="#00A4EF"/>
+              <rect x="13" y="13" width="10" height="10" fill="#FFB900"/>
+            </svg>
+            Continue with Microsoft
+          </button>
+        </div>
+
+        <div class="login-divider" role="separator">or continue with email</div>
+
+        <form id="login-form" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="email">Email address</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              class="form-input"
+              placeholder="you@company.com"
+              autocomplete="email"
+              required
+            >
+            <p class="form-error" id="email-error" role="alert"></p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="password">Password</label>
+            <div class="form-input-wrap">
+              <input
+                type="password"
+                id="password"
+                name="password"
+                class="form-input form-input--password"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+                required
+              >
+              <button
+                type="button"
+                class="password-toggle"
+                id="password-toggle"
+                aria-label="Show password"
+              >
+                <svg id="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <svg id="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="display:none">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </div>
+            <p class="form-error" id="password-error" role="alert"></p>
+          </div>
+
+          <div class="form-row">
+            <label class="form-checkbox">
+              <input type="checkbox" name="remember" id="remember">
+              Remember me
+            </label>
+            <a href="#" class="form-forgot">Forgot password?</a>
+          </div>
+
+          <button type="submit" class="btn-submit" id="submit-btn">
+            <span class="btn-submit__text">Sign in →</span>
+            <span class="btn-submit__spinner" aria-hidden="true"></span>
+          </button>
+        </form>
+
+        <p class="login-card__footer">
+          Don't have an account? <a href="index.html#cta">Request access</a>
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="js/particles.js"></script>
+  <script src="js/login.js"></script>
+</body>
+</html>

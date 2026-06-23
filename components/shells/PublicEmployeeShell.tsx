@@ -11,9 +11,9 @@ import {
   Users,
   Menu,
   X,
-  Zap,
   Search,
 } from "lucide-react";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { useState, type ReactNode, useMemo } from "react";
 
 export function PublicEmployeeShell({
@@ -87,9 +87,12 @@ export function PublicEmployeeShell({
       <aside className="sidebar relative hidden md:flex">
         <div className="relative z-10 w-full shrink-0">
           <div className="sidebar-logo-area">
-            <div className="sidebar-logo-icon shrink-0" aria-hidden>
-              <Zap className="h-[16px] w-[16px] text-white" strokeWidth={2.5} fill="white" />
-            </div>
+            <BrandLogo
+              size={38}
+              showText={false}
+              wrapperClassName="shrink-0"
+              imageClassName="brand-logo-img sidebar-logo-img"
+            />
             <div className="min-w-0 flex-1">
               <div className="sidebar-logo-text leading-tight">{brand}</div>
               <div className="sidebar-brand-sub mt-1 text-[11px] font-medium leading-snug text-[var(--color-text-muted)]">
@@ -159,9 +162,12 @@ export function PublicEmployeeShell({
             <aside className="mobile-shell-drawer-panel sidebar flex flex-col">
               <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-4">
                 <div className="flex min-w-0 items-center gap-2">
-                  <div className="sidebar-logo-icon !h-9 !w-9 shrink-0">
-                    <Zap className="h-4 w-4 text-white" aria-hidden strokeWidth={2.5} fill="white" />
-                  </div>
+                  <BrandLogo
+                    size={36}
+                    showText={false}
+                    wrapperClassName="shrink-0"
+                    imageClassName="brand-logo-img sidebar-logo-img"
+                  />
                   <span className="truncate font-display text-[15px] font-extrabold uppercase tracking-[1.4px] text-white">
                     {brand}
                   </span>

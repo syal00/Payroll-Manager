@@ -9,10 +9,15 @@ function isPublicPath(pathname: string) {
   if (pathname.startsWith("/api/auth/login") || pathname.startsWith("/api/auth/logout")) return true;
   if (pathname.startsWith("/api/auth/forgot")) return true;
   if (pathname.startsWith("/api/public/")) return true;
-  if (pathname === "/login" || pathname === "/employees") return true;
+  if (pathname === "/login" || pathname === "/admin/login" || pathname === "/employees") return true;
   if (pathname === "/employee-access" || pathname.startsWith("/employee-access/")) return true;
   if (pathname === "/employee" || pathname.startsWith("/employee/")) return true;
   return false;
+}
+
+function withPathname(response: NextResponse, pathname: string) {
+  response.headers.set("x-pathname", pathname);
+  return response;
 }
 
 export async function middleware(request: NextRequest) {
@@ -26,7 +31,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isPublicPath(pathname)) {
-    return NextResponse.next();
+    return withPathname(NextResponse.next(), pathname);
   }
 
   if (!token || !secret || secret.length < 32) {
@@ -45,7 +50,7 @@ export async function middleware(request: NextRequest) {
     const { payload } = await jose.jwtVerify(token, key);
     const role = payload.role as string;
 
-    if (pathname === "/login") {
+    if (pathname === "/login" || pathname === "/admin/login") {
       if (isStaffRole(role)) {
         return NextResponse.redirect(new URL("/admin", request.url));
       }
@@ -56,7 +61,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/employee-access", request.url));
     }
 
-    return NextResponse.next();
+    return withPathname(NextResponse.next(), pathname);
   } catch (_e: unknown) {
     void _e;
     if (pathname.startsWith("/api/")) {

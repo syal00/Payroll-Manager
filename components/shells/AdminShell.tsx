@@ -1,50 +1,14 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  Users,
-  Clock3,
-  CalendarDays,
-  ClipboardCheck,
-  Receipt,
-  History,
-  BarChart3,
-  UserCircle,
-  UserCog,
-  Settings,
-  LogOut,
-  Menu,
-  X,
-  Zap,
-  Search,
-  Bell,
-  ClipboardList,
-  Inbox,
-} from "lucide-react";
-import { useState, type ReactNode, useMemo } from "react";
-import { Button } from "@/components/ui/Button";
+import { useEffect, useState, type ReactNode } from "react";
 import type { AdminShellHeader } from "@/lib/admin-header";
 import { resolveAdminPageTitle } from "@/lib/admin-nav";
-import { UserMenu } from "@/components/dashboard/UserMenu";
+import { usePathname } from "next/navigation";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { Topbar } from "@/components/layout/Topbar";
 import { AdminMobileFab } from "@/components/dashboard/AdminMobileFab";
 
-const allNavLinks = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard, mainAdminOnly: false },
-  { href: "/admin/employees", label: "Employees", icon: Users, mainAdminOnly: false },
-  { href: "/admin/timesheets", label: "Timesheets", icon: Clock3, mainAdminOnly: false },
-  { href: "/admin/pay-periods", label: "Pay periods", icon: CalendarDays, mainAdminOnly: false },
-  { href: "/admin/review", label: "Review", icon: ClipboardCheck, mainAdminOnly: false },
-  { href: "/admin/payslips", label: "Payslips", icon: Receipt, mainAdminOnly: false },
-  { href: "/admin/history", label: "History", icon: History, mainAdminOnly: false },
-  { href: "/admin/reports", label: "Reports", icon: BarChart3, mainAdminOnly: false },
-  { href: "/admin/audit", label: "Audit log", icon: ClipboardList, mainAdminOnly: true },
-  { href: "/admin/demo-requests", label: "Demo requests", icon: Inbox, mainAdminOnly: true },
-  { href: "/admin/managers", label: "Managers", icon: UserCog, mainAdminOnly: true },
-  { href: "/admin/profile", label: "Profile", icon: UserCircle, mainAdminOnly: false },
-  { href: "/admin/settings", label: "Settings", icon: Settings, mainAdminOnly: true },
-] as const;
+const SIDEBAR_COLLAPSED_KEY = "sidebar-collapsed";
 
 export function AdminShell({
   userName,
@@ -56,188 +20,69 @@ export function AdminShell({
   userName: string;
   userEmail?: string;
   header?: AdminShellHeader;
-  /** Main Admin sees tenant-wide settings, audit, demo requests, manager assignment. Staff (including managers) share payroll workflows scoped to role. */
   isMainAdmin?: boolean;
   children: ReactNode;
 }) {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  const brand = (process.env.NEXT_PUBLIC_COMPANY_NAME ?? "Syal Operations Group").toUpperCase();
-  const topBarOrg = (header?.organization ?? brand).toUpperCase();
-  const topBarSubtitle = header?.roleTitle ?? "Admin Panel";
+  useEffect(() => {
+    const stored = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
+    if (stored === "true") setCollapsed(true);
+  }, []);
+
+  const userRole = header?.roleTitle ?? "Admin Panel";
   const pageTitle = resolveAdminPageTitle(pathname);
-  const isDashboardHome = pathname === "/admin";
-
-  const formattedDate = useMemo(
-    () =>
-      new Intl.DateTimeFormat(undefined, {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }).format(new Date()),
-    [],
-  );
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
     window.location.href = "/login";
   }
 
-  const links = useMemo(
-    () => allNavLinks.filter((l) => isMainAdmin || !l.mainAdminOnly),
-    [isMainAdmin],
-  );
+  function toggleSidebar() {
+    if (window.matchMedia("(max-width: 1199px)").matches) {
+      setMobileOpen((o) => !o);
+      return;
+    }
+    setCollapsed((c) => {
+      const next = !c;
+      localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(next));
+      return next;
+    });
+  }
 
-  const navContent = (
-    <>
-      <p className="sidebar-section-label">Workspace</p>
-      <nav className="sidebar-nav flex flex-1 flex-col gap-0.5" aria-label="Admin">
-        {links.map(({ href, label, icon: Icon }) => {
-          const isRoot = href === "/admin";
-          const isActive = isRoot ? pathname === "/admin" : pathname === href || pathname.startsWith(`${href}/`);
-          return (
-            <Link
-              key={href}
-              href={href}
-              title={label}
-              onClick={() => setOpen(false)}
-              className={`sidebar-item ${isActive ? "active" : ""}`}
-            >
-              <Icon className="nav-icon" aria-hidden strokeWidth={2} />
-              <span className="sidebar-item-label">{label}</span>
-            </Link>
-          );
-        })}
-      </nav>
-    </>
-  );
+  const layoutClass = [
+    "root-layout",
+    collapsed ? "sidebar-collapsed" : "",
+    mobileOpen ? "sidebar-open" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
-    <div className="root-layout">
-      <aside className="sidebar sidebar-gradient relative hidden md:flex">
-        <div className="relative z-10 w-full shrink-0">
-          <div className="sidebar-logo-area">
-            <div className="sidebar-logo-icon shrink-0" aria-hidden>
-              <Zap className="h-[16px] w-[16px] text-white" strokeWidth={2.5} fill="white" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="sidebar-logo-text leading-tight">{brand}</div>
-              <div className="sidebar-brand-sub mt-1 text-[11px] font-medium leading-snug text-[var(--color-text-muted)]">
-                {topBarSubtitle}
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="relative z-10 flex min-h-0 w-full flex-1 flex-col px-0">{navContent}</div>
-        <div className="relative z-10 mt-auto flex w-full flex-col gap-1 border-t border-white/[0.06] px-3 py-3">
-          <p className="sidebar-user-name truncate px-1 text-[12px] font-semibold text-[var(--color-sidebar-text-active)]">
-            {userName}
-          </p>
-          <button
-            type="button"
-            className="sidebar-item border-0 bg-transparent text-left !text-[var(--color-sidebar-text)] hover:!text-white"
-            onClick={() => {
-              void logout();
-            }}
-          >
-            <LogOut className="nav-icon" aria-hidden strokeWidth={2} />
-            <span className="sidebar-item-label">Sign out</span>
-          </button>
-        </div>
-      </aside>
+    <div className={layoutClass}>
+      <Sidebar
+        mobileOpen={mobileOpen}
+        onCloseMobile={() => setMobileOpen(false)}
+        userName={userName}
+        userRole={userRole}
+        isMainAdmin={isMainAdmin}
+        onLogout={() => void logout()}
+      />
 
       <div className="main-wrapper">
-        <header className={`topbar ${isDashboardHome ? "topbar-dashboard" : ""}`}>
-          {/* Mobile: title + menu only */}
-          <div className="topbar-mobile flex w-full items-center justify-between gap-3 md:hidden">
-            <div className="min-w-0">
-              <span className="topbar-eyebrow">{topBarOrg}</span>
-              <p className="topbar-greeting-mobile truncate text-base font-semibold text-[var(--color-text-primary)]">
-                {isDashboardHome ? "Payroll Command Center" : pageTitle}
-              </p>
-            </div>
-            <button
-              type="button"
-              className="icon-btn shrink-0 border-0"
-              aria-label={open ? "Close menu" : "Open menu"}
-              aria-expanded={open}
-              onClick={() => setOpen((o) => !o)}
-            >
-              {open ? <X className="h-5 w-5" strokeWidth={2} /> : <Menu className="h-5 w-5" strokeWidth={2} />}
-            </button>
-          </div>
-
-          {/* Tablet/desktop: single header row */}
-          <div className="topbar-desktop hidden w-full items-center gap-4 md:flex">
-            <div className="topbar-left min-w-0 shrink-0">
-              <span className="topbar-eyebrow">{topBarOrg}</span>
-              <h1 className={isDashboardHome ? "topbar-dashboard-title" : "topbar-page-title"}>
-                {isDashboardHome ? "Payroll Command Center" : pageTitle}
-              </h1>
-              <time className="topbar-date" dateTime={new Date().toISOString().slice(0, 10)}>
-                {formattedDate}
-              </time>
-            </div>
-            <div className="topbar-search mx-2 hidden min-w-0 max-w-md flex-1 lg:flex" role="search">
-              <Search className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" aria-hidden strokeWidth={2} />
-              <input
-                type="search"
-                readOnly
-                placeholder="Search payroll, employees, periods…"
-                tabIndex={-1}
-                aria-label="Search (placeholder)"
-              />
-            </div>
-            <div className="topbar-right ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
-              <button type="button" className="icon-btn hidden md:flex" aria-label="Notifications">
-                <Bell className="h-[18px] w-[18px]" strokeWidth={2} />
-              </button>
-              <UserMenu userName={userName} emailHint={userEmail} onLogout={() => void logout()} />
-            </div>
-          </div>
-        </header>
-
-        {open ? (
-          <div className="mobile-shell-drawer md:hidden" role="dialog" aria-modal="true">
-            <button type="button" className="mobile-shell-drawer-backdrop" aria-label="Close menu" onClick={() => setOpen(false)} />
-            <aside className="mobile-shell-drawer-panel sidebar sidebar-gradient flex flex-col">
-              <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-4">
-                <div className="flex min-w-0 items-center gap-2">
-                  <div className="sidebar-logo-icon !h-9 !w-9 shrink-0">
-                    <Zap className="h-4 w-4 text-white" aria-hidden strokeWidth={2.5} fill="white" />
-                  </div>
-                  <span className="truncate font-display text-[15px] font-extrabold uppercase tracking-[1.4px] text-white">{brand}</span>
-                </div>
-                <button
-                  type="button"
-                  className="icon-btn"
-                  aria-label="Close menu"
-                  onClick={() => setOpen(false)}
-                >
-                  <X className="h-5 w-5" strokeWidth={2} />
-                </button>
-              </div>
-              <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-0">{navContent}</div>
-              <div className="border-t border-[var(--color-border)] px-4 py-4">
-                <p className="text-sm font-semibold text-[var(--color-text-primary)]">{userName}</p>
-                <Button
-                  variant="ghost"
-                  className="btn-ghost mt-2 !justify-start px-2 !text-[var(--color-text-secondary)] hover:!bg-[var(--color-accent-soft)] hover:!text-[var(--color-text-primary)]"
-                  onClick={logout}
-                >
-                  <LogOut className="h-4 w-4" />
-                  Sign out
-                </Button>
-              </div>
-            </aside>
-          </div>
-        ) : null}
+        <Topbar
+          onToggleSidebar={toggleSidebar}
+          userName={userName}
+          userEmail={userEmail}
+          pageTitle={pageTitle}
+          onLogout={() => void logout()}
+        />
 
         <AdminMobileFab />
 
-        <main className="page-content page-body">{children}</main>
+        <main className="page-content page-body page-dashboard">{children}</main>
       </div>
     </div>
   );

@@ -1,16 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Manrope } from "next/font/google";
+import { Inter } from "next/font/google";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { ThemeScript } from "@/components/theme/ThemeScript";
 import "./globals.css";
 
 const inter = Inter({
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-inter",
-  display: "swap",
-});
-
-const manrope = Manrope({
-  subsets: ["latin"],
-  variable: "--font-manrope",
   display: "swap",
 });
 
@@ -18,12 +15,16 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  themeColor: "#f7f3ec",
+  themeColor: "#0B1426",
 };
 
 export const metadata: Metadata = {
   title: "Syal Operations Group — Intelligent Payroll",
   description: "Streamline your payroll lifecycle",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -44,14 +45,15 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${manrope.variable} h-full`}
+      className={`${inter.variable} h-full`}
       suppressHydrationWarning
     >
       <body
-        className={`${inter.variable} ${manrope.variable} min-h-full antialiased font-sans`}
+        className={`${inter.variable} min-h-full antialiased font-sans`}
         suppressHydrationWarning
       >
-        {children}
+        <ThemeScript />
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );

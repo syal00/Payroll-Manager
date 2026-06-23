@@ -40,9 +40,9 @@ export function UserMenu({
         aria-expanded={open}
         aria-haspopup="menu"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] px-2 py-1.5 pl-3 pr-2 text-left transition hover:border-[var(--color-accent-tint)] hover:bg-[var(--color-accent-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-accent)] focus-visible:outline-offset-2"
+        className="flex items-center gap-2 rounded-xl border border-[var(--elite-border)] bg-[var(--elite-surface)] px-2 py-1.5 pl-3 pr-2 text-left transition hover:border-[var(--elite-accent-tint)] hover:bg-[var(--elite-accent-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--elite-accent)] focus-visible:outline-offset-2"
       >
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--color-accent-hover)] to-[var(--color-accent-deep)] text-xs font-bold text-white">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--elite-accent)] text-xs font-bold text-white">
           {initials || "A"}
         </span>
         <span className="hidden min-w-0 text-left md:block">

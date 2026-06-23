@@ -2,12 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Bell, Palette, Shield, Sparkles, UserCog } from "lucide-react";
+import { Bell, Moon, Palette, Shield, Sparkles, Sun, UserCog } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { useTheme } from "@/components/theme/ThemeProvider";
+import type { ThemeMode } from "@/lib/theme";
 
 export default function AdminSettingsPage() {
+  const { theme, setTheme } = useTheme();
   const [taxRate, setTaxRate] = useState("20");
   const [taxMsg, setTaxMsg] = useState<string | null>(null);
   const [taxErr, setTaxErr] = useState<string | null>(null);
@@ -143,14 +146,33 @@ export default function AdminSettingsPage() {
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--color-accent-soft)] border border-[var(--color-accent-tint)] text-[var(--color-accent-light)]">
               <Palette className="h-5 w-5" strokeWidth={2} aria-hidden />
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <h2 className="text-base font-bold text-[var(--color-text-primary)]">Appearance</h2>
               <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-                Density and contrast presets follow system defaults automatically in this rollout.
+                Choose light or dark mode for the admin workspace. Your preference is saved on this device.
               </p>
-              <span className="mt-4 inline-flex items-center rounded-full bg-[var(--color-bg-elevated)] px-3 py-1 text-xs font-semibold text-[var(--color-text-muted)]">
-                Premium light theme enforced
-              </span>
+              <div className="mt-4 inline-flex rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-secondary)] p-1">
+                {(
+                  [
+                    { id: "light" as ThemeMode, label: "Light", icon: Sun },
+                    { id: "dark" as ThemeMode, label: "Dark", icon: Moon },
+                  ] as const
+                ).map(({ id, label, icon: Icon }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setTheme(id)}
+                    className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                      theme === id
+                        ? "bg-[var(--elite-accent)] text-[#0b1426] shadow-sm"
+                        : "text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" strokeWidth={2} aria-hidden />
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </Card>
