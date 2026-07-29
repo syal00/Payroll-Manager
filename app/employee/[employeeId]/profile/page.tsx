@@ -13,7 +13,8 @@ export default function PublicProfilePage({
   const { employeeId } = use(params);
   const [emp, setEmp] = useState<{
     name: string;
-    email: string;
+    username: string;
+    contactEmail: string;
     employeeCode: string;
     hourlyRate: number;
     overtimeRate: number;
@@ -67,8 +68,12 @@ export default function PublicProfilePage({
             <dd className="text-right font-semibold text-[var(--color-text-primary)]">{emp.name}</dd>
           </div>
           <div className="flex justify-between gap-4 border-b border-violet-50 pb-3">
-            <dt className="text-slate-500">Email</dt>
-            <dd className="text-right text-[var(--color-text-secondary)]">{emp.email}</dd>
+            <dt className="text-slate-500">Username</dt>
+            <dd className="font-mono text-right text-[var(--color-text-secondary)]">{emp.username}</dd>
+          </div>
+          <div className="flex justify-between gap-4 border-b border-violet-50 pb-3">
+            <dt className="text-slate-500">Contact email</dt>
+            <dd className="text-right text-[var(--color-text-secondary)]">{emp.contactEmail}</dd>
           </div>
           <div className="flex justify-between gap-4 border-b border-violet-50 pb-3">
             <dt className="text-slate-500">Employee ID</dt>

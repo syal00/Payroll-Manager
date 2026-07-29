@@ -16,22 +16,22 @@ const STEPS: {
   {
     num: "I",
     meta: "Step one",
-    title: "Bring your week in.",
-    desc: "Employees submit timesheets. Managers see entries in real time — no chasing, no gaps.",
+    title: "Employees submit hours.",
+    desc: "Staff log regular, overtime, and leave hours for the current pay period through the employee portal.",
     icon: ClipboardList,
   },
   {
     num: "II",
     meta: "Step two",
-    title: "Reconcile, with eyes open.",
-    desc: "Route submissions through review with role-based sign-offs and a full audit trail.",
+    title: "Managers review and approve.",
+    desc: "Admins and managers check submissions, move them through review, and approve hours before payroll runs.",
     icon: Eye,
   },
   {
     num: "III",
     meta: "Step three",
-    title: "Run, sign, send.",
-    desc: "Generate payslips from approved hours, dual-authorize the run, and distribute with confidence.",
+    title: "Generate and distribute payslips.",
+    desc: "Create payslips from approved timesheets, then employees download PDF copies from their dashboard.",
     icon: Send,
   },
 ];
@@ -49,11 +49,11 @@ export function ProtocolSection() {
             custom={0}
             variants={landingReveal}
           >
-            <p className="lp-overline">The Syal Protocol</p>
+            <p className="lp-overline">How it works</p>
             <h2 className="lp-display mt-6 text-[clamp(2rem,5vw,3.25rem)]">
-              How it <em className="lp-copper-italic">works</em>
+              From hours to <em className="lp-copper-italic">payslip</em>
             </h2>
-            <p className="lp-protocol-time">~37 min average run time</p>
+            <p className="lp-protocol-time">Three steps, one workspace</p>
           </motion.div>
 
           <div className="lp-protocol-steps">

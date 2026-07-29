@@ -1,19 +1,19 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { normalizeEmployeeEmail } from "@/lib/employee-code";
+import { normalizeContactEmail } from "@/lib/email-deliverable";
 import { z } from "zod";
 
 const bodySchema = z.object({
-  email: z.string().trim().email("Enter a valid email").max(320),
+  contactEmail: z.string().trim().email("Enter a valid email").max(320),
 });
 
 export async function POST(req: Request) {
   try {
     const body = bodySchema.parse(await req.json());
-    const email = normalizeEmployeeEmail(body.email);
+    const contactEmail = normalizeContactEmail(body.contactEmail);
 
     const employee = await prisma.employee.findUnique({
-      where: { email },
+      where: { contactEmail },
       select: { employeeCode: true, deletedAt: true, isApproved: true },
     });
 

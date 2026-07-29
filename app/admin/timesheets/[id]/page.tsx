@@ -31,11 +31,12 @@ type Timesheet = {
   entries: Entry[];
   employee: {
     name: string;
-    email: string;
+    username: string;
+    contactEmail: string;
     employeeCode: string;
     hourlyRate: number;
     overtimeRate: number;
-    user: { name: string; email: string } | null;
+    user: { name: string; username: string; contactEmail: string } | null;
   };
   payPeriod: { name: string | null; startDate: string; endDate: string };
   payslip: { id: string; payslipNumber: string } | null;
@@ -301,7 +302,9 @@ export default function AdminTimesheetDetailPage({
           <p className="page-description mt-1">
             <span className="font-mono font-semibold text-[var(--color-text-secondary)]">{ts.employee.employeeCode}</span>
             <span className="text-slate-300"> Â· </span>
-            {ts.employee.email}
+            {ts.employee.username}
+            <span className="text-slate-300"> · </span>
+            {ts.employee.contactEmail}
           </p>
         </div>
         <div className="shrink-0 self-start rounded-xl border border-[var(--color-accent-tint)] bg-[var(--color-accent-soft)]/50 px-3 py-2">

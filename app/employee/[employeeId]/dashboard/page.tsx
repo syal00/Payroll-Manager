@@ -12,7 +12,8 @@ type DashboardPayload = {
   employee: {
     id: string;
     name: string;
-    email: string;
+    username: string;
+    contactEmail: string;
     employeeCode: string;
   };
   currentPeriod: { id: string; name: string | null; startDate: string; endDate: string } | null;
@@ -87,7 +88,9 @@ export default function PublicEmployeeDashboardPage({
           <p className="page-description mt-2 font-mono text-[var(--color-text-secondary)]">
             <span className="font-semibold">{data.employee.employeeCode}</span>
             <span> · </span>
-            <span>{data.employee.email}</span>
+            <span>{data.employee.username}</span>
+            <span> · </span>
+            <span>{data.employee.contactEmail}</span>
           </p>
         </div>
       </div>

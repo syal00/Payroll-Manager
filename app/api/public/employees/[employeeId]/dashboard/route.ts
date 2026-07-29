@@ -64,7 +64,8 @@ export async function GET(
       employee: {
         id: emp.id,
         name: emp.name,
-        email: emp.email,
+        username: emp.username,
+        contactEmail: emp.contactEmail,
         employeeCode: emp.employeeCode,
         hourlyRate: emp.hourlyRate,
         overtimeRate: emp.overtimeRate,

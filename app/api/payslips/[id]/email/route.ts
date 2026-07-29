@@ -29,7 +29,8 @@ export async function POST(
     }
 
     const company = process.env.NEXT_PUBLIC_COMPANY_NAME ?? "Company";
-    const to = payslip.employee.email;
+    // Deliver to contactEmail only — username is a login handle, never routable mail.
+    const to = payslip.employee.contactEmail;
     const subject = `${company} — Payslip ${payslip.payslipNumber}`;
     const body = `Hello ${payslip.employee.name},
 

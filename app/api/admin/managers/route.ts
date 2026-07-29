@@ -1,38 +1,48 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { requireMainAdmin } from "@/lib/api-auth";
+import { requireMainAdmin, resolveCompanyId } from "@/lib/api-auth";
+import { isSuperAdminRole } from "@/lib/roles";
 import { Role } from "@/lib/enums";
 import { writeAuditLog } from "@/lib/audit";
+import { validateEmailDeliverable, emailValidationMessage } from "@/lib/email-validation";
+import { createStaffUser } from "@/lib/staff-account";
 import { z } from "zod";
+import type { Prisma } from "@prisma/client";
 
 const createSchema = z.object({
-  email: z.string().trim().email().max(320),
-  name: z.string().trim().min(1).max(120),
+  firstName: z.string().trim().min(1).max(60),
+  lastName: z.string().trim().min(1).max(60),
+  contactEmail: z.string().trim().email().max(320),
   password: z.string().min(8).max(128),
+  companyId: z.string().trim().min(1).optional(),
 });
 
 export async function GET() {
   try {
-    await requireMainAdmin();
+    const session = await requireMainAdmin();
+    const where: Prisma.UserWhereInput = { role: Role.MANAGER };
+    if (!isSuperAdminRole(session.role)) where.companyId = session.companyId;
     const managers = await prisma.user.findMany({
-      where: { role: Role.MANAGER },
+      where,
       orderBy: { createdAt: "asc" },
       select: {
         id: true,
-        email: true,
+        username: true,
+        contactEmail: true,
         name: true,
         createdAt: true,
-        createdBy: { select: { id: true, email: true, name: true } },
+        createdBy: { select: { id: true, username: true, contactEmail: true, name: true } },
       },
     });
     return NextResponse.json({
       managers: managers.map((m) => ({
         id: m.id,
-        email: m.email,
+        username: m.username,
+        contactEmail: m.contactEmail,
         name: m.name,
         createdAt: m.createdAt.toISOString(),
-        createdByEmail: m.createdBy?.email ?? null,
+        createdByUsername: m.createdBy?.username ?? null,
       })),
     });
   } catch (e) {
@@ -45,26 +55,24 @@ export async function POST(req: Request) {
   try {
     const session = await requireMainAdmin();
     const body = createSchema.parse(await req.json());
-    const email = body.email.toLowerCase();
 
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) {
+    const deliverable = await validateEmailDeliverable(body.contactEmail);
+    if (!deliverable.valid) {
       return NextResponse.json(
-        { error: "An account with this email already exists. Use a different email or reset access another way." },
-        { status: 409 }
+        { error: emailValidationMessage(deliverable.reason), reason: deliverable.reason },
+        { status: 400 }
       );
     }
 
     const passwordHash = await bcrypt.hash(body.password, 12);
-    const user = await prisma.user.create({
-      data: {
-        email,
-        name: body.name,
-        passwordHash,
-        role: Role.MANAGER,
-        createdById: session.id,
-      },
-      select: { id: true, email: true, name: true, createdAt: true },
+    const user = await createStaffUser({
+      firstName: body.firstName,
+      lastName: body.lastName,
+      contactEmail: body.contactEmail,
+      passwordHash,
+      role: Role.MANAGER,
+      companyId: resolveCompanyId(session, body.companyId),
+      createdById: session.id,
     });
 
     await writeAuditLog({
@@ -72,14 +80,15 @@ export async function POST(req: Request) {
       action: "MANAGER_ACCOUNT_CREATED",
       entityType: "User",
       entityId: user.id,
-      details: { email: user.email, name: user.name },
+      details: { username: user.username, contactEmail: user.contactEmail, name: user.name },
     });
 
     return NextResponse.json({
       ok: true,
       manager: {
         id: user.id,
-        email: user.email,
+        username: user.username,
+        contactEmail: user.contactEmail,
         name: user.name,
         createdAt: user.createdAt.toISOString(),
       },
@@ -89,6 +98,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Validation failed", issues: e.issues }, { status: 400 });
     }
     const err = e as Error & { status?: number };
-    return NextResponse.json({ error: err.message }, { status: err.status ?? 500 });
+    const message = err.message ?? "Server error";
+    const status = message.includes("already exists") ? 409 : (err.status ?? 500);
+    return NextResponse.json({ error: message }, { status });
   }
 }

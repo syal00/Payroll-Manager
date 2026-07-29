@@ -18,7 +18,13 @@ type PayPeriod = {
   approvedCount: number;
 };
 
-export function DashboardPayPeriodCard({ period }: { period: PayPeriod }) {
+export function DashboardPayPeriodCard({
+  period,
+  payPeriodsPath = "/admin/pay-periods",
+}: {
+  period: PayPeriod;
+  payPeriodsPath?: string | null;
+}) {
   const title = period.name ?? "Current pay period";
 
   return (
@@ -58,13 +64,15 @@ export function DashboardPayPeriodCard({ period }: { period: PayPeriod }) {
             <span className="dash-pay-period-stat-value">{period.payslipCount}</span>
             <span className="dash-pay-period-stat-label">Payslips</span>
           </div>
-          <Link
-            href="/admin/pay-periods"
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--elite-accent)] hover:underline"
-          >
-            Manage
-            <ArrowRight className="h-4 w-4" aria-hidden />
-          </Link>
+          {payPeriodsPath ? (
+            <Link
+              href={payPeriodsPath}
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--elite-accent)] hover:underline"
+            >
+              Manage
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </Link>
+          ) : null}
         </div>
       </div>
     </Card>

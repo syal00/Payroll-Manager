@@ -11,36 +11,61 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+model Company {
+  id           String   @id @default(uuid())
+  name         String
+  slug         String   @unique
+  logoUrl      String?  @map("logo_url")
+  primaryColor String?  @map("primary_color")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  users     User[]
+  employees Employee[]
+}
+
 model User {
   id                String    @id @default(cuid())
-  email             String    @unique
+  username          String    @unique
+  contactEmail      String    @unique @map("contact_email")
   passwordHash      String
   name              String
-  role              String // MAIN_ADMIN | MANAGER | EMPLOYEE (legacy ADMIN → migrated to MAIN_ADMIN)
+  role              String // SUPER_ADMIN | MAIN_ADMIN | MANAGER | SUPERVISOR | EMPLOYEE (legacy ADMIN → migrated to MAIN_ADMIN)
   phone             String?
   tokenVersion      Int       @default(0) @map("token_version")
   createdById       String?   @map("created_by_id")
   createdBy         User?     @relation("ManagerAccountsCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   managersCreated   User[]    @relation("ManagerAccountsCreatedBy")
+  /// Nullable only for SUPER_ADMIN (cross-tenant); enforced at the application layer, see lib/roles.ts.
+  companyId         String?   @map("company_id")
+  company           Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  employee          Employee?
-  assignedEmployees Employee[] @relation("EmployeeAssignedManager")
-  notifications     Notification[]
-  auditLogs         AuditLog[] @relation("ActorAuditLogs")
-  approvals         Approval[]
+  employee            Employee?
+  assignedEmployees    Employee[] @relation("EmployeeAssignedManager")
+  supervisedEmployees  Employee[] @relation("EmployeeAssignedSupervisor")
+  notifications        Notification[]
+  auditLogs             AuditLog[] @relation("ActorAuditLogs")
+  approvals             Approval[]
+
+  @@index([companyId])
 }
 
 model Employee {
   id             String    @id @default(cuid())
   employeeCode   String    @unique @map("employee_id")
+  username       String    @unique
   name           String
-  email          String    @unique
+  contactEmail   String    @unique @map("contact_email")
   userId         String?   @unique
   user           User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  companyId      String?   @map("company_id")
+  company        Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
   managerUserId  String?   @map("manager_user_id")
   managerUser    User?     @relation("EmployeeAssignedManager", fields: [managerUserId], references: [id], onDelete: SetNull)
+  supervisorId   String?   @map("supervisor_id")
+  supervisor     User?     @relation("EmployeeAssignedSupervisor", fields: [supervisorId], references: [id], onDelete: SetNull)
   hourlyRate     Float     @default(28)
   overtimeRate   Float     @default(42)
   department     String?
@@ -57,7 +82,9 @@ model Employee {
 
   @@index([deletedAt])
   @@index([isApproved])
+  @@index([companyId])
   @@index([managerUserId])
+  @@index([supervisorId])
 }
 
 model PayPeriod {
@@ -207,5 +234,12 @@ model DemoRequest {
   createdAt DateTime @default(now())
 
   @@index([createdAt])
+}
+
+/// Daily API request counter (incremented fire-and-forget in proxy.ts). Rows older than 90 days
+/// can be safely pruned via an optional cron — not required for correctness since `date` is the key.
+model UsageDaily {
+  date         DateTime @id @db.Date
+  requestCount Int      @default(0) @map("request_count")
 }
 

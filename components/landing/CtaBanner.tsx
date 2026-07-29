@@ -30,20 +30,20 @@ export function CtaBanner({ onBookDemo }: CtaBannerProps) {
 
           <p className="lp-overline">Get started</p>
           <h2 className="lp-display mt-6 max-w-2xl text-[clamp(2rem,5vw,3rem)]">
-            Ready to simplify your <em className="lp-copper-italic">payroll</em>?
+            Ready to manage hours and <em className="lp-copper-italic">payroll</em>?
           </h2>
           <p className="lp-cta-lead mt-4 max-w-lg">
-            Book a demo with our team and see how Syal Operations Group keeps payroll
-            accurate, compliant, and calm.
+            Request a demo to see WorkLedger in action, or sign in if your team already
+            has access.
           </p>
 
           <div className="lp-cta-actions">
             <MagneticButton onClick={onBookDemo} data-testid="cta-book-demo-btn">
-              Book a Demo
+              Request a Demo
               <ArrowRight className="h-4 w-4" strokeWidth={2} />
             </MagneticButton>
-            <Link href="/login" className="lp-outline-btn" data-testid="cta-portal-link">
-              Sign In
+            <Link href="/employee-access" className="lp-outline-btn" data-testid="cta-portal-link">
+              Employee Portal
             </Link>
           </div>
         </motion.div>

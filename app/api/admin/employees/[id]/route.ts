@@ -22,7 +22,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
     const employee = await prisma.employee.findUnique({
       where: { id },
       include: {
-        user: { select: { id: true, email: true, name: true, role: true } },
+        user: { select: { id: true, username: true, contactEmail: true, name: true, role: true } },
         _count: { select: { timesheets: true, payslips: true } },
       },
     });
@@ -38,7 +38,8 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
       employee: {
         id: employee.id,
         name: employee.name,
-        email: employee.email,
+        username: employee.username,
+        contactEmail: employee.contactEmail,
         employeeCode: employee.employeeCode,
         deletedAt: employee.deletedAt?.toISOString() ?? null,
         isApproved: employee.isApproved,
@@ -70,7 +71,8 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
         id: true,
         deletedAt: true,
         name: true,
-        email: true,
+        contactEmail: true,
+        username: true,
         employeeCode: true,
         hourlyRate: true,
         overtimeRate: true,
@@ -135,7 +137,7 @@ export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string 
 
     const employee = await prisma.employee.findUnique({
       where: { id },
-      select: { id: true, deletedAt: true, name: true, email: true, employeeCode: true },
+      select: { id: true, deletedAt: true, name: true, username: true, contactEmail: true, employeeCode: true },
     });
 
     if (!employee) {
@@ -161,7 +163,8 @@ export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string 
       entityId: id,
       details: {
         employeeCode: employee.employeeCode,
-        email: employee.email,
+        username: employee.username,
+        contactEmail: employee.contactEmail,
         name: employee.name,
         deletedAt: now.toISOString(),
       },

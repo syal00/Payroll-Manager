@@ -16,7 +16,7 @@ export default async function AdminEmployeeDetailPage({
   const employee = await prisma.employee.findUnique({
     where: { id },
     include: {
-      user: { select: { email: true, name: true, role: true } },
+      user: { select: { username: true, contactEmail: true, name: true, role: true } },
       _count: { select: { timesheets: true, payslips: true } },
     },
   });
@@ -49,8 +49,12 @@ export default async function AdminEmployeeDetailPage({
         <p className="mt-1 text-xs text-slate-500">Rates and identifiers on file</p>
         <dl className="mt-5 space-y-4 text-sm">
           <div className="flex justify-between gap-4 border-b border-violet-50 pb-3">
-            <dt className="text-slate-500">Email</dt>
-            <dd className="text-right font-medium text-[var(--color-text-secondary)]">{employee.email}</dd>
+            <dt className="text-slate-500">Username</dt>
+            <dd className="font-mono text-right font-medium text-[var(--color-text-secondary)]">{employee.username}</dd>
+          </div>
+          <div className="flex justify-between gap-4 border-b border-violet-50 pb-3">
+            <dt className="text-slate-500">Contact email</dt>
+            <dd className="text-right font-medium text-[var(--color-text-secondary)]">{employee.contactEmail}</dd>
           </div>
           <div className="flex justify-between gap-4 border-b border-violet-50 pb-3">
             <dt className="text-slate-500">Hourly rate</dt>

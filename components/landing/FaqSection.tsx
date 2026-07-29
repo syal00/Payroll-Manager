@@ -5,33 +5,9 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Plus } from "lucide-react";
 
 import { landingReveal, landingViewport } from "@/lib/landing-motion";
+import { MARKETING_FAQS } from "@/lib/marketing-content";
 
-const FAQS = [
-  {
-    q: "How long does migration take?",
-    a: "Most teams are live within two weeks. We handle data mapping, parallel runs, and a full reconciliation before you cut over.",
-  },
-  {
-    q: "Which jurisdictions do you support?",
-    a: "We currently support 14 jurisdictions across the UK, EU, and North America — with tax tables updated automatically each period.",
-  },
-  {
-    q: "Is there an employee self-service portal?",
-    a: "Yes. Employees submit timesheets, view payslips, and update personal details through a clean, mobile-friendly portal.",
-  },
-  {
-    q: "How is pricing structured?",
-    a: "Per-employee, per-month pricing with no hidden fees. Volume discounts apply above 200 employees. Book a demo for a tailored quote.",
-  },
-  {
-    q: "What integrations are available?",
-    a: "We integrate with major HRIS platforms, accounting software (Xero, QuickBooks, Sage), and bank payment rails via open banking APIs.",
-  },
-  {
-    q: "How do you handle security?",
-    a: "SOC 2 Type II certified, ISO 27001 compliant, GDPR-ready. All data encrypted at rest (AES-256) and in transit (TLS 1.3).",
-  },
-];
+const FAQS = MARKETING_FAQS;
 
 export function FaqSection() {
   const [open, setOpen] = useState<number | null>(null);

@@ -2,19 +2,19 @@
 
 import { useEffect, useRef } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { Clock3, ShieldCheck } from "lucide-react";
+import { Clock3, FileCheck } from "lucide-react";
 import { landingReveal } from "@/lib/landing-motion";
 
 const metrics = [
-  { label: "Net run", value: "£412k", delta: "+4.2%" },
-  { label: "Hours", value: "1,248", delta: "+118" },
-  { label: "Team", value: "42", delta: "+3" },
+  { label: "Pending review", value: "6", delta: "2 new" },
+  { label: "Hours logged", value: "248", delta: "+32" },
+  { label: "Employees", value: "12", delta: "+1" },
 ];
 
 const rows = [
-  { label: "Timesheets reconciled", value: "38" },
-  { label: "Payslips queued", value: "12" },
-  { label: "Compliance flags", value: "0" },
+  { label: "Timesheets submitted", value: "10" },
+  { label: "Approved this period", value: "8" },
+  { label: "Payslips generated", value: "5" },
 ];
 
 const chartHeights = [38, 52, 44, 72, 58, 64, 48];
@@ -76,8 +76,8 @@ export function DashboardPreview() {
           <span className="lp-dashboard-dot" />
           <span className="lp-dashboard-dot" />
           <span className="lp-dashboard-dot" />
-          <span className="lp-dashboard-title">Payroll Overview</span>
-          <span className="lp-dashboard-live-label">Live · 1m ago</span>
+          <span className="lp-dashboard-title">Admin Dashboard</span>
+          <span className="lp-dashboard-live-label">Current pay period</span>
         </div>
 
         <div className="lp-dashboard-body">
@@ -94,8 +94,8 @@ export function DashboardPreview() {
           </div>
 
           <div className="lp-dashboard-chart-header">
-            <span>Weekly throughput</span>
-            <span className="lp-dashboard-pill">7 periods</span>
+            <span>Hours by week</span>
+            <span className="lp-dashboard-pill">This period</span>
           </div>
           <div className="lp-dashboard-chart" aria-hidden>
             {chartHeights.map((h, i) => (
@@ -123,11 +123,11 @@ export function DashboardPreview() {
 
       <div className="lp-dashboard-float-card lp-glass lp-dashboard-float-card--tl">
         <Clock3 className="h-4 w-4 text-copper" strokeWidth={1.5} />
-        <span>37 min avg</span>
+        <span>6 pending</span>
       </div>
       <div className="lp-dashboard-float-card lp-glass lp-dashboard-float-card--br">
-        <ShieldCheck className="h-4 w-4 text-copper" strokeWidth={1.5} />
-        <span>SOC 2</span>
+        <FileCheck className="h-4 w-4 text-copper" strokeWidth={1.5} />
+        <span>8 approved</span>
       </div>
     </div>
   );

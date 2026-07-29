@@ -1,8 +1,8 @@
 ﻿"use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Eye, Archive } from "lucide-react";
+import { Eye, Archive, Copy } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -12,7 +12,8 @@ import { dispatchAdminStatsRefresh } from "@/lib/admin-stats-refresh";
 type Row = {
   id: string;
   name: string;
-  email: string;
+  username: string;
+  contactEmail: string;
   employeeCode: string;
   deletedAt: string | null;
   isApproved?: boolean;
@@ -22,6 +23,25 @@ type Row = {
   jobTitle: string | null;
 };
 
+function CopyUsernameButton({ value }: { value: string }) {
+  const [copied, setCopied] = useState(false);
+  async function copy() {
+    await navigator.clipboard.writeText(value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+  return (
+    <button
+      type="button"
+      onClick={() => void copy()}
+      className="mt-2 inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] px-2 py-1 text-xs font-semibold text-[var(--color-accent)] hover:bg-[var(--color-accent-tint)]"
+    >
+      <Copy className="h-3.5 w-3.5" aria-hidden />
+      {copied ? "Copied" : "Copy username"}
+    </button>
+  );
+}
+
 function initials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
@@ -30,6 +50,7 @@ function initials(name: string) {
 }
 
 type StatusFilter = "active" | "deleted" | "all";
+type EmailCheckStatus = "idle" | "checking" | "valid" | "invalid";
 
 export default function AdminEmployeesPage() {
   const [status, setStatus] = useState<StatusFilter>("active");
@@ -40,6 +61,19 @@ export default function AdminEmployeesPage() {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Row | null>(null);
   const [pendingRows, setPendingRows] = useState<Row[]>([]);
+  const [showAddEmployee, setShowAddEmployee] = useState(false);
+  const [addFirstName, setAddFirstName] = useState("");
+  const [addLastName, setAddLastName] = useState("");
+  const [addContactEmail, setAddContactEmail] = useState("");
+  const [addBusy, setAddBusy] = useState(false);
+  const [addFormErr, setAddFormErr] = useState<string | null>(null);
+  const [createdEmployee, setCreatedEmployee] = useState<{
+    employeeCode: string;
+    username: string;
+  } | null>(null);
+  const [emailCheckStatus, setEmailCheckStatus] = useState<EmailCheckStatus>("idle");
+  const [emailCheckMessage, setEmailCheckMessage] = useState<string | null>(null);
+  const emailCheckTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadPending = useCallback(() => {
     fetch(`/api/admin/employees?status=pending`)
@@ -121,7 +155,8 @@ export default function AdminEmployeesPage() {
     if (!query) return true;
     return (
       r.name.toLowerCase().includes(query) ||
-      r.email.toLowerCase().includes(query) ||
+      r.username.toLowerCase().includes(query) ||
+      r.contactEmail.toLowerCase().includes(query) ||
       r.employeeCode.toLowerCase().includes(query)
     );
   });
@@ -166,6 +201,100 @@ export default function AdminEmployeesPage() {
     }
   }
 
+  function resetAddEmployeeForm() {
+    setAddFirstName("");
+    setAddLastName("");
+    setAddContactEmail("");
+    setAddFormErr(null);
+    setCreatedEmployee(null);
+    setEmailCheckStatus("idle");
+    setEmailCheckMessage(null);
+    if (emailCheckTimerRef.current) clearTimeout(emailCheckTimerRef.current);
+  }
+
+  function openAddEmployee() {
+    resetAddEmployeeForm();
+    setShowAddEmployee(true);
+  }
+
+  function closeAddEmployee() {
+    setShowAddEmployee(false);
+    resetAddEmployeeForm();
+  }
+
+  function onAddEmailBlur() {
+    const value = addContactEmail.trim();
+    if (emailCheckTimerRef.current) clearTimeout(emailCheckTimerRef.current);
+
+    if (!value) {
+      setEmailCheckStatus("idle");
+      setEmailCheckMessage(null);
+      return;
+    }
+
+    emailCheckTimerRef.current = setTimeout(async () => {
+      setEmailCheckStatus("checking");
+      setEmailCheckMessage(null);
+      try {
+        const res = await fetch(`/api/validate-email?email=${encodeURIComponent(value)}`);
+        const data = (await res.json()) as { valid?: boolean; message?: string };
+        if (data.valid) {
+          setEmailCheckStatus("valid");
+          setEmailCheckMessage(null);
+        } else {
+          setEmailCheckStatus("invalid");
+          setEmailCheckMessage(data.message ?? "Enter a valid contact email address.");
+        }
+      } catch {
+        setEmailCheckStatus("idle");
+        setEmailCheckMessage(null);
+      }
+    }, 300);
+  }
+
+  async function onCreateEmployee(e: React.FormEvent) {
+    e.preventDefault();
+    setAddFormErr(null);
+    setCreatedEmployee(null);
+
+    if (emailCheckStatus === "invalid") {
+      setAddFormErr(emailCheckMessage ?? "Fix the contact email before submitting.");
+      return;
+    }
+
+    setAddBusy(true);
+    try {
+      const res = await fetch("/api/admin/employees", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: addFirstName.trim(),
+          lastName: addLastName.trim(),
+          contactEmail: addContactEmail.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setAddFormErr(data.error ?? "Could not create employee");
+        if (data.reason) {
+          setEmailCheckStatus("invalid");
+          setEmailCheckMessage(data.error ?? null);
+        }
+        return;
+      }
+      setCreatedEmployee({
+        employeeCode: data.employee.employeeCode,
+        username: data.employee.username,
+      });
+      load();
+      dispatchAdminStatsRefresh();
+    } catch {
+      setAddFormErr("Network error");
+    } finally {
+      setAddBusy(false);
+    }
+  }
+
   return (
     <div className="page-container max-w-6xl space-y-8">
       <PageHeader
@@ -173,7 +302,13 @@ export default function AdminEmployeesPage() {
         title="Employee management"
         description="Deactivating keeps timesheets, payslips, and history intact â€” restore roster access anytime without losing immutable payroll records."
       >
-        <Button className="h-11 rounded-xl shadow-md shadow-violet-500/20">Add employee</Button>
+        <Button
+          type="button"
+          className="h-11 rounded-xl shadow-md shadow-violet-500/20"
+          onClick={openAddEmployee}
+        >
+          Add employee
+        </Button>
       </PageHeader>
 
       {pendingRows.length > 0 && (
@@ -188,7 +323,8 @@ export default function AdminEmployeesPage() {
               >
                 <div>
                   <p className="font-semibold text-[var(--color-text-primary)]">{r.name}</p>
-                  <p className="text-xs text-slate-600">{r.email}</p>
+                  <p className="font-mono text-xs text-slate-600">{r.username}</p>
+                  <p className="text-xs text-slate-500">{r.contactEmail}</p>
                   <p className="mt-1 font-mono text-xs font-bold text-[var(--color-accent-light)]">{r.employeeCode}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -228,7 +364,7 @@ export default function AdminEmployeesPage() {
                 className="input-field mt-1.5"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Name, email, or employee ID"
+                placeholder="Name, username, contact email, or employee ID"
               />
             </div>
           </div>
@@ -311,7 +447,8 @@ export default function AdminEmployeesPage() {
                           </span>
                           <div className="min-w-0">
                             <p className="truncate font-semibold text-[var(--color-text-primary)]">{r.name}</p>
-                            <p className="truncate text-[11px] text-[var(--color-text-muted)]">{r.email}</p>
+                            <p className="truncate font-mono text-[11px] font-medium text-[var(--color-text-secondary)]">{r.username}</p>
+                            <p className="truncate text-[11px] text-[var(--color-text-muted)]">{r.contactEmail}</p>
                             <p className="font-mono text-[10px] font-semibold text-[var(--color-accent-light)]/90">{r.employeeCode}</p>
                           </div>
                         </div>
@@ -418,6 +555,117 @@ export default function AdminEmployeesPage() {
                 {pendingId === confirmDelete.id ? "Working…" : "Archive employee"}
               </Button>
             </div>
+          </Card>
+        </div>
+      )}
+
+      {showAddEmployee && (
+        <div
+          className="modal-overlay z-[1100]"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="add-employee-title"
+        >
+          <Card className="modal w-full max-w-md !shadow-[var(--shadow-modal)] border-[var(--color-border)]">
+            <h2 id="add-employee-title" className="modal-title text-lg">
+              Add employee
+            </h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Creates an approved profile with a generated login username. OTPs and notifications go to the contact
+              email.
+            </p>
+            {addFormErr && <div className="alert-error mt-4 text-sm">{addFormErr}</div>}
+            {createdEmployee ? (
+              <div className="mt-4 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-[var(--color-text-primary)]">
+                <p className="font-semibold">Employee created</p>
+                <p className="mt-1">
+                  Employee ID: <code className="font-mono">{createdEmployee.employeeCode}</code>
+                </p>
+                <p className="mt-1">
+                  Login username: <code className="font-mono">{createdEmployee.username}</code>
+                </p>
+                <CopyUsernameButton value={createdEmployee.username} />
+                <div className="mt-6 flex justify-end">
+                  <Button type="button" onClick={closeAddEmployee}>
+                    Done
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={onCreateEmployee} className="mt-6 space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="label-field" htmlFor="add-emp-first">
+                      First name
+                    </label>
+                    <input
+                      id="add-emp-first"
+                      className="input-field mt-1.5 w-full"
+                      value={addFirstName}
+                      onChange={(e) => setAddFirstName(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="label-field" htmlFor="add-emp-last">
+                      Last name
+                    </label>
+                    <input
+                      id="add-emp-last"
+                      className="input-field mt-1.5 w-full"
+                      value={addLastName}
+                      onChange={(e) => setAddLastName(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="label-field" htmlFor="add-emp-email">
+                    Contact email (for OTP / notifications)
+                  </label>
+                  <input
+                    id="add-emp-email"
+                    type="email"
+                    className={`input-field mt-1.5 w-full ${
+                      emailCheckStatus === "invalid" ? "border-rose-400 ring-1 ring-rose-300" : ""
+                    }`}
+                    value={addContactEmail}
+                    onChange={(e) => {
+                      setAddContactEmail(e.target.value);
+                      if (emailCheckStatus !== "idle") {
+                        setEmailCheckStatus("idle");
+                        setEmailCheckMessage(null);
+                      }
+                    }}
+                    onBlur={onAddEmailBlur}
+                    autoComplete="email"
+                    required
+                  />
+                  {emailCheckStatus === "checking" && (
+                    <p className="mt-1 text-xs text-slate-500">Checking email…</p>
+                  )}
+                  {emailCheckStatus === "valid" && (
+                    <p className="mt-1 text-xs text-emerald-600">Email looks deliverable.</p>
+                  )}
+                  {emailCheckStatus === "invalid" && emailCheckMessage && (
+                    <p className="mt-1 text-xs text-rose-600" role="alert">
+                      {emailCheckMessage}
+                    </p>
+                  )}
+                </div>
+                <div className="flex flex-wrap justify-end gap-2 pt-2">
+                  <Button type="button" variant="secondary" disabled={addBusy} onClick={closeAddEmployee}>
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={addBusy || emailCheckStatus === "checking" || emailCheckStatus === "invalid"}
+                  >
+                    {addBusy ? "Creating…" : "Create employee"}
+                  </Button>
+                </div>
+              </form>
+            )}
           </Card>
         </div>
       )}

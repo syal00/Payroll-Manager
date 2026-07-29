@@ -19,7 +19,7 @@ export async function PATCH(
 
     const employee = await prisma.employee.findUnique({
       where: { id },
-      select: { id: true, isApproved: true, name: true, email: true, employeeCode: true },
+      select: { id: true, isApproved: true, name: true, username: true, contactEmail: true, employeeCode: true },
     });
 
     if (!employee) {
@@ -36,7 +36,7 @@ export async function PATCH(
         action: "APPROVE_EMPLOYEE",
         entityType: "Employee",
         entityId: id,
-        details: { name: employee.name, email: employee.email },
+        details: { name: employee.name, username: employee.username, contactEmail: employee.contactEmail },
       });
       return NextResponse.json({ ok: true, isApproved: true });
     }
@@ -49,7 +49,7 @@ export async function PATCH(
           action: "REJECT_EMPLOYEE_REGISTRATION",
           entityType: "Employee",
           entityId: id,
-          details: { name: employee.name, email: employee.email },
+          details: { name: employee.name, username: employee.username, contactEmail: employee.contactEmail },
         });
         return NextResponse.json({ ok: true, removed: true });
       }

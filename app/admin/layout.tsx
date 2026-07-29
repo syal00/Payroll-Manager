@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
-import { isStaffRole, isMainAdminRole } from "@/lib/roles";
+import { isStaffRole, isMainAdminRole, isSupervisorRole, isSuperAdminRole } from "@/lib/roles";
 import { getAdminHeaderForEmail } from "@/lib/admin-header";
 import { AdminLayoutClient } from "@/components/shells/AdminLayoutClient";
 
@@ -11,7 +11,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const isLoginRoute = pathname === "/admin/login";
 
   const session = await getSession();
-  if (!isLoginRoute && (!session || !isStaffRole(session.role))) {
+
+  // Defense in depth (proxy.ts already redirects this case): the single-tenant /admin app scopes
+  // queries via session.companyId, which is always null for SUPER_ADMIN — never let it render here.
+  if (session && isSuperAdminRole(session.role)) {
+    redirect("/super-admin/companies");
+  }
+
+  if (!isLoginRoute && (!session || (!isStaffRole(session.role) && !isSupervisorRole(session.role)))) {
     redirect("/login");
   }
 

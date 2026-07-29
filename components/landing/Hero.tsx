@@ -8,9 +8,9 @@ import { MagneticButton } from "@/components/landing/MagneticButton";
 import { landingReveal } from "@/lib/landing-motion";
 
 const TRUST_ITEMS = [
-  { label: "Licensed & Insured", sub: "Fully certified" },
-  { label: "24/7 Coverage", sub: "Always available" },
-  { label: "99.98% Accuracy", sub: "Payroll precision" },
+  { label: "Timesheet submissions", sub: "Employees log hours each pay period" },
+  { label: "Manager approvals", sub: "Review and sign off before payroll runs" },
+  { label: "Payslip generation", sub: "PDF payslips from approved hours" },
 ];
 
 type HeroProps = {
@@ -51,8 +51,8 @@ export function Hero({ onBookDemo }: HeroProps) {
               custom={0}
               variants={landingReveal}
             >
-              Professional Payroll Solutions{" "}
-              <span className="lp-copper-italic">You Can Trust</span>
+              Timesheets, approvals, and payslips{" "}
+              <span className="lp-copper-italic">in one place</span>
             </motion.h1>
 
             <motion.p
@@ -62,7 +62,8 @@ export function Hero({ onBookDemo }: HeroProps) {
               custom={1}
               variants={landingReveal}
             >
-              Certified processes. Automated compliance. Modern payroll for growing businesses.
+              WorkLedger helps your team submit hours, route them through review, and
+              generate payslips — with role-based access for admins, managers, and employees.
             </motion.p>
 
             <motion.ul
@@ -91,13 +92,13 @@ export function Hero({ onBookDemo }: HeroProps) {
               variants={landingReveal}
             >
               <MagneticButton onClick={onBookDemo} data-testid="hero-book-demo-btn">
-                Get a Quote
+                Request a Demo
                 <ArrowRight className="h-4 w-4" strokeWidth={2} />
               </MagneticButton>
-              <button type="button" className="lp-outline-btn" data-testid="hero-tour-btn">
+              <a href="/login" className="lp-outline-btn" data-testid="hero-tour-btn">
                 <Play className="h-4 w-4" strokeWidth={2} />
-                Watch Product Tour
-              </button>
+                Sign In to Dashboard
+              </a>
             </motion.div>
           </div>
 

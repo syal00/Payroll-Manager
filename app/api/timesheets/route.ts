@@ -31,7 +31,8 @@ export async function GET(req: Request) {
         employee: {
           OR: [
             { name: { contains: term } },
-            { email: { contains: term } },
+            { username: { contains: term } },
+            { contactEmail: { contains: term } },
             { employeeCode: { contains: term } },
             { user: { name: { contains: term } } },
           ],

@@ -49,7 +49,7 @@ export async function GET(req: Request) {
         orderBy: { createdAt: "desc" },
         skip,
         take: q.pageSize,
-        include: { actor: true },
+        include: { actor: { select: { name: true, contactEmail: true, username: true } } },
       }),
       prisma.auditLog.count({ where }),
     ]);

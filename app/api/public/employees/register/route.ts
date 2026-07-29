@@ -1,27 +1,39 @@
 import { NextResponse } from "next/server";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { nextEmployeeCode, normalizeEmployeeEmail } from "@/lib/employee-code";
+import { nextEmployeeCode } from "@/lib/employee-code";
 import { writeAuditLog } from "@/lib/audit";
+import { validateEmailDeliverable, emailValidationMessage } from "@/lib/email-validation";
+import { createEmployeeProfile } from "@/lib/staff-account";
 import { z } from "zod";
 
 const bodySchema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(200),
-  email: z.string().trim().email("Enter a valid email").max(320),
+  firstName: z.string().trim().min(1, "First name is required").max(60),
+  lastName: z.string().trim().min(1, "Last name is required").max(60),
+  contactEmail: z.string().trim().email("Enter a valid contact email").max(320),
 });
 
 export async function POST(req: Request) {
   try {
     const body = bodySchema.parse(await req.json());
-    const email = normalizeEmployeeEmail(body.email);
-    const name = body.name.trim();
 
-    const existing = await prisma.employee.findUnique({ where: { email } });
+    const deliverable = await validateEmailDeliverable(body.contactEmail);
+    if (!deliverable.valid) {
+      return NextResponse.json(
+        { error: emailValidationMessage(deliverable.reason), reason: deliverable.reason },
+        { status: 400 }
+      );
+    }
+
+    const existing = await prisma.employee.findUnique({
+      where: { contactEmail: body.contactEmail.trim().toLowerCase() },
+    });
     if (existing) {
       if (existing.deletedAt) {
         return NextResponse.json(
           {
             error:
-              "This email belongs to a deactivated profile. Contact an administrator to restore access.",
+              "This contact email belongs to a deactivated profile. Contact an administrator to restore access.",
             deactivated: true,
           },
           { status: 403 }
@@ -29,27 +41,26 @@ export async function POST(req: Request) {
       }
       return NextResponse.json(
         {
-          error: "An employee profile already exists for this email.",
+          error: "An employee profile already exists for this contact email.",
           exists: true,
           employeeCode: existing.employeeCode,
+          username: existing.username,
           redirect: `/employee/${existing.employeeCode}/dashboard`,
         },
         { status: 409 }
       );
     }
 
-    const employee = await prisma.$transaction(async (tx) => {
-      const employeeCode = await nextEmployeeCode(tx);
-      return tx.employee.create({
-        data: {
-          employeeCode,
-          name,
-          email,
-          hourlyRate: 28,
-          overtimeRate: 42,
-          isApproved: false,
-        },
-      });
+    const companyId = (await headers()).get("x-company-id");
+
+    const employeeCode = await nextEmployeeCode();
+    const employee = await createEmployeeProfile({
+      firstName: body.firstName,
+      lastName: body.lastName,
+      contactEmail: body.contactEmail,
+      companyId,
+      employeeCode,
+      isApproved: false,
     });
 
     await writeAuditLog({
@@ -57,14 +68,20 @@ export async function POST(req: Request) {
       action: "EMPLOYEE_SELF_REGISTERED",
       entityType: "Employee",
       entityId: employee.id,
-      details: { employeeCode: employee.employeeCode, email },
+      details: {
+        employeeCode: employee.employeeCode,
+        username: employee.username,
+        contactEmail: employee.contactEmail,
+      },
     });
 
     return NextResponse.json({
       ok: true,
       pendingApproval: true,
       employeeCode: employee.employeeCode,
-      message: "Pending admin approval. You will be able to sign in after an administrator approves your profile.",
+      username: employee.username,
+      message:
+        "Pending admin approval. You will be able to sign in with your username after an administrator approves your profile.",
     });
   } catch (e) {
     if (e instanceof z.ZodError) {

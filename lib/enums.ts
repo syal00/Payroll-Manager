@@ -1,7 +1,14 @@
-/** Staff: MAIN_ADMIN (full), MANAGER (assigned employees & review). EMPLOYEE = portal user account. */
+/**
+ * SUPER_ADMIN: cross-tenant platform operator (companyId null).
+ * Staff: MAIN_ADMIN (full, single tenant), MANAGER (assigned employees & review),
+ * SUPERVISOR (direct reports only, no unassigned-employee fallback).
+ * EMPLOYEE = portal user account.
+ */
 export const Role = {
+  SUPER_ADMIN: "SUPER_ADMIN",
   MAIN_ADMIN: "MAIN_ADMIN",
   MANAGER: "MANAGER",
+  SUPERVISOR: "SUPERVISOR",
   EMPLOYEE: "EMPLOYEE",
 } as const;
 export type Role = (typeof Role)[keyof typeof Role];

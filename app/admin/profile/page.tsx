@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/Button";
 export default function AdminProfilePage() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
 
   useEffect(() => {
@@ -20,7 +21,8 @@ export default function AdminProfilePage() {
         if (j.user) {
           setName(j.user.name);
           setPhone(j.user.phone ?? "");
-          setEmail(j.user.email);
+          setUsername(j.user.username ?? "");
+          setContactEmail(j.user.contactEmail ?? "");
         }
       });
   }, []);
@@ -38,7 +40,7 @@ export default function AdminProfilePage() {
     else setMsg("Profile updated.");
   }
 
-  const initialsSource = name.trim() || email.trim() || "?";
+  const initialsSource = name.trim() || username.trim() || contactEmail.trim() || "?";
   const parts = initialsSource.replace(/[^a-zA-Z\u00C0-\u00FF\s@.]/g, " ").split(/\s+/).filter(Boolean);
   const initials =
     parts.length >= 2
@@ -61,7 +63,8 @@ export default function AdminProfilePage() {
           </div>
           <div className="min-w-0">
             <p className="text-lg font-extrabold text-[var(--color-text-primary)]">{name || "Administrator"}</p>
-            <p className="truncate text-sm font-medium text-[var(--color-text-secondary)]">{email}</p>
+            <p className="truncate font-mono text-sm font-medium text-[var(--color-text-secondary)]">{username}</p>
+            <p className="truncate text-sm text-[var(--color-text-muted)]">{contactEmail}</p>
           </div>
         </div>
       </div>
@@ -74,11 +77,17 @@ export default function AdminProfilePage() {
           </div>
           <form onSubmit={save} className="space-y-5">
             <div>
-              <label className="label-field" htmlFor="prof-email">
-                Email
+              <label className="label-field" htmlFor="prof-username">
+                Username
               </label>
-              <input id="prof-email" disabled className="input-field mt-1.5 cursor-not-allowed opacity-60" value={email} />
-              <p className="mt-1 text-xs text-[var(--color-text-muted)]">Email is anchored to your organization directory.</p>
+              <input id="prof-username" disabled className="input-field mt-1.5 cursor-not-allowed font-mono opacity-60" value={username} />
+            </div>
+            <div>
+              <label className="label-field" htmlFor="prof-contact-email">
+                Contact email
+              </label>
+              <input id="prof-contact-email" disabled className="input-field mt-1.5 cursor-not-allowed opacity-60" value={contactEmail} />
+              <p className="mt-1 text-xs text-[var(--color-text-muted)]">Contact email is anchored to your organization directory.</p>
             </div>
             <div>
               <label className="label-field" htmlFor="prof-name">

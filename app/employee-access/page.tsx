@@ -1,10 +1,14 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { ArrowRight, Mail, Shield, UserPlus } from "lucide-react";
 import { LoginBrandIllustration } from "@/components/auth/LoginBrandIllustration";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 
-export default function EmployeeAccessHubPage() {
-  const brand = (process.env.NEXT_PUBLIC_COMPANY_NAME ?? "Syal Operations Group").toUpperCase();
+export default async function EmployeeAccessHubPage() {
+  const h = await headers();
+  const companyName = h.get("x-company-name");
+  const companyLogoUrl = h.get("x-company-logo");
+  const brand = (companyName ?? process.env.NEXT_PUBLIC_COMPANY_NAME ?? "Syal Operations Group").toUpperCase();
 
   return (
     <div className="login-root">
@@ -15,6 +19,7 @@ export default function EmployeeAccessHubPage() {
             size={44}
             showTag={false}
             nameLine1={brand}
+            logoSrc={companyLogoUrl}
             wrapperClassName="login-brand-logo-row"
             imageClassName="brand-logo-img login-brand-logo-img"
             textWrapperClassName="login-brand-logo-text"
@@ -29,7 +34,7 @@ export default function EmployeeAccessHubPage() {
               Your Hours, <span>Your Pay</span>
             </h1>
             <p className="login-brand-desc">
-              Log into the employee portal with just your work email — no passwords to remember.
+              Log into the employee portal with your username — no passwords to remember.
               Submit hours, track approvals, and download payslips, all in one place.
             </p>
 
@@ -38,7 +43,7 @@ export default function EmployeeAccessHubPage() {
                 <div className="login-feature-icon">
                   <Mail className="h-4 w-4" aria-hidden />
                 </div>
-                <span>Sign in with your work email — no password required</span>
+                <span>Sign in with your username — one-time code sent to your contact email</span>
               </div>
               <div className="login-feature">
                 <div className="login-feature-icon">
@@ -63,6 +68,7 @@ export default function EmployeeAccessHubPage() {
             size={36}
             showTag={false}
             nameLine1={brand}
+            logoSrc={companyLogoUrl}
             wrapperClassName="login-brand-logo-row"
             imageClassName="brand-logo-img login-brand-logo-img"
             nameClassName="login-mobile-brand-name"
@@ -91,7 +97,8 @@ export default function EmployeeAccessHubPage() {
                   New Employee
                 </span>
                 <span className="mt-1 block text-[13px] leading-relaxed text-[var(--color-text-secondary)]">
-                  Enter your name + email, get an ID (e.g. EMP001) and open your dashboard.
+                  Enter your name and contact email, get a username + ID (e.g. EMP001), then open your dashboard after
+                  approval.
                 </span>
               </span>
               <ArrowRight
@@ -113,7 +120,7 @@ export default function EmployeeAccessHubPage() {
                   Returning Employee
                 </span>
                 <span className="mt-1 block text-[13px] leading-relaxed text-[var(--color-text-secondary)]">
-                  Enter the email you used before — straight to your hours and payslips.
+                  Enter the username you received — straight to your hours and payslips.
                 </span>
               </span>
               <ArrowRight

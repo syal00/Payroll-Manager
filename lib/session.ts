@@ -6,9 +6,14 @@ const COOKIE_NAME = "hr_session";
 
 export type SessionUser = {
   id: string;
+  /** Login handle — never used for outbound email. */
+  username: string;
+  /** Deliverable address for notifications (stored as `email` in JWT for backward compatibility). */
   email: string;
-  role: "MAIN_ADMIN" | "MANAGER" | "EMPLOYEE" | "ADMIN";
+  role: "SUPER_ADMIN" | "MAIN_ADMIN" | "MANAGER" | "SUPERVISOR" | "EMPLOYEE" | "ADMIN";
   name: string;
+  /** Tenant this session is scoped to. Always null for SUPER_ADMIN. */
+  companyId: string | null;
 };
 
 export async function createSession(user: SessionUser) {
@@ -19,9 +24,11 @@ export async function createSession(user: SessionUser) {
   const tv = dbUser?.tokenVersion ?? 0;
   const secret = new TextEncoder().encode(getSecret());
   const token = await new jose.SignJWT({
+    username: user.username,
     email: user.email,
     role: user.role,
     name: user.name,
+    companyId: user.companyId,
     tv,
   })
     .setProtectedHeader({ alg: "HS256" })
@@ -56,15 +63,17 @@ export async function getSession(): Promise<SessionUser | null> {
     const tvClaim = Number(payload.tv ?? 0);
     const dbUser = await prisma.user.findUnique({
       where: { id },
-      select: { tokenVersion: true, email: true, role: true, name: true },
+      select: { tokenVersion: true, username: true, contactEmail: true, role: true, name: true, companyId: true },
     });
     if (!dbUser) return null;
     if (dbUser.tokenVersion !== tvClaim) return null;
     return {
       id,
-      email: dbUser.email,
+      username: dbUser.username,
+      email: dbUser.contactEmail,
       role: dbUser.role as SessionUser["role"],
       name: dbUser.name,
+      companyId: dbUser.companyId,
     };
   } catch {
     return null;

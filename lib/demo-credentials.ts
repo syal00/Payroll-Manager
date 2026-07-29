@@ -3,11 +3,13 @@ export const DEMO_ADMIN_PASSWORD = "PayrollDemo2026!";
 
 export const DEMO_CREDENTIALS = {
   admin: {
-    email: "admin@syaloperations.com",
+    username: "operations.admin@syal-operations.local",
+    contactEmail: "admin@syaloperations.com",
     password: DEMO_ADMIN_PASSWORD,
   },
   manager: {
-    email: "manager@syaloperations.com",
+    username: "payroll.manager@syal-operations.local",
+    contactEmail: "manager@syaloperations.com",
     password: DEMO_ADMIN_PASSWORD,
   },
 } as const;

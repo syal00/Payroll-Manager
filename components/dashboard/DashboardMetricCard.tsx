@@ -12,7 +12,7 @@ type Props = {
   label: string;
   value: string | number;
   hint?: string;
-  href: string;
+  href?: string;
   icon: LucideIcon;
   trend?: string;
   trendUp?: boolean;
@@ -31,26 +31,32 @@ export function DashboardMetricCard({
   const reduceMotion = useReducedMotion();
   const hasTrend = Boolean(trend);
 
-  const inner = (
-    <Link href={href} className="dash-stat-card group">
-      <div className="dash-stat-body">
-        <span className={`dash-stat-icon dash-stat-icon--${iconVariant}`} aria-hidden>
-          <Icon className="h-5 w-5" strokeWidth={2} />
+  const body = (
+    <div className="dash-stat-body">
+      <span className={`dash-stat-icon dash-stat-icon--${iconVariant}`} aria-hidden>
+        <Icon className="h-5 w-5" strokeWidth={2} />
+      </span>
+      <span className="dash-stat-label">{label}</span>
+      <span className="dash-stat-value tabular-nums">{value}</span>
+      {hasTrend ? (
+        <span className={`dash-stat-trend ${trendUp ? "positive" : "negative"}`}>
+          {trendUp ? (
+            <TrendingUp className="h-3.5 w-3.5" aria-hidden />
+          ) : (
+            <TrendingDown className="h-3.5 w-3.5" aria-hidden />
+          )}
+          <span>{trend}</span>
         </span>
-        <span className="dash-stat-label">{label}</span>
-        <span className="dash-stat-value tabular-nums">{value}</span>
-        {hasTrend ? (
-          <span className={`dash-stat-trend ${trendUp ? "positive" : "negative"}`}>
-            {trendUp ? (
-              <TrendingUp className="h-3.5 w-3.5" aria-hidden />
-            ) : (
-              <TrendingDown className="h-3.5 w-3.5" aria-hidden />
-            )}
-            <span>{trend}</span>
-          </span>
-        ) : null}
-      </div>
+      ) : null}
+    </div>
+  );
+
+  const inner = href ? (
+    <Link href={href} className="dash-stat-card group">
+      {body}
     </Link>
+  ) : (
+    <div className="dash-stat-card">{body}</div>
   );
 
   if (reduceMotion) {

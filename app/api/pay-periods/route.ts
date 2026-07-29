@@ -5,12 +5,12 @@ import { PayPeriodStatus } from "@/lib/enums";
 import { isValidFourteenDayWindow } from "@/lib/pay-period-utils";
 import { writeAuditLog } from "@/lib/audit";
 import { z } from "zod";
-import { isStaffRole } from "@/lib/roles";
+import { isStaffRole, isSupervisorRole } from "@/lib/roles";
 
 export async function GET() {
   try {
     const session = await requireSession();
-    if (isStaffRole(session.role)) {
+    if (isStaffRole(session.role) || isSupervisorRole(session.role)) {
       const rows = await prisma.payPeriod.findMany({
         orderBy: { startDate: "desc" },
         include: {

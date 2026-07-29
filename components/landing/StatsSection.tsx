@@ -6,10 +6,10 @@ import { CountUp } from "@/components/landing/CountUp";
 import { landingReveal, landingViewport } from "@/lib/landing-motion";
 
 const STATS = [
-  { end: 2, prefix: "£", suffix: "B+", label: "Processed annually", decimals: 0 },
-  { end: 99.98, suffix: "%", label: "Accuracy rate", decimals: 2 },
-  { end: 11000, suffix: "+", label: "Pay runs completed", decimals: 0 },
-  { end: 37, suffix: " min", label: "Average run time", decimals: 0 },
+  { end: 5, suffix: "", label: "User roles supported", decimals: 0 },
+  { end: 3, suffix: "", label: "Steps from hours to payslip", decimals: 0 },
+  { end: 100, suffix: "%", label: "Audit trail on key actions", decimals: 0 },
+  { end: 2, suffix: "", label: "Portals — admin and employee", decimals: 0 },
 ];
 
 export function StatsSection() {
@@ -24,9 +24,9 @@ export function StatsSection() {
           custom={0}
           variants={landingReveal}
         >
-          <p className="lp-overline">By the numbers</p>
+          <p className="lp-overline">Built for teams</p>
           <h2 className="lp-display mt-6 text-[clamp(2rem,5vw,3.25rem)]">
-            Proof, not <em className="lp-copper-italic">promises</em>
+            What you get out of the <em className="lp-copper-italic">box</em>
           </h2>
         </motion.div>
 

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/api-auth";
-import { isMainAdminRole, isStaffRole } from "@/lib/roles";
+import { isMainAdminRole, isStaffRole, isSupervisorRole } from "@/lib/roles";
 import { getEmployeeRecord } from "@/lib/employee-scope";
 import { payslipWhereForStaff } from "@/lib/manager-scope";
 import { z } from "zod";
@@ -29,7 +29,8 @@ export async function GET(req: Request) {
         where.employee = {
           OR: [
             { name: { contains: term } },
-            { email: { contains: term } },
+            { username: { contains: term } },
+            { contactEmail: { contains: term } },
             { employeeCode: { contains: term } },
             { user: { name: { contains: term } } },
           ],
@@ -52,7 +53,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ items, total, page: q.page, pageSize: q.pageSize });
     }
 
-    if (isStaffRole(session.role)) {
+    if (isStaffRole(session.role) || isSupervisorRole(session.role)) {
       const scope = payslipWhereForStaff(session);
       const parts: Prisma.PayslipWhereInput[] = [scope];
       if (q.payPeriodId) parts.push({ payPeriodId: q.payPeriodId });
@@ -62,7 +63,8 @@ export async function GET(req: Request) {
           employee: {
             OR: [
               { name: { contains: term } },
-              { email: { contains: term } },
+              { username: { contains: term } },
+              { contactEmail: { contains: term } },
               { employeeCode: { contains: term } },
               { user: { name: { contains: term } } },
             ],

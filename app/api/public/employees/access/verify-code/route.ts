@@ -1,20 +1,20 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { normalizeEmployeeEmail } from "@/lib/employee-code";
+import { normalizeUsername } from "@/lib/username-generator";
 import { z } from "zod";
 
 const bodySchema = z.object({
-  email: z.string().trim().email().max(320),
+  username: z.string().trim().min(3).max(320),
   code: z.string().trim().length(6),
 });
 
 export async function POST(req: Request) {
   try {
     const body = bodySchema.parse(await req.json());
-    const email = normalizeEmployeeEmail(body.email);
+    const username = normalizeUsername(body.username);
 
     const employee = await prisma.employee.findUnique({
-      where: { email },
+      where: { username },
       select: {
         id: true,
         employeeCode: true,
@@ -30,10 +30,7 @@ export async function POST(req: Request) {
     }
 
     if (!employee.isApproved) {
-      return NextResponse.json(
-        { error: "Your account is pending admin approval." },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Your account is pending admin approval." }, { status: 403 });
     }
 
     if (!employee.otpCode || !employee.otpExpires) {

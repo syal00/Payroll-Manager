@@ -1,28 +1,49 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { UserPlus } from "lucide-react";
+import { Copy, UserPlus } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 
 type ManagerRow = {
   id: string;
-  email: string;
+  username: string;
+  contactEmail: string;
   name: string;
   createdAt: string;
-  createdByEmail: string | null;
+  createdByUsername: string | null;
 };
+
+function CopyUsernameButton({ value }: { value: string }) {
+  const [copied, setCopied] = useState(false);
+  async function copy() {
+    await navigator.clipboard.writeText(value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+  return (
+    <button
+      type="button"
+      onClick={() => void copy()}
+      className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] px-2 py-1 text-xs font-semibold text-[var(--color-accent)] hover:bg-[var(--color-accent-tint)]"
+    >
+      <Copy className="h-3.5 w-3.5" aria-hidden />
+      {copied ? "Copied" : "Copy username"}
+    </button>
+  );
+}
 
 export default function AdminManagersPage() {
   const [managers, setManagers] = useState<ManagerRow[]>([]);
   const [loadErr, setLoadErr] = useState<string | null>(null);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [formErr, setFormErr] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [createdUsername, setCreatedUsername] = useState<string | null>(null);
 
   const load = useCallback(() => {
     setLoadErr(null);
@@ -49,15 +70,16 @@ export default function AdminManagersPage() {
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();
     setFormErr(null);
-    setSuccess(null);
+    setCreatedUsername(null);
     setBusy(true);
     try {
       const res = await fetch("/api/admin/managers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: name.trim(),
-          email: email.trim(),
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          contactEmail: contactEmail.trim(),
           password,
         }),
       });
@@ -66,11 +88,10 @@ export default function AdminManagersPage() {
         setFormErr(j.error ?? "Create failed");
         return;
       }
-      setSuccess(
-        `Manager account created for ${j.manager.email}. Send them this email and temporary password so they can sign in at /login → Sign in as admin.`,
-      );
-      setName("");
-      setEmail("");
+      setCreatedUsername(j.manager.username);
+      setFirstName("");
+      setLastName("");
+      setContactEmail("");
       setPassword("");
       void load();
     } catch {
@@ -85,7 +106,7 @@ export default function AdminManagersPage() {
       <PageHeader
         eyebrow="Access"
         title="Management accounts"
-        description="Create manager logins (email + temporary password). Managers sign in at the same admin login page, then only see employees assigned to them and review workflows."
+        description="Create manager logins with a contact email (for notifications) and a temporary password. The login username is generated automatically."
       />
 
       <Card className="border-[var(--color-border)] !bg-[var(--color-bg-card)]/80 p-6 backdrop-blur-md">
@@ -93,39 +114,59 @@ export default function AdminManagersPage() {
           <UserPlus className="h-5 w-5 text-[var(--color-accent)]" aria-hidden />
           <h2 className="text-base font-bold">Add a manager</h2>
         </div>
-        <p className="mt-2 text-sm text-[var(--color-text-muted)]">
-          Email must be unique. Password is stored hashed; share it with the manager securely (email, chat, or in person). They should change it after first login when you add that flow.
-        </p>
         {formErr && <div className="alert-error mt-4 text-sm">{formErr}</div>}
-        {success && (
+        {createdUsername ? (
           <div className="mt-4 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-[var(--color-text-primary)]">
-            {success}
+            <p className="font-semibold">Manager created</p>
+            <p className="mt-1">
+              Login username: <code className="font-mono">{createdUsername}</code>
+            </p>
+            <div className="mt-2">
+              <CopyUsernameButton value={createdUsername} />
+            </div>
+            <p className="mt-2 text-xs text-[var(--color-text-muted)]">
+              Share the username and temporary password securely. OTPs and notifications go to the
+              contact email — never to the username.
+            </p>
           </div>
-        )}
+        ) : null}
         <form onSubmit={onCreate} className="mt-6 space-y-4">
-          <div>
-            <label className="label-field" htmlFor="mgr-name">
-              Full name
-            </label>
-            <input
-              id="mgr-name"
-              className="input-field mt-1.5 w-full"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              autoComplete="name"
-              required
-            />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="label-field" htmlFor="mgr-first">
+                First name
+              </label>
+              <input
+                id="mgr-first"
+                className="input-field mt-1.5 w-full"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <label className="label-field" htmlFor="mgr-last">
+                Last name
+              </label>
+              <input
+                id="mgr-last"
+                className="input-field mt-1.5 w-full"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                required
+              />
+            </div>
           </div>
           <div>
-            <label className="label-field" htmlFor="mgr-email">
-              Work email
+            <label className="label-field" htmlFor="mgr-contact-email">
+              Contact email (for OTP / notifications)
             </label>
             <input
-              id="mgr-email"
+              id="mgr-contact-email"
               type="email"
               className="input-field mt-1.5 w-full"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={contactEmail}
+              onChange={(e) => setContactEmail(e.target.value)}
               autoComplete="email"
               required
             />
@@ -144,7 +185,6 @@ export default function AdminManagersPage() {
               minLength={8}
               required
             />
-            <p className="mt-1 text-xs text-[var(--color-text-muted)]">At least 8 characters.</p>
           </div>
           <Button type="submit" className="mt-2" disabled={busy}>
             {busy ? "Creating…" : "Create manager account"}
@@ -164,11 +204,12 @@ export default function AdminManagersPage() {
               <li key={m.id} className="flex flex-col gap-1 py-3 first:pt-0 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="font-semibold text-[var(--color-text-primary)]">{m.name}</p>
-                  <p className="text-sm text-[var(--color-accent-light)]">{m.email}</p>
+                  <p className="font-mono text-sm text-[var(--color-accent-light)]">{m.username}</p>
+                  <p className="text-xs text-[var(--color-text-muted)]">{m.contactEmail}</p>
                 </div>
                 <p className="text-xs text-[var(--color-text-muted)]">
                   Added {new Date(m.createdAt).toLocaleString()}
-                  {m.createdByEmail ? ` · by ${m.createdByEmail}` : ""}
+                  {m.createdByUsername ? ` · by ${m.createdByUsername}` : ""}
                 </p>
               </li>
             ))}

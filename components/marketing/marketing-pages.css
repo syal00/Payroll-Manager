@@ -1,0 +1,325 @@
+.mkt-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  color: #212529;
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+.mkt-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 1px solid #dee2e6;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+}
+
+.mkt-header-inner {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.mkt-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.mkt-nav-link {
+  font-size: 0.875rem;
+  color: #6c757d;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.mkt-nav-link:hover {
+  color: #212529;
+}
+
+.mkt-main {
+  flex: 1;
+}
+
+.mkt-page {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 4rem;
+}
+
+.mkt-page--wide {
+  max-width: 56rem;
+}
+
+.mkt-overline {
+  font-size: 0.7rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: #c5a021;
+  font-weight: 600;
+}
+
+.mkt-title {
+  margin-top: 1rem;
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: #050a14;
+}
+
+.mkt-lead {
+  margin-top: 1rem;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: #6c757d;
+}
+
+.mkt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+
+.mkt-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.mkt-btn--primary {
+  background: #c5a021;
+  color: #050a14;
+}
+
+.mkt-btn--primary:hover {
+  background: #d4af37;
+}
+
+.mkt-btn--secondary {
+  border: 1px solid #dee2e6;
+  color: #212529;
+  background: #fff;
+}
+
+.mkt-btn--secondary:hover {
+  border-color: #c5a021;
+  color: #050a14;
+}
+
+.mkt-section {
+  margin-top: 2.5rem;
+}
+
+.mkt-section h2 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #050a14;
+  margin-bottom: 0.75rem;
+}
+
+.mkt-section p,
+.mkt-section li {
+  color: #495057;
+  line-height: 1.7;
+}
+
+.mkt-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mkt-list li {
+  padding: 1rem 0;
+  border-bottom: 1px solid #eef1f4;
+}
+
+.mkt-list li:last-child {
+  border-bottom: none;
+}
+
+.mkt-list strong {
+  display: block;
+  color: #050a14;
+  margin-bottom: 0.25rem;
+}
+
+.mkt-card-grid {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .mkt-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.mkt-card {
+  padding: 1.25rem;
+  border: 1px solid #dee2e6;
+  border-radius: 1rem;
+  background: #f8f9fa;
+}
+
+.mkt-card h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #050a14;
+  margin-bottom: 0.5rem;
+}
+
+.mkt-card p {
+  font-size: 0.925rem;
+  color: #6c757d;
+  line-height: 1.6;
+}
+
+.mkt-steps {
+  counter-reset: step;
+  margin-top: 1.5rem;
+}
+
+.mkt-step {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr;
+  gap: 1rem;
+  padding: 1.25rem 0;
+  border-bottom: 1px solid #eef1f4;
+}
+
+.mkt-step:last-child {
+  border-bottom: none;
+}
+
+.mkt-step-num {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(197, 160, 33, 0.12);
+  color: #a8861a;
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+.mkt-faq-item {
+  border-bottom: 1px solid #eef1f4;
+}
+
+.mkt-faq-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 0;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #050a14;
+  cursor: pointer;
+}
+
+.mkt-faq-answer {
+  padding: 0 0 1.1rem;
+  color: #6c757d;
+  line-height: 1.7;
+}
+
+.mkt-contact-card {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  border: 1px solid #dee2e6;
+  background: #f8f9fa;
+}
+
+.mkt-contact-card a {
+  color: #a8861a;
+  text-decoration: none;
+}
+
+.mkt-contact-card a:hover {
+  text-decoration: underline;
+}
+
+.mkt-form {
+  margin-top: 2rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.mkt-form label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #050a14;
+  margin-bottom: 0.35rem;
+}
+
+.mkt-form input,
+.mkt-form select,
+.mkt-form textarea {
+  width: 100%;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid #dee2e6;
+  border-radius: 0.75rem;
+  font: inherit;
+  background: #fff;
+}
+
+.mkt-form textarea {
+  min-height: 8rem;
+  resize: vertical;
+}
+
+.mkt-alert {
+  padding: 0.875rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.mkt-alert--error {
+  background: #fff5f5;
+  color: #b42318;
+  border: 1px solid #fecaca;
+}
+
+.mkt-alert--success {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.mkt-prose p + p {
+  margin-top: 1rem;
+}
+
+.mkt-prose ul {
+  margin-top: 0.75rem;
+  padding-left: 1.25rem;
+}
+
+.mkt-prose li + li {
+  margin-top: 0.35rem;
+}

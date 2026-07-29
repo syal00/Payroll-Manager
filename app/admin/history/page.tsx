@@ -13,7 +13,7 @@ type Log = {
   entityId: string | null;
   details: string | null;
   createdAt: string;
-  actor: { name: string; email: string } | null;
+  actor: { name: string; contactEmail: string } | null;
 };
 
 export default function AdminHistoryPage() {

@@ -2,13 +2,13 @@
 
 import { motion } from "framer-motion";
 import {
-  Banknote,
-  Eye,
+  CalendarRange,
+  ClipboardList,
   FileCheck,
   FileText,
+  History,
   Lock,
-  PenLine,
-  ShieldCheck,
+  Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { landingReveal, landingViewport } from "@/lib/landing-motion";
@@ -24,49 +24,49 @@ const FEATURES: {
     num: "01",
     icon: Lock,
     title: "Role-based access",
-    desc: "Granular permissions for admins, managers, and employees — every action scoped to the right person.",
+    desc: "Separate portals for admins, managers, supervisors, and employees — each person sees only what they need.",
     span: "md:col-span-7",
   },
   {
     num: "02",
-    icon: FileCheck,
-    title: "Audit trail",
-    desc: "A complete, immutable log of approvals, edits, and payslip generations for compliance reviews.",
+    icon: ClipboardList,
+    title: "Timesheet tracking",
+    desc: "Employees submit regular, overtime, and leave hours per pay period. Managers review submissions in one queue.",
     span: "md:col-span-5",
   },
   {
     num: "03",
     icon: FileText,
-    title: "Payslips",
-    desc: "Precision payslips generated from approved hours — accurate net pay, every period.",
+    title: "Payslips & PDFs",
+    desc: "Generate payslips from approved timesheets with earnings and deductions, then download or share as PDF.",
     span: "md:col-span-5",
   },
   {
     num: "04",
-    icon: ShieldCheck,
-    title: "Compliance",
-    desc: "Multi-jurisdiction rules baked in. Tax tables updated before your team notices.",
+    icon: CalendarRange,
+    title: "Pay periods",
+    desc: "Open and close bi-weekly or custom pay cycles. Track which timesheets and payslips belong to each period.",
     span: "md:col-span-7",
   },
   {
     num: "05",
-    icon: PenLine,
-    title: "E-signed contracts",
-    desc: "Onboarding documents signed digitally and filed alongside payroll records.",
+    icon: Users,
+    title: "Employee roster",
+    desc: "Register employees, assign managers, set hourly rates, and approve new hires before they can submit hours.",
     span: "md:col-span-4",
   },
   {
     num: "06",
-    icon: Eye,
-    title: "Quiet by design",
-    desc: "No notification noise. Status updates when you need them, silence when you don't.",
+    icon: FileCheck,
+    title: "Approval workflow",
+    desc: "Route timesheets from pending to under review to approved, with comments and a record of who signed off.",
     span: "md:col-span-4",
   },
   {
     num: "07",
-    icon: Banknote,
-    title: "Bank-grade controls",
-    desc: "Dual-authorization on pay runs, encrypted at rest and in transit, SOC 2 audited.",
+    icon: History,
+    title: "Audit log",
+    desc: "Every approval, payslip generation, and admin action is logged so you can trace changes when questions come up.",
     span: "md:col-span-4",
   },
 ];
@@ -85,9 +85,9 @@ export function FeaturesBento() {
           custom={0}
           variants={reveal}
         >
-          <p className="lp-overline">Platform capabilities</p>
+          <p className="lp-overline">What WorkLedger does</p>
           <h2 className="lp-display mt-6 text-[clamp(2rem,5vw,3rem)]">
-            Everything you need to run <em className="lp-copper-italic">payroll</em>
+            Built for hours, approvals, and <em className="lp-copper-italic">payslips</em>
           </h2>
         </motion.div>
 

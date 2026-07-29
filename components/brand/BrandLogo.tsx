@@ -11,6 +11,8 @@ type BrandLogoProps = {
   showTag?: boolean;
   nameLine1?: string;
   nameLine2?: string;
+  /** Tenant-supplied logo URL (e.g. from Company.logoUrl). Falls back to the bundled brand mark. */
+  logoSrc?: string | null;
   href?: string | null;
   priority?: boolean;
   wrapperClassName?: string;
@@ -33,6 +35,7 @@ export function BrandLogo({
   showTag = true,
   nameLine1,
   nameLine2,
+  logoSrc,
   href = null,
   priority = false,
   wrapperClassName = "brand-logo",
@@ -49,14 +52,20 @@ export function BrandLogo({
 
   const content = (
     <>
-      <Image
-        src={BRAND_LOGO_PATH}
-        alt={`${brand} logo`}
-        width={size}
-        height={size}
-        className={imageClassName}
-        priority={priority}
-      />
+      {logoSrc ? (
+        // Tenant-supplied URL: not run through next/image (arbitrary host, not allow-listed).
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={logoSrc} alt={`${brand} logo`} width={size} height={size} className={imageClassName} />
+      ) : (
+        <Image
+          src={BRAND_LOGO_PATH}
+          alt={`${brand} logo`}
+          width={size}
+          height={size}
+          className={imageClassName}
+          priority={priority}
+        />
+      )}
       {showText ? (
         <span className={textWrapperClassName}>
           <span className={nameClassName}>{line1}</span>

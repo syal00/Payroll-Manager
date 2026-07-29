@@ -6,12 +6,15 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 
 export default function EmployeeRegisterPage() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [existsInfo, setExistsInfo] = useState<{ employeeCode: string; redirect: string } | null>(null);
   const [deactivated, setDeactivated] = useState(false);
-  const [pendingInfo, setPendingInfo] = useState<{ employeeCode: string; message: string } | null>(null);
+  const [pendingInfo, setPendingInfo] = useState<{ employeeCode: string; username: string; message: string } | null>(
+    null
+  );
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
@@ -25,28 +28,29 @@ export default function EmployeeRegisterPage() {
       const res = await fetch("/api/public/employees/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email }),
+        body: JSON.stringify({ firstName, lastName, contactEmail }),
       });
       const data = await res.json();
       if (res.status === 409 && data.exists && data.redirect) {
         setExistsInfo({ employeeCode: data.employeeCode, redirect: data.redirect });
-        setError(data.error ?? "This email is already registered.");
+        setError(data.error ?? "This contact email is already registered.");
         return;
       }
       if (res.status === 403 && data.deactivated) {
         setDeactivated(true);
         setError(
           data.error ??
-            "This email belongs to a deactivated profile. Contact an administrator to restore access."
+            "This contact email belongs to a deactivated profile. Contact an administrator to restore access."
         );
         return;
       }
       if (res.ok && data.pendingApproval) {
         setPendingInfo({
           employeeCode: data.employeeCode as string,
+          username: data.username as string,
           message:
             (data.message as string) ??
-            "Your account is pending admin approval. You will be able to sign in after an administrator approves your profile.",
+            "Your account is pending admin approval. You will be able to sign in with your username after an administrator approves your profile.",
         });
         return;
       }
@@ -77,17 +81,15 @@ export default function EmployeeRegisterPage() {
             Create your Employee ID
           </h1>
           <p className="mt-2 text-sm leading-relaxed text-slate-600">
-            We validate your email, assign a unique ID, then open your personal dashboard.
+            We validate your contact email, assign a username and unique ID, then open your personal dashboard after
+            approval.
           </p>
         </div>
 
         <Card className="w-full max-w-md shadow-[var(--shadow-card)]">
           <form onSubmit={onSubmit} className="space-y-5">
             {error && (
-              <div
-                className={deactivated ? "alert-warn" : "alert-error"}
-                role="alert"
-              >
+              <div className={deactivated ? "alert-warn" : "alert-error"} role="alert">
                 {error}
               </div>
             )}
@@ -96,8 +98,9 @@ export default function EmployeeRegisterPage() {
                 <p className="font-semibold">Pending admin approval</p>
                 <p className="mt-2 text-violet-900/90">{pendingInfo.message}</p>
                 <p className="mt-3 font-mono text-xs font-bold text-violet-950">Employee ID: {pendingInfo.employeeCode}</p>
+                <p className="mt-2 font-mono text-xs text-violet-900/90">Username: {pendingInfo.username}</p>
                 <p className="mt-2 text-xs text-violet-800/90">
-                  Save this ID. An administrator must approve your profile before you can use the employee portal.
+                  Save these details. An administrator must approve your profile before you can use the employee portal.
                 </p>
               </div>
             )}
@@ -115,36 +118,53 @@ export default function EmployeeRegisterPage() {
                 </Link>
               </div>
             )}
-            <div>
-              <label className="label-field" htmlFor="reg-name">
-                Full name
-              </label>
-              <input
-                id="reg-name"
-                type="text"
-                autoComplete="name"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="input-field mt-1.5"
-                placeholder="Jane Doe"
-              />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="label-field" htmlFor="reg-first-name">
+                  First name
+                </label>
+                <input
+                  id="reg-first-name"
+                  type="text"
+                  autoComplete="given-name"
+                  required
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="input-field mt-1.5"
+                  placeholder="Jane"
+                />
+              </div>
+              <div>
+                <label className="label-field" htmlFor="reg-last-name">
+                  Last name
+                </label>
+                <input
+                  id="reg-last-name"
+                  type="text"
+                  autoComplete="family-name"
+                  required
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className="input-field mt-1.5"
+                  placeholder="Doe"
+                />
+              </div>
             </div>
             <div>
-              <label className="label-field" htmlFor="reg-email">
-                Work email
+              <label className="label-field" htmlFor="reg-contact-email">
+                Contact email
               </label>
               <input
-                id="reg-email"
+                id="reg-contact-email"
                 type="email"
                 autoComplete="email"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={contactEmail}
+                onChange={(e) => setContactEmail(e.target.value)}
                 className="input-field mt-1.5"
                 placeholder="you@company.com"
               />
-              <p className="mt-1 text-xs text-slate-500">Use the email your employer recognizes.</p>
+              <p className="mt-1 text-xs text-slate-500">Use the email your employer recognizes for notifications.</p>
             </div>
             <Button type="submit" className="h-11 w-full" disabled={loading}>
               {loading ? "Creating your profile…" : "Create profile & continue"}

@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/Card";
 
 export default function EmployeeExistingAccessPage() {
   const [step, setStep] = useState<1 | 2>(1);
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [code, setCode] = useState("");
   const [devOtp, setDevOtp] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +24,7 @@ export default function EmployeeExistingAccessPage() {
       const res = await fetch("/api/public/employees/access/send-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ username }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -53,7 +53,7 @@ export default function EmployeeExistingAccessPage() {
       const res = await fetch("/api/public/employees/access/verify-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, code }),
+        body: JSON.stringify({ username, code }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -80,7 +80,7 @@ export default function EmployeeExistingAccessPage() {
           </h1>
           <p className="mt-2 text-sm leading-relaxed text-slate-600">
             {step === 1
-              ? "Enter your work email. We will send a one-time code to verify it is you."
+              ? "Enter your username. We will send a one-time code to your contact email on file."
               : "Enter the 6-digit code we generated for your account."}
           </p>
         </div>
@@ -94,18 +94,18 @@ export default function EmployeeExistingAccessPage() {
                 </div>
               )}
               <div>
-                <label className="label-field" htmlFor="ex-email">
-                  Work email
+                <label className="label-field" htmlFor="ex-username">
+                  Username
                 </label>
                 <input
-                  id="ex-email"
-                  type="email"
-                  autoComplete="email"
+                  id="ex-username"
+                  type="text"
+                  autoComplete="username"
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="input-field mt-1.5"
-                  placeholder="you@company.com"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="input-field mt-1.5 font-mono"
+                  placeholder="jane.doe@acme.local"
                 />
               </div>
               <Button type="submit" className="h-11 w-full" disabled={loading}>
@@ -118,7 +118,7 @@ export default function EmployeeExistingAccessPage() {
                 <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-950">
                   <p className="font-semibold">Your one-time code is: {devOtp}</p>
                   <p className="mt-1 text-xs text-violet-900/90">
-                    (In production this would be emailed to you.)
+                    (In production this would be emailed to your contact email on file.)
                   </p>
                 </div>
               )}

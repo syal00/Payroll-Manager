@@ -5,11 +5,12 @@ import { prismaDatabaseUnavailableMessage } from "@/lib/prisma-errors";
 import { createSession } from "@/lib/session";
 import { checkLoginRateLimit, clearLoginRateLimit, clientIpFromRequest } from "@/lib/login-rate-limit";
 import { DEMO_CREDENTIALS } from "@/lib/demo-credentials";
-import { isStaffRole } from "@/lib/roles";
+import { isStaffRole, isSupervisorRole, isSuperAdminRole } from "@/lib/roles";
+import { normalizeUsername } from "@/lib/username-generator";
 import { z } from "zod";
 
 const schema = z.object({
-  email: z.string().email(),
+  username: z.string().trim().min(3).max(320),
   password: z.string().min(1),
 });
 
@@ -30,43 +31,47 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
     const body = schema.parse(json);
-    const user = await prisma.user.findUnique({ where: { email: body.email } });
+    const username = normalizeUsername(body.username);
+    const user = await prisma.user.findUnique({ where: { username } });
     if (!user) {
-      const isDemoAdminEmail =
-        body.email === DEMO_CREDENTIALS.admin.email || body.email === DEMO_CREDENTIALS.manager.email;
+      const isDemoAdminUsername =
+        username === DEMO_CREDENTIALS.admin.username ||
+        username === DEMO_CREDENTIALS.manager.username;
       return NextResponse.json(
         {
-          error: isDemoAdminEmail
+          error: isDemoAdminUsername
             ? "No admin account in the database yet. Wait for the latest deploy to finish, or run: npm run setup (or npx tsx scripts/ensure-demo-admins.ts)."
-            : "Invalid email or password.",
+            : "Invalid username or password.",
         },
         { status: 401 }
       );
     }
     const ok = await bcrypt.compare(body.password, user.passwordHash);
     if (!ok) {
-      return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
+      return NextResponse.json({ error: "Invalid username or password." }, { status: 401 });
     }
-    if (!isStaffRole(user.role)) {
+    if (!isStaffRole(user.role) && !isSupervisorRole(user.role)) {
       return NextResponse.json(
         {
           error:
-            "Employees do not use password login. Use the Employee button to register or access your profile with email.",
+            "Employees do not use password login. Use the employee portal and sign in with your username.",
         },
         { status: 403 }
       );
     }
     await createSession({
       id: user.id,
-      email: user.email,
-      role: user.role as "MAIN_ADMIN" | "MANAGER" | "ADMIN",
+      username: user.username,
+      email: user.contactEmail,
+      role: user.role as "SUPER_ADMIN" | "MAIN_ADMIN" | "MANAGER" | "SUPERVISOR" | "ADMIN",
       name: user.name,
+      companyId: user.companyId,
     });
     clearLoginRateLimit(ip);
     return NextResponse.json({
       ok: true,
       role: user.role,
-      redirect: "/admin",
+      redirect: isSuperAdminRole(user.role) ? "/super-admin/companies" : "/admin",
     });
   } catch (e) {
     if (e instanceof z.ZodError) {

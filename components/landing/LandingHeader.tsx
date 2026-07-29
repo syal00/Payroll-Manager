@@ -6,8 +6,8 @@ import { MagneticButton } from "@/components/landing/MagneticButton";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 
 const NAV = [
-  { label: "Services", href: "#features" },
-  { label: "About", href: "#process" },
+  { label: "Features", href: "#features" },
+  { label: "How it works", href: "#process" },
   { label: "Contact", href: "#cta" },
   { label: "FAQ", href: "#faq" },
 ];
@@ -69,7 +69,7 @@ export function LandingHeader({
                 className="lp-copper-btn lp-nav-cta"
                 data-testid="header-book-demo-btn"
               >
-                Get a Quote
+                Request Demo
                 <ArrowRight className="h-4 w-4" strokeWidth={2} />
               </MagneticButton>
             </div>

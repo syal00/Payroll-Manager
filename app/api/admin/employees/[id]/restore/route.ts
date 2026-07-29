@@ -11,7 +11,7 @@ export async function POST(_req: Request, ctx: { params: Promise<{ id: string }>
 
     const employee = await prisma.employee.findUnique({
       where: { id },
-      select: { id: true, deletedAt: true, name: true, email: true, employeeCode: true },
+      select: { id: true, deletedAt: true, name: true, username: true, contactEmail: true, employeeCode: true },
     });
 
     if (!employee) {
@@ -36,7 +36,8 @@ export async function POST(_req: Request, ctx: { params: Promise<{ id: string }>
       entityId: id,
       details: {
         employeeCode: employee.employeeCode,
-        email: employee.email,
+        username: employee.username,
+        contactEmail: employee.contactEmail,
         name: employee.name,
       },
     });

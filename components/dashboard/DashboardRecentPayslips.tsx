@@ -13,7 +13,16 @@ type Row = {
   payPeriod: { name: string | null };
 };
 
-export function DashboardRecentPayslips({ items }: { items: Row[] }) {
+export function DashboardRecentPayslips({
+  items,
+  payslipsListPath = "/admin/payslips",
+  payslipDetailPathPrefix = "/admin/payslips",
+}: {
+  items: Row[];
+  /** Override for super-admin drill-down (e.g. hide links by passing null). */
+  payslipsListPath?: string | null;
+  payslipDetailPathPrefix?: string | null;
+}) {
   return (
     <Card className="ui-panel !rounded-xl !border-[var(--elite-border)] !shadow-sm">
       <div className="card-header !mb-0 flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
@@ -21,9 +30,11 @@ export function DashboardRecentPayslips({ items }: { items: Row[] }) {
           <h2 className="card-heading text-base text-[var(--elite-heading)]">Recent payslips</h2>
           <p className="card-subtitle">Latest generated payroll slips</p>
         </div>
-        <Link href="/admin/payslips" className="link-accent shrink-0 text-sm font-semibold">
-          View all →
-        </Link>
+        {payslipsListPath ? (
+          <Link href={payslipsListPath} className="link-accent shrink-0 text-sm font-semibold">
+            View all →
+          </Link>
+        ) : null}
       </div>
 
       <div className="table-wrap mt-5">
@@ -58,12 +69,16 @@ export function DashboardRecentPayslips({ items }: { items: Row[] }) {
                     {shortDate(row.createdAt)}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Link
-                      href={`/admin/payslips/${row.id}`}
-                      className="inline-flex rounded-lg px-3 py-1.5 text-xs font-semibold text-[var(--elite-accent)] hover:bg-[var(--elite-accent-soft)]"
-                    >
-                      View
-                    </Link>
+                    {payslipDetailPathPrefix ? (
+                      <Link
+                        href={`${payslipDetailPathPrefix}/${row.id}`}
+                        className="inline-flex rounded-lg px-3 py-1.5 text-xs font-semibold text-[var(--elite-accent)] hover:bg-[var(--elite-accent-soft)]"
+                      >
+                        View
+                      </Link>
+                    ) : (
+                      <span className="text-xs text-[var(--text-muted)]">—</span>
+                    )}
                   </td>
                 </tr>
               ))

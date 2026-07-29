@@ -28,10 +28,14 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 
 ## Demo logins (after `npm run setup`)
 
-Password for both admins: **`PayrollDemo2026!`** (from `lib/demo-credentials.ts`)
+Password for both accounts: **`PayrollDemo2026!`** (from `lib/demo-credentials.ts`)
 
-- `admin@syaloperations.com`
-- `manager@syaloperations.com`
+Sign in at `/login` with the **username** (not the contact email):
+
+- Main admin: `operations.admin@syal-operations.local` (contact: `admin@syaloperations.com`)
+- Manager: `payroll.manager@syal-operations.local` (contact: `manager@syaloperations.com`)
+
+Employees use the employee portal with their assigned username; OTP codes are sent to their contact email only.
 
 ## Deploy on Vercel
 

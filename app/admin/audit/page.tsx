@@ -11,7 +11,7 @@ type Item = {
   entityId: string | null;
   details: string | null;
   createdAt: string;
-  actor: { name: string; email: string } | null;
+  actor: { name: string; contactEmail: string } | null;
 };
 
 export default function AdminAuditPage() {
@@ -160,8 +160,8 @@ export default function AdminAuditPage() {
                     </td>
                     <td className="px-4 py-3 text-sm text-[var(--color-text-primary)]">
                       {row.actor?.name ?? "—"}
-                      {row.actor?.email ? (
-                        <span className="mt-0.5 block text-[11px] text-slate-500">{row.actor.email}</span>
+                      {row.actor?.contactEmail ? (
+                        <span className="mt-0.5 block text-[11px] text-slate-500">{row.actor.contactEmail}</span>
                       ) : null}
                     </td>
                     <td className="px-4 py-3 font-mono text-xs font-semibold text-[var(--color-accent-light)]">

@@ -24,7 +24,7 @@ export default function AdminPayslipDetailPage({ params }: { params: Promise<{ i
     emailSentAt: string | null;
     items: { label: string; amount: number; type: string }[];
     payPeriod: { name: string | null; startDate: string; endDate: string };
-    employee: { employeeCode: string; name: string; email: string };
+    employee: { employeeCode: string; name: string; username: string; contactEmail: string };
     timesheet: { id: string };
   } | null>(null);
   const [emailPreview, setEmailPreview] = useState<string | null>(null);

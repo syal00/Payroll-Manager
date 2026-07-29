@@ -43,24 +43,24 @@ function MarqueeRow({
 }
 
 const ROW1 = [
-  "Trusted by leading companies",
-  "Northwind Logistics",
-  "Apex Manufacturing",
-  "Summit Healthcare",
-  "GDPR compliant",
-  "ISO 27001",
-  "SOC 2 Type II",
+  "Timesheets",
+  "Approvals",
+  "Payslips",
+  "Pay periods",
+  "Employee portal",
+  "Audit log",
+  "Reports",
 ];
 
 const ROW2 = [
-  "payroll",
-  "compliance",
-  "timesheets",
-  "payslips",
-  "reconciliation",
-  "e-signatures",
-  "reporting",
-  "approvals",
+  "admins",
+  "managers",
+  "supervisors",
+  "employees",
+  "hourly rates",
+  "overtime",
+  "leave hours",
+  "PDF export",
 ];
 
 export function MarqueeStrip() {

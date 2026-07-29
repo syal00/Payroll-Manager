@@ -1,5 +1,10 @@
 import type { PrismaClient } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import {
+  emailValidationMessage,
+  validateEmailDeliverable,
+  type EmailValidationReason,
+} from "@/lib/email-validation";
 
 const CODE_RE = /^EMP(\d+)$/i;
 
@@ -32,4 +37,21 @@ export async function nextEmployeeCode(db: Pick<PrismaClient, "employee"> = pris
 
 export function normalizeEmployeeEmail(raw: string) {
   return raw.trim().toLowerCase();
+}
+
+/** Safety net before OTP delivery — catches invalid contact emails already stored in the DB. */
+export async function validateEmployeeEmailForOtp(email: string): Promise<{
+  ok: true;
+} | {
+  ok: false;
+  reason: EmailValidationReason;
+  message: string;
+}> {
+  const result = await validateEmailDeliverable(email);
+  if (result.valid) return { ok: true };
+  return {
+    ok: false,
+    reason: result.reason,
+    message: emailValidationMessage(result.reason),
+  };
 }

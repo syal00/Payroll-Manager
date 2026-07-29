@@ -2,8 +2,10 @@ import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { addDays } from "date-fns";
-import { nextEmployeeCode, normalizeEmployeeEmail } from "../lib/employee-code";
+import { nextEmployeeCode } from "../lib/employee-code";
 import { DEMO_ADMIN_PASSWORD, DEMO_CREDENTIALS } from "../lib/demo-credentials";
+import { generateUsername } from "../lib/username-generator";
+import { splitDisplayName } from "../lib/email-deliverable";
 
 const prisma = new PrismaClient();
 
@@ -20,43 +22,74 @@ async function main() {
   await prisma.employee.deleteMany();
   await prisma.user.deleteMany();
 
+  // Every non-SUPER_ADMIN User/Employee row requires a companyId (DB check constraint on User).
+  // These demo staff/employees belong to the platform owner's own org, "Syal Operations" — a
+  // normal Company row like any tenant, no special-casing.
+  const syalOperations = await prisma.company.upsert({
+    where: { slug: "syal-operations" },
+    create: { name: "Syal Operations", slug: "syal-operations", logoUrl: "/logo.png" },
+    update: {},
+  });
+
   /** Primary demo admins — upsert preserves behavior of the legacy `add-admins` helper if seed order changes. */
   const adminPwHash = await bcrypt.hash(DEMO_ADMIN_PASSWORD, 12);
   const primaryAdmins = [
-    { name: "Operations Admin", email: DEMO_CREDENTIALS.admin.email, role: "MAIN_ADMIN" as const },
-    { name: "Payroll Manager", email: DEMO_CREDENTIALS.manager.email, role: "MANAGER" as const },
+    {
+      name: "Operations Admin",
+      username: DEMO_CREDENTIALS.admin.username,
+      contactEmail: DEMO_CREDENTIALS.admin.contactEmail,
+      role: "MAIN_ADMIN" as const,
+    },
+    {
+      name: "Payroll Manager",
+      username: DEMO_CREDENTIALS.manager.username,
+      contactEmail: DEMO_CREDENTIALS.manager.contactEmail,
+      role: "MANAGER" as const,
+    },
   ] as const;
   const admin = await prisma.user.upsert({
-    where: { email: primaryAdmins[0]!.email },
+    where: { username: primaryAdmins[0]!.username },
     create: {
-      email: primaryAdmins[0]!.email,
+      username: primaryAdmins[0]!.username,
+      contactEmail: primaryAdmins[0]!.contactEmail,
       passwordHash: adminPwHash,
       name: primaryAdmins[0]!.name,
       role: primaryAdmins[0]!.role,
+      companyId: syalOperations.id,
     },
-    update: { passwordHash: adminPwHash, name: primaryAdmins[0]!.name, role: primaryAdmins[0]!.role },
+    update: {
+      passwordHash: adminPwHash,
+      contactEmail: primaryAdmins[0]!.contactEmail,
+      name: primaryAdmins[0]!.name,
+      role: primaryAdmins[0]!.role,
+      companyId: syalOperations.id,
+    },
   });
   const managerUser = await prisma.user.upsert({
-    where: { email: primaryAdmins[1]!.email },
+    where: { username: primaryAdmins[1]!.username },
     create: {
-      email: primaryAdmins[1]!.email,
+      username: primaryAdmins[1]!.username,
+      contactEmail: primaryAdmins[1]!.contactEmail,
       passwordHash: adminPwHash,
       name: primaryAdmins[1]!.name,
       role: primaryAdmins[1]!.role,
+      companyId: syalOperations.id,
       createdById: admin.id,
     },
     update: {
       passwordHash: adminPwHash,
+      contactEmail: primaryAdmins[1]!.contactEmail,
       name: primaryAdmins[1]!.name,
       role: primaryAdmins[1]!.role,
+      companyId: syalOperations.id,
       createdById: admin.id,
     },
   });
 
   const empSeed = [
-    { email: "alex.morgan@nexusops.com", name: "Alex Morgan", rate: 42.5 },
-    { email: "sam.rivera@nexusops.com", name: "Sam Rivera", rate: 38.0 },
-    { email: "taylor.chen@nexusops.com", name: "Taylor Chen", rate: 55.0 },
+    { contactEmail: "alex.morgan@nexusops.com", name: "Alex Morgan", rate: 42.5 },
+    { contactEmail: "sam.rivera@nexusops.com", name: "Sam Rivera", rate: 38.0 },
+    { contactEmail: "taylor.chen@nexusops.com", name: "Taylor Chen", rate: 55.0 },
   ];
   const empUsers: {
     user: { id: string };
@@ -64,12 +97,16 @@ async function main() {
   }[] = [];
   for (let i = 0; i < empSeed.length; i++) {
     const u = empSeed[i]!;
+    const { firstName, lastName } = splitDisplayName(u.name);
+    const username = await generateUsername(firstName, lastName, syalOperations.slug);
     const user = await prisma.user.create({
       data: {
-        email: u.email,
+        username,
+        contactEmail: u.contactEmail,
         passwordHash: await bcrypt.hash("Employee123!", 12),
         name: u.name,
         role: "EMPLOYEE",
+        companyId: syalOperations.id,
       },
     });
     const ot = Math.round(u.rate * 1.5 * 100) / 100;
@@ -77,9 +114,11 @@ async function main() {
     const employee = await prisma.employee.create({
       data: {
         employeeCode,
+        username,
         name: u.name,
-        email: normalizeEmployeeEmail(u.email),
+        contactEmail: u.contactEmail,
         userId: user.id,
+        companyId: syalOperations.id,
         managerUserId: i < 2 ? managerUser.id : null,
         hourlyRate: u.rate,
         overtimeRate: ot,
@@ -245,9 +284,9 @@ async function main() {
 
   console.log("Seed complete.");
   console.log("Admins (same password for demo):");
-  console.log(`  ${primaryAdmins[0]!.name} — ${primaryAdmins[0]!.email} / ${DEMO_ADMIN_PASSWORD}`);
-  console.log(`  ${primaryAdmins[1]!.name} — ${primaryAdmins[1]!.email} / ${DEMO_ADMIN_PASSWORD}`);
-  console.log("Demo employees: register or use employee access with the same emails (optional legacy User login still works).");
+  console.log(`  ${primaryAdmins[0]!.name} — login ${primaryAdmins[0]!.username} / ${DEMO_ADMIN_PASSWORD}`);
+  console.log(`  ${primaryAdmins[1]!.name} — login ${primaryAdmins[1]!.username} / ${DEMO_ADMIN_PASSWORD}`);
+  console.log("Demo employees: sign in at employee access with their username; OTP goes to contact email.");
 }
 
 main()
