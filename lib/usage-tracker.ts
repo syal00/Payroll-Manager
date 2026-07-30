@@ -27,7 +27,7 @@ export async function getDatabaseSizeMB(): Promise<number> {
   const rows = await prisma.$queryRaw<{ size_bytes: bigint }[]>`
     SELECT pg_database_size(current_database()) AS size_bytes
   `;
-  const bytes = rows[0]?.size_bytes ?? 0n;
+  const bytes = rows[0]?.size_bytes ?? BigInt(0);
   return Math.round((Number(bytes) / (1024 * 1024)) * 100) / 100;
 }
 

@@ -421,10 +421,7 @@ export default function SuperAdminCompaniesPage() {
                   required
                   pattern="[a-z0-9]+(-[a-z0-9]+)*"
                   value={form.slug}
-                  onChange={(e) => {
-                    setSlugTouched(true);
-                    setForm((f) => ({ ...f, slug: e.target.value.toLowerCase() }));
-                  }}
+                  onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value.toLowerCase() }))}
                 />
                 {form.slug ? (
                   <p className="mt-1 text-xs text-[var(--sa-muted)]">
