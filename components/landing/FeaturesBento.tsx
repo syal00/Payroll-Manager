@@ -24,7 +24,7 @@ const FEATURES: {
     num: "01",
     icon: Lock,
     title: "Role-based access",
-    desc: "Separate portals for admins, managers, supervisors, and employees — each person sees only what they need.",
+    desc: "Three roles per company — main admin, manager, and employee — each with the right portal and permissions.",
     span: "md:col-span-7",
   },
   {
@@ -38,7 +38,7 @@ const FEATURES: {
     num: "03",
     icon: FileText,
     title: "Payslips & PDFs",
-    desc: "Generate payslips from approved timesheets with earnings and deductions, then download or share as PDF.",
+    desc: "Generate payslips from approved timesheets with earnings and deductions, export PDFs, mark as sent, and track when a copy was emailed.",
     span: "md:col-span-5",
   },
   {
@@ -59,7 +59,7 @@ const FEATURES: {
     num: "06",
     icon: FileCheck,
     title: "Approval workflow",
-    desc: "Route timesheets from pending to under review to approved, with comments and a record of who signed off.",
+    desc: "Route timesheets from pending to under review to approved — or rejected with a comment. Every decision is logged with who signed off.",
     span: "md:col-span-4",
   },
   {
@@ -85,7 +85,7 @@ export function FeaturesBento() {
           custom={0}
           variants={reveal}
         >
-          <p className="lp-overline">What WorkLedger does</p>
+          <p className="lp-overline">What PayRun does</p>
           <h2 className="lp-display mt-6 text-[clamp(2rem,5vw,3rem)]">
             Built for hours, approvals, and <em className="lp-copper-italic">payslips</em>
           </h2>

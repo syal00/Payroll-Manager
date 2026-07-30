@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Globe, Mail, Share2 } from "lucide-react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
+import { APP_NAME, SUPPORT_EMAIL } from "@/lib/brand";
 import { FOOTER_SECTIONS } from "@/lib/marketing-content";
 
 export function LandingFooter() {
@@ -15,8 +16,8 @@ export function LandingFooter() {
               href="/"
               size={38}
               testId="footer-logo"
-              nameLine1="Syal"
-              nameLine2="Operations"
+              showTag={false}
+              nameLine1={APP_NAME}
               wrapperClassName="lp-logo"
               imageClassName="brand-logo-img lp-logo-img"
               textWrapperClassName="lp-logo-text"
@@ -24,7 +25,7 @@ export function LandingFooter() {
               tagClassName="lp-logo-tag"
             />
             <p className="lp-footer-brand-desc">
-              WorkLedger — timesheets, approvals, and payslips for your team.
+              PayRun — timesheets, approvals, and payslips for your team.
             </p>
             <div className="lp-footer-social">
               <Link href="/" aria-label="Website" data-testid="social-linkedin">
@@ -33,7 +34,7 @@ export function LandingFooter() {
               <Link href="/contact" aria-label="Contact" data-testid="social-twitter">
                 <Share2 className="h-4 w-4" strokeWidth={1.5} />
               </Link>
-              <a href="mailto:hello@syaloperations.com" aria-label="Email" data-testid="social-email">
+              <a href={`mailto:${SUPPORT_EMAIL}`} aria-label="Email" data-testid="social-email">
                 <Mail className="h-4 w-4" strokeWidth={1.5} />
               </a>
             </div>
@@ -56,12 +57,12 @@ export function LandingFooter() {
         </div>
 
         <div className="lp-footer-meta">
-          <span>© {year} Syal Operations Group</span>
-          <span>WorkLedger payroll manager</span>
+          <span>© {year} {APP_NAME}</span>
+          <span>{APP_NAME}</span>
         </div>
 
         <p className="lp-huge-footer" aria-hidden>
-          SYAL.
+          PAYRUN.
         </p>
       </div>
     </footer>

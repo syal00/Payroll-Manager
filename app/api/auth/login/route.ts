@@ -59,6 +59,23 @@ export async function POST(req: Request) {
         { status: 403 }
       );
     }
+    if (user.mustChangePassword) {
+      await createSession({
+        id: user.id,
+        username: user.username,
+        email: user.contactEmail,
+        role: user.role as "SUPER_ADMIN" | "MAIN_ADMIN" | "MANAGER" | "SUPERVISOR" | "ADMIN",
+        name: user.name,
+        companyId: user.companyId,
+      });
+      clearLoginRateLimit(ip);
+      return NextResponse.json({
+        ok: true,
+        role: user.role,
+        mustChangePassword: true,
+        redirect: "/admin/change-password",
+      });
+    }
     await createSession({
       id: user.id,
       username: user.username,

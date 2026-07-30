@@ -61,8 +61,15 @@ export function LandingHeader({
             </nav>
 
             <div className="lp-nav-actions">
+              <Link
+                href="/employee-access"
+                className="lp-nav-portal lp-u-link"
+                data-testid="header-employee-portal-link"
+              >
+                Employee portal
+              </Link>
               <Link href="/login" className="lp-nav-portal lp-u-link" data-testid="header-portal-link">
-                Sign In
+                Admin sign in
               </Link>
               <MagneticButton
                 onClick={onBookDemo}
@@ -97,8 +104,11 @@ export function LandingHeader({
               {item.label}
             </a>
           ))}
+          <a href="/employee-access" onClick={onCloseMobile}>
+            Employee portal
+          </a>
           <a href="/login" onClick={onCloseMobile}>
-            Sign In
+            Admin sign in
           </a>
           <button
             type="button"

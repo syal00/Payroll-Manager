@@ -42,12 +42,12 @@ function UsageMeter({
 
   return (
     <div className="dash-stat-card !items-start !p-5">
-      <p className="text-sm font-semibold text-[var(--elite-heading)]">{label}</p>
-      <p className="mt-2 text-2xl font-bold tabular-nums text-[var(--elite-heading)]">
+      <p className="text-sm font-semibold text-[var(--sa-heading)]">{label}</p>
+      <p className="mt-2 text-2xl font-bold tabular-nums text-[var(--sa-heading)]">
         {displayValue}
-        <span className="ml-1 text-sm font-normal text-[var(--text-muted)]">/ {displayLimit} {unit}</span>
+        <span className="ml-1 text-sm font-normal text-[var(--sa-muted)]">/ {displayLimit} {unit}</span>
       </p>
-      <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-[var(--elite-border)]">
+      <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-[var(--sa-border)]">
         <div
           className={`h-full rounded-full transition-all ${usageBarColor(pct)}`}
           style={{ width: `${pct}%` }}

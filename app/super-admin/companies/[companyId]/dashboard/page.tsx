@@ -144,7 +144,7 @@ export default function CompanyDrilldownDashboardPage({
 
   return (
     <div className="page-container space-y-6">
-      <h1 className="text-xl font-semibold tracking-tight text-[var(--elite-heading)]">Dashboard</h1>
+      <h1 className="text-xl font-semibold tracking-tight text-[var(--sa-heading)]">Dashboard</h1>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((c) => (

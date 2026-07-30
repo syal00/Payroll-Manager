@@ -33,8 +33,8 @@ export function CtaBanner({ onBookDemo }: CtaBannerProps) {
             Ready to manage hours and <em className="lp-copper-italic">payroll</em>?
           </h2>
           <p className="lp-cta-lead mt-4 max-w-lg">
-            Request a demo to see WorkLedger in action, or sign in if your team already
-            has access.
+            Request a demo to see PayRun in action, sign in as admin or manager, or open the
+            employee portal to submit hours and view payslips.
           </p>
 
           <div className="lp-cta-actions">
@@ -43,7 +43,10 @@ export function CtaBanner({ onBookDemo }: CtaBannerProps) {
               <ArrowRight className="h-4 w-4" strokeWidth={2} />
             </MagneticButton>
             <Link href="/employee-access" className="lp-outline-btn" data-testid="cta-portal-link">
-              Employee Portal
+              Employee portal
+            </Link>
+            <Link href="/login" className="lp-outline-btn" data-testid="cta-admin-sign-in-link">
+              Admin sign in
             </Link>
           </div>
         </motion.div>

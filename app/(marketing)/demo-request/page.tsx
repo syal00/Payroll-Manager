@@ -3,8 +3,8 @@ import { DemoRequestForm } from "@/components/marketing/DemoRequestForm";
 import { MarketingPage } from "@/components/marketing/MarketingPage";
 
 export const metadata: Metadata = {
-  title: "Request a demo — WorkLedger",
-  description: "Request a WorkLedger demo and see how timesheets, approvals, and payslips work together.",
+  title: "Request a demo — PayRun",
+  description: "Request a PayRun demo and see how timesheets, approvals, and payslips work together.",
 };
 
 export default function DemoRequestPage() {
@@ -12,7 +12,7 @@ export default function DemoRequestPage() {
     <MarketingPage
       overline="Company"
       title="Request a demo"
-      lead="Tell us about your team and we'll set up a walkthrough of WorkLedger — timesheets, approvals, pay periods, and payslip generation."
+      lead="Tell us about your team and we'll set up a walkthrough of PayRun — timesheets, approvals, pay periods, and payslip generation."
       wide
     >
       <DemoRequestForm />

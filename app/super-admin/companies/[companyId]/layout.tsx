@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Globe } from "lucide-react";
+import { CompanyDrilldownNav } from "@/components/super-admin/CompanyDrilldownNav";
+import { TenantActingCookie } from "@/components/super-admin/TenantActingCookie";
+import { formatCompanySubdomain } from "@/lib/company-subdomain-display";
 
 export default async function CompanyDrilldownLayout({
   children,
@@ -13,26 +16,45 @@ export default async function CompanyDrilldownLayout({
   const { companyId } = await params;
   const company = await prisma.company.findUnique({
     where: { id: companyId },
-    select: { name: true },
+    select: { name: true, slug: true, websiteUrl: true },
   });
 
   if (!company) notFound();
 
   return (
     <div>
-      {/* Not dismissible by design — prevents accidental cross-tenant confusion while super admin
-          is viewing a single company's normally-session-scoped data through a shared login. */}
-      <div className="flex items-center justify-center gap-3 bg-[var(--elite-warning)] px-4 py-2 text-center text-sm font-medium text-black">
-        <span>
-          Viewing <strong>{company.name}</strong> as super admin
-        </span>
+      <TenantActingCookie companyId={companyId} />
+      <div className="sa-platform-bar">
         <Link
           href="/super-admin/companies"
-          className="inline-flex items-center gap-1 underline underline-offset-2 hover:no-underline"
+          className="inline-flex items-center gap-1 hover:text-[var(--sa-heading)]"
         >
           <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
-          Back to all companies
+          All companies
         </Link>
+        <span aria-hidden>·</span>
+        <span>
+          Inspecting <strong>{company.name}</strong>
+        </span>
+        {company.websiteUrl ? (
+          <>
+            <span aria-hidden>·</span>
+            <a
+              href={company.websiteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-[var(--sa-accent)] hover:underline"
+            >
+              <Globe className="h-3.5 w-3.5" aria-hidden />
+              Website
+            </a>
+          </>
+        ) : null}
+        <span aria-hidden>·</span>
+        <code className="sa-mono text-[var(--sa-accent)]">{formatCompanySubdomain(company.slug, company.websiteUrl)}</code>
+      </div>
+      <div className="page-container !pb-0">
+        <CompanyDrilldownNav companyId={companyId} />
       </div>
       {children}
     </div>

@@ -10,12 +10,14 @@ export function AdminLayoutClient({
   userEmail,
   header,
   isMainAdmin,
+  superAdminActing,
   children,
 }: {
   userName: string;
   userEmail?: string;
   header?: AdminShellHeader;
   isMainAdmin: boolean;
+  superAdminActing?: { companyId: string; companyName: string };
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -31,6 +33,7 @@ export function AdminLayoutClient({
       userEmail={userEmail}
       header={header ?? undefined}
       isMainAdmin={isMainAdmin}
+      superAdminActing={superAdminActing}
     >
       {children}
     </AdminShell>

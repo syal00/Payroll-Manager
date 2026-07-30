@@ -21,6 +21,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
+import { DEFAULT_BRAND_NAME } from "@/lib/brand";
 
 export type SidebarNavLink = {
   href: string;
@@ -72,7 +73,7 @@ export function Sidebar({
   onLogout,
 }: SidebarProps) {
   const pathname = usePathname();
-  const brand = process.env.NEXT_PUBLIC_COMPANY_NAME ?? "Syal Operations Group";
+  const brand = process.env.NEXT_PUBLIC_COMPANY_NAME ?? DEFAULT_BRAND_NAME;
   const links = adminNavLinks.filter((l) => isMainAdmin || !l.mainAdminOnly);
   const initials = getInitials(userName);
 

@@ -6,7 +6,7 @@ import { CountUp } from "@/components/landing/CountUp";
 import { landingReveal, landingViewport } from "@/lib/landing-motion";
 
 const STATS = [
-  { end: 5, suffix: "", label: "User roles supported", decimals: 0 },
+  { end: 3, suffix: "", label: "User roles — admin, manager, employee", decimals: 0 },
   { end: 3, suffix: "", label: "Steps from hours to payslip", decimals: 0 },
   { end: 100, suffix: "%", label: "Audit trail on key actions", decimals: 0 },
   { end: 2, suffix: "", label: "Portals — admin and employee", decimals: 0 },
@@ -43,7 +43,6 @@ export function StatsSection() {
             >
               <CountUp
                 end={stat.end}
-                prefix={stat.prefix}
                 suffix={stat.suffix}
                 decimals={stat.decimals}
                 data-testid={`stat-value-${i}`}

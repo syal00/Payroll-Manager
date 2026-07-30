@@ -14,6 +14,7 @@ import {
   Search,
 } from "lucide-react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
+import { DEFAULT_BRAND_NAME } from "@/lib/brand";
 import { useState, type ReactNode, useMemo } from "react";
 
 export function PublicEmployeeShell({
@@ -28,7 +29,7 @@ export function PublicEmployeeShell({
   const base = `/employee/${employeeId}`;
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const brand = (process.env.NEXT_PUBLIC_COMPANY_NAME ?? "Syal Operations Group").toUpperCase();
+  const brand = (process.env.NEXT_PUBLIC_COMPANY_NAME ?? DEFAULT_BRAND_NAME).toUpperCase();
 
   const greetingPhrase = useMemo(() => {
     const h = new Date().getHours();

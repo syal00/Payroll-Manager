@@ -3,12 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/api-auth";
 import { assertStaffCanAccessEmployee } from "@/lib/manager-scope";
 import { writeAuditLog } from "@/lib/audit";
-import { format } from "date-fns";
+import { buildPayslipReadyEmail } from "@/lib/email/payslip-ready";
+import { sendEmail } from "@/lib/mailer";
 
-/**
- * Email-ready payload: wire SMTP (e.g. nodemailer) via env when available.
- * Always records audit + optional emailSentAt for traceability.
- */
 export async function POST(
   _req: Request,
   ctx: { params: Promise<{ id: string }> }
@@ -19,7 +16,7 @@ export async function POST(
     const payslip = await prisma.payslip.findUnique({
       where: { id },
       include: {
-        employee: { include: { user: true } },
+        employee: { include: { user: true, company: true } },
         payPeriod: true,
       },
     });
@@ -28,25 +25,22 @@ export async function POST(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const company = process.env.NEXT_PUBLIC_COMPANY_NAME ?? "Company";
-    // Deliver to contactEmail only — username is a login handle, never routable mail.
     const to = payslip.employee.contactEmail;
-    const subject = `${company} — Payslip ${payslip.payslipNumber}`;
-    const body = `Hello ${payslip.employee.name},
+    const companyName = payslip.employee.company?.name ?? process.env.NEXT_PUBLIC_COMPANY_NAME ?? "PayRun";
+    const { subject, text, html } = buildPayslipReadyEmail({
+      employeeName: payslip.employee.name,
+      companyName,
+      payslipNumber: payslip.payslipNumber,
+      periodStart: payslip.payPeriod.startDate,
+      periodEnd: payslip.payPeriod.endDate,
+      netPay: payslip.netPay,
+    });
 
-Your payslip ${payslip.payslipNumber} for the period ${format(payslip.payPeriod.startDate, "MMM d, yyyy")} – ${format(payslip.payPeriod.endDate, "MMM d, yyyy")} is available.
-
-Net pay: $${payslip.netPay.toFixed(2)}
-
-Sign in to the employee portal to view details and download your PDF.
-
-— Payroll`;
-
-    const smtpConfigured = Boolean(process.env.SMTP_HOST && process.env.SMTP_FROM);
+    const emailResult = await sendEmail({ to, subject, text, html });
 
     await prisma.payslip.update({
       where: { id },
-      data: { emailSentAt: new Date() },
+      data: { emailSentAt: emailResult.sent ? new Date() : undefined },
     });
 
     await writeAuditLog({
@@ -54,15 +48,16 @@ Sign in to the employee portal to view details and download your PDF.
       action: "PAYSLIP_EMAIL_DISPATCH",
       entityType: "Payslip",
       entityId: id,
-      details: { to, smtpConfigured, subject },
+      details: { to, emailSent: emailResult.sent, subject },
     });
 
     return NextResponse.json({
       ok: true,
-      message: smtpConfigured
-        ? "Email queued (configure nodemailer in production to actually send)."
-        : "Email template recorded; attach SMTP in .env to send in production.",
-      preview: { to, subject, body },
+      emailSent: emailResult.sent,
+      message: emailResult.sent
+        ? `Payslip email sent to ${to}.`
+        : emailResult.detail ?? "Email not configured — payslip recorded only.",
+      preview: emailResult.sent ? undefined : { to, subject, text },
     });
   } catch (e) {
     const err = e as Error & { status?: number };

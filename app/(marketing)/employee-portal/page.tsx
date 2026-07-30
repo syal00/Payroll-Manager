@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { MarketingPage } from "@/components/marketing/MarketingPage";
 
 export const metadata: Metadata = {
-  title: "Employee portal — WorkLedger",
+  title: "Employee portal — PayRun",
   description: "Submit timesheets, track approvals, and download payslips from the employee portal.",
 };
 
@@ -26,7 +26,7 @@ export default function EmployeePortalPage() {
           </li>
           <li>
             <strong>Track approval status</strong>
-            See whether a submission is pending, under review, or approved.
+            See whether a submission is pending, under review, approved, or rejected.
           </li>
           <li>
             <strong>View payslips</strong>

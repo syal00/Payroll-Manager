@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
 import { AdminMobileFab } from "@/components/dashboard/AdminMobileFab";
+import { SuperAdminActingBanner } from "@/components/super-admin/SuperAdminActingBanner";
 
 const SIDEBAR_COLLAPSED_KEY = "sidebar-collapsed";
 
@@ -15,12 +16,14 @@ export function AdminShell({
   userEmail,
   header,
   isMainAdmin = true,
+  superAdminActing,
   children,
 }: {
   userName: string;
   userEmail?: string;
   header?: AdminShellHeader;
   isMainAdmin?: boolean;
+  superAdminActing?: { companyId: string; companyName: string };
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -72,6 +75,12 @@ export function AdminShell({
       />
 
       <div className="main-wrapper">
+        {superAdminActing ? (
+          <SuperAdminActingBanner
+            companyId={superAdminActing.companyId}
+            companyName={superAdminActing.companyName}
+          />
+        ) : null}
         <Topbar
           onToggleSidebar={toggleSidebar}
           userName={userName}

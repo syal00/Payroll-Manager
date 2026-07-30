@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useRef } from "react";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
-import { ArrowRight, Play } from "lucide-react";
+import { ArrowRight, Play, Users } from "lucide-react";
 import { DashboardPreview } from "@/components/landing/DashboardPreview";
 import { MagneticButton } from "@/components/landing/MagneticButton";
 import { landingReveal } from "@/lib/landing-motion";
@@ -10,7 +11,7 @@ import { landingReveal } from "@/lib/landing-motion";
 const TRUST_ITEMS = [
   { label: "Timesheet submissions", sub: "Employees log hours each pay period" },
   { label: "Manager approvals", sub: "Review and sign off before payroll runs" },
-  { label: "Payslip generation", sub: "PDF payslips from approved hours" },
+  { label: "Payslip generation", sub: "PDF export, mark sent, and email tracking" },
 ];
 
 type HeroProps = {
@@ -62,8 +63,8 @@ export function Hero({ onBookDemo }: HeroProps) {
               custom={1}
               variants={landingReveal}
             >
-              WorkLedger helps your team submit hours, route them through review, and
-              generate payslips — with role-based access for admins, managers, and employees.
+              PayRun helps your team submit hours, route them through review, and
+              generate payslips — with three roles per company: main admin, manager, and employee.
             </motion.p>
 
             <motion.ul
@@ -95,11 +96,32 @@ export function Hero({ onBookDemo }: HeroProps) {
                 Request a Demo
                 <ArrowRight className="h-4 w-4" strokeWidth={2} />
               </MagneticButton>
+              <Link href="/employee-access" className="lp-outline-btn" data-testid="hero-employee-portal-link">
+                <Users className="h-4 w-4" strokeWidth={2} />
+                Employee portal
+              </Link>
               <a href="/login" className="lp-outline-btn" data-testid="hero-tour-btn">
                 <Play className="h-4 w-4" strokeWidth={2} />
-                Sign In to Dashboard
+                Admin sign in
               </a>
             </motion.div>
+
+            <motion.p
+              className="lp-hero-portal-hints"
+              initial="hidden"
+              animate="visible"
+              custom={4}
+              variants={landingReveal}
+            >
+              Employees:{" "}
+              <Link href="/employee-access/register" className="lp-hero-portal-link">
+                Register
+              </Link>
+              {" · "}
+              <Link href="/employee-access/existing" className="lp-hero-portal-link">
+                Sign in with username
+              </Link>
+            </motion.p>
           </div>
 
           <div className="lp-hero-right">

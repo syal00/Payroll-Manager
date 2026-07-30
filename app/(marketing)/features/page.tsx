@@ -3,7 +3,7 @@ import { MarketingPage } from "@/components/marketing/MarketingPage";
 import { MARKETING_FEATURES } from "@/lib/marketing-content";
 
 export const metadata: Metadata = {
-  title: "Features — WorkLedger",
+  title: "Features — PayRun",
   description: "Timesheets, approvals, payslips, pay periods, and audit logs in one payroll workspace.",
 };
 
@@ -12,7 +12,7 @@ export default function FeaturesPage() {
     <MarketingPage
       overline="Product"
       title="Platform features"
-      lead="WorkLedger covers the full payroll workflow — from hour submissions through manager approval to payslip generation."
+      lead="PayRun covers the full payroll workflow — from hour submissions through manager approval to payslip generation."
       actions={[
         { label: "Request a demo", href: "/demo-request", primary: true },
         { label: "Admin sign in", href: "/login" },

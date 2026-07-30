@@ -3,12 +3,13 @@ import { headers } from "next/headers";
 import { ArrowRight, Mail, Shield, UserPlus } from "lucide-react";
 import { LoginBrandIllustration } from "@/components/auth/LoginBrandIllustration";
 import { BrandLogo } from "@/components/brand/BrandLogo";
+import { DEFAULT_BRAND_NAME } from "@/lib/brand";
 
 export default async function EmployeeAccessHubPage() {
   const h = await headers();
   const companyName = h.get("x-company-name");
   const companyLogoUrl = h.get("x-company-logo");
-  const brand = (companyName ?? process.env.NEXT_PUBLIC_COMPANY_NAME ?? "Syal Operations Group").toUpperCase();
+  const brand = (companyName ?? process.env.NEXT_PUBLIC_COMPANY_NAME ?? DEFAULT_BRAND_NAME).toUpperCase();
 
   return (
     <div className="login-root">

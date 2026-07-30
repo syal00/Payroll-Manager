@@ -24,14 +24,14 @@ const STEPS: {
     num: "II",
     meta: "Step two",
     title: "Managers review and approve.",
-    desc: "Admins and managers check submissions, move them through review, and approve hours before payroll runs.",
+    desc: "Main admins and managers check submissions, move them through review, approve or reject with comments, then payroll runs on approved hours only.",
     icon: Eye,
   },
   {
     num: "III",
     meta: "Step three",
     title: "Generate and distribute payslips.",
-    desc: "Create payslips from approved timesheets, then employees download PDF copies from their dashboard.",
+    desc: "Create payslips from approved timesheets, export PDFs, mark as sent, and track email delivery — employees download copies from their dashboard.",
     icon: Send,
   },
 ];

@@ -53,9 +53,8 @@ const ROW1 = [
 ];
 
 const ROW2 = [
-  "admins",
+  "main admins",
   "managers",
-  "supervisors",
   "employees",
   "hourly rates",
   "overtime",

@@ -1,4 +1,4 @@
-# WorkLedger — Payroll manager
+# PayRun
 
 Next.js 16, Prisma 5, and PostgreSQL (**Neon**). Demo app for hours, approvals, and payslips.
 
@@ -18,7 +18,9 @@ For a step-by-step checklist with copy buttons, **[open `setup.html` in your bro
 | `DATABASE_URL` | Pooled connection (e.g. Neon `*-pooler.*.neon.tech`). Used by the app at runtime. |
 | `DIRECT_URL` | Direct/non-pooler host (no `-pooler`). Required in `schema.prisma` so **`prisma migrate deploy`** works against Neon. |
 | `AUTH_SECRET` | JWT/session signing; minimum 32 characters. |
-| `NEXT_PUBLIC_COMPANY_NAME` | Optional branding on login and employee screens. |
+| `ROOT_DOMAIN` | **Routing only** (server/proxy): apex hostname without port for parsing tenant subdomains from incoming requests. Dev: `localhost`. Production: e.g. `payrun.app`. |
+| `NEXT_PUBLIC_APP_DOMAIN` | **Display only** (UI): full domain suffix shown as `{slug}.{domain}` in super-admin and modals. Dev: `localhost:3000`. Production: e.g. `payrun.app`. Set this in Vercel so deployed super-admin never shows localhost by mistake. |
+| `NEXT_PUBLIC_COMPANY_NAME` | Optional branding on login, sidebar, and employee screens. Defaults to **PayRun**. |
 
 Generate a secret:
 
@@ -45,6 +47,8 @@ Employees use the employee portal with their assigned username; OTP codes are se
    - **`DATABASE_URL`** — Neon **pooled** URL (often includes `-pooler`).
    - **`DIRECT_URL`** — Neon **direct** URL (host without `-pooler`). **Both** are required for builds that run `prisma migrate deploy`.
    - **`AUTH_SECRET`** — 32+ random characters.
+   - **`ROOT_DOMAIN`** — apex hostname for tenant routing (e.g. `payrun.app`; dev: `localhost`).
+   - **`NEXT_PUBLIC_APP_DOMAIN`** — same apex for UI display, with port in dev (`localhost:3000`).
    - Optional: **`NEXT_PUBLIC_COMPANY_NAME`**
 4. Deploy. The build runs `prisma generate`, `prisma migrate deploy`, **`tsx scripts/ensure-demo-admins.ts`** (creates/updates the two demo admin accounts — no full data wipe), then `next build`.
 5. Optional: run **`npm run setup`** or **`npm run db:seed`** from your machine if you want the full demo dataset (employees, timesheets, etc.). Demo admin login works after step 4 alone.

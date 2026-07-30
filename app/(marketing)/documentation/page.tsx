@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { MarketingPage } from "@/components/marketing/MarketingPage";
 
 export const metadata: Metadata = {
-  title: "Documentation — WorkLedger",
+  title: "Documentation — PayRun",
   description: "Getting started guides for admins, managers, employees, and super admins.",
 };
 
@@ -11,7 +11,7 @@ export default function DocumentationPage() {
     <MarketingPage
       overline="Resources"
       title="Documentation"
-      lead="A quick reference for getting started with WorkLedger across admin, employee, and super admin roles."
+      lead="A quick reference for getting started with PayRun across admin, employee, and super admin roles."
       actions={[
         { label: "Admin sign in", href: "/login", primary: true },
         { label: "Employee portal", href: "/employee-access" },
@@ -43,7 +43,6 @@ export default function DocumentationPage() {
           <li>Sign in at <a href="/login">/login</a> with a super admin account.</li>
           <li>You will be redirected to the companies list at <code>/super-admin/companies</code>.</li>
           <li>Select a company to open its drill-down dashboard with employees, timesheets, and payslips.</li>
-          <li>See the <a href="/super-admin-access">super admin access page</a> for more details.</li>
         </ul>
       </div>
       <div className="mkt-section mkt-prose">

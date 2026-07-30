@@ -23,11 +23,11 @@ async function main() {
   await prisma.user.deleteMany();
 
   // Every non-SUPER_ADMIN User/Employee row requires a companyId (DB check constraint on User).
-  // These demo staff/employees belong to the platform owner's own org, "Syal Operations" — a
+  // Demo staff/employees belong to the default demo org (slug syal-operations, display name PayRun Demo).
   // normal Company row like any tenant, no special-casing.
   const syalOperations = await prisma.company.upsert({
     where: { slug: "syal-operations" },
-    create: { name: "Syal Operations", slug: "syal-operations", logoUrl: "/logo.png" },
+    create: { name: "PayRun Demo", slug: "syal-operations", logoUrl: "/logo.png" },
     update: {},
   });
 

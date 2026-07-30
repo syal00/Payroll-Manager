@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { MarketingPage } from "@/components/marketing/MarketingPage";
+import { SUPPORT_EMAIL } from "@/lib/brand";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — WorkLedger",
-  description: "How WorkLedger collects, uses, and protects your data.",
+  title: "Privacy Policy — PayRun",
+  description: "How PayRun collects, uses, and protects your data.",
 };
 
 export default function PrivacyPage() {
@@ -11,12 +12,12 @@ export default function PrivacyPage() {
     <MarketingPage
       overline="Legal"
       title="Privacy policy"
-      lead="This policy describes how Syal Operations Group handles information in the WorkLedger payroll platform."
+      lead="This policy describes how PayRun handles information in the payroll platform."
     >
       <div className="mkt-section mkt-prose">
         <h2>Information we collect</h2>
         <p>
-          WorkLedger stores account information (name, email, role), employee payroll data
+          PayRun stores account information (name, email, role), employee payroll data
           (timesheets, hourly rates, payslips), and activity logs (approvals, admin actions)
           required to operate the service.
         </p>
@@ -42,7 +43,7 @@ export default function PrivacyPage() {
         <h2>Contact</h2>
         <p>
           Privacy questions can be sent to{" "}
-          <a href="mailto:hello@syaloperations.com">hello@syaloperations.com</a>.
+          <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
         </p>
       </div>
     </MarketingPage>

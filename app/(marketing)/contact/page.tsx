@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { MarketingPage } from "@/components/marketing/MarketingPage";
+import { SUPPORT_EMAIL } from "@/lib/brand";
 
 export const metadata: Metadata = {
-  title: "Contact — WorkLedger",
-  description: "Get in touch with the WorkLedger team for support, demos, or general inquiries.",
+  title: "Contact — PayRun",
+  description: "Get in touch with the PayRun team for support, demos, or general inquiries.",
 };
 
 export default function ContactPage() {
@@ -11,7 +12,7 @@ export default function ContactPage() {
     <MarketingPage
       overline="Company"
       title="Contact us"
-      lead="Have a question about WorkLedger, need help with your account, or want to schedule a walkthrough? Reach out below."
+      lead="Have a question about PayRun, need help with your account, or want to schedule a walkthrough? Reach out below."
       actions={[
         { label: "Request a demo", href: "/demo-request", primary: true },
         { label: "Read the FAQ", href: "/faq" },
@@ -21,7 +22,7 @@ export default function ContactPage() {
         <p>
           <strong>Email</strong>
           <br />
-          <a href="mailto:hello@syaloperations.com">hello@syaloperations.com</a>
+          <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
         </p>
         <p style={{ marginTop: "1rem" }}>
           <strong>Support hours</strong>

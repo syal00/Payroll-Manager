@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* ────────────────────────────────────────────────────────────────
-   SYAL OPERATIONS GROUP — EliteAdmin-inspired design system
+   PAYRUN — EliteAdmin-inspired design system
    ──────────────────────────────────────────────────────────────── */
 :root {
   /* EliteAdmin core palette (from EliteAdmin-pro _variables.scss) */
@@ -595,7 +595,7 @@ p {
   }
 }
 
-/* ── Sidebar (Syal navy + gold) ── */
+/* ── Sidebar (PayRun navy + gold) ── */
 .sidebar {
   position: fixed;
   top: 0;
@@ -3471,7 +3471,7 @@ p {
 }
 
 /* ────────────────────────────────────────────────────────────────
-   MARKETING LANDING (`/`) — full cinematic SYAL OPERATIONS GROUP
+   MARKETING LANDING (`/`) — full cinematic PAYRUN
    ──────────────────────────────────────────────────────────────── */
 .landing-root {
   min-height: 100vh;

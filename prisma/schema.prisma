@@ -15,8 +15,11 @@ model Company {
   id           String   @id @default(uuid())
   name         String
   slug         String   @unique
+  websiteUrl   String?  @map("website_url")
   logoUrl      String?  @map("logo_url")
   primaryColor String?  @map("primary_color")
+  /// IANA timezone for pay-period date boundaries (e.g. America/Toronto).
+  timezone     String   @default("America/Toronto")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -33,6 +36,8 @@ model User {
   role              String // SUPER_ADMIN | MAIN_ADMIN | MANAGER | SUPERVISOR | EMPLOYEE (legacy ADMIN → migrated to MAIN_ADMIN)
   phone             String?
   tokenVersion      Int       @default(0) @map("token_version")
+  /// When true, user must set a new password before using the app (provisioning / reset).
+  mustChangePassword Boolean  @default(false) @map("must_change_password")
   createdById       String?   @map("created_by_id")
   createdBy         User?     @relation("ManagerAccountsCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   managersCreated   User[]    @relation("ManagerAccountsCreatedBy")

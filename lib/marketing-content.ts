@@ -15,15 +15,17 @@ export const FOOTER_SECTIONS: FooterSection[] = [
     links: [
       { label: "Features", href: "/features", testId: "features" },
       { label: "How it works", href: "/how-it-works", testId: "how-it-works" },
-      { label: "Employee portal", href: "/employee-portal", testId: "employee-portal" },
-      { label: "Admin sign in", href: "/admin-access", testId: "admin-sign-in" },
-      { label: "Super admin", href: "/super-admin-access", testId: "super-admin" },
+      { label: "Employee portal", href: "/employee-access", testId: "employee-portal" },
+      { label: "Employee registration", href: "/employee-access/register", testId: "employee-register" },
+      { label: "Admin sign in", href: "/login", testId: "admin-sign-in" },
+      { label: "Super admin", href: "/login", testId: "super-admin" },
     ],
   },
   {
     title: "Company",
     links: [
       { label: "About", href: "/about", testId: "about" },
+      { label: "Owner", href: "/owner", testId: "owner" },
       { label: "Contact", href: "/contact", testId: "contact" },
       { label: "Demo requests", href: "/demo-request", testId: "demo-requests" },
     ],
@@ -46,8 +48,8 @@ export const FOOTER_SECTIONS: FooterSection[] = [
 
 export const MARKETING_FAQS = [
   {
-    q: "Who can use WorkLedger?",
-    a: "Admins manage the company, managers review their team's timesheets, supervisors assist with approvals, and employees submit hours and view payslips. A super admin role is also available for multi-company oversight.",
+    q: "Who can use PayRun?",
+    a: "PayRun has three roles within each company: main admins (full company control), managers (review and approve employee timesheets), and employees (self-service portal for hours and payslips). Platform operators may also use a separate super-admin console for multi-company oversight — tenants never see that layer.",
   },
   {
     q: "How do employees submit timesheets?",
@@ -55,7 +57,7 @@ export const MARKETING_FAQS = [
   },
   {
     q: "Can employees view their payslips?",
-    a: "Yes. Once payroll generates a payslip from approved hours, employees can view it in their dashboard and download a PDF copy.",
+    a: "Yes. Once payroll generates a payslip from approved hours, employees can view it in their dashboard and download a PDF copy. Admins can also mark payslips as sent and record when a copy was emailed.",
   },
   {
     q: "How do pay periods work?",
@@ -74,7 +76,7 @@ export const MARKETING_FAQS = [
 export const MARKETING_FEATURES = [
   {
     title: "Role-based access",
-    desc: "Separate portals for admins, managers, supervisors, and employees — each person sees only what they need.",
+    desc: "Three roles per company — main admin, manager, and employee — each with the right portal and permissions. Admins run the company; managers approve timesheets; employees submit hours and view payslips.",
   },
   {
     title: "Timesheet tracking",
@@ -82,7 +84,7 @@ export const MARKETING_FEATURES = [
   },
   {
     title: "Payslips & PDFs",
-    desc: "Generate payslips from approved timesheets with earnings and deductions, then download or share as PDF.",
+    desc: "Generate payslips from approved timesheets with earnings and deductions, export PDFs, mark them as sent, and track when a copy was emailed to the employee.",
   },
   {
     title: "Pay periods",
@@ -94,7 +96,7 @@ export const MARKETING_FEATURES = [
   },
   {
     title: "Approval workflow",
-    desc: "Route timesheets from pending to under review to approved, with comments and a record of who signed off.",
+    desc: "Route timesheets from pending to under review to approved — or rejected with a comment. Every decision is recorded in the audit trail with who signed off.",
   },
   {
     title: "Audit log",
@@ -109,10 +111,10 @@ export const MARKETING_STEPS = [
   },
   {
     title: "Managers review and approve",
-    desc: "Admins and managers check submissions, move them through review, and approve hours before payroll runs.",
+    desc: "Main admins and managers check submissions, move them through review, approve or reject with comments, then payroll runs on approved hours only.",
   },
   {
     title: "Generate and distribute payslips",
-    desc: "Create payslips from approved timesheets, then employees download PDF copies from their dashboard.",
+    desc: "Create payslips from approved timesheets, export PDFs, mark as sent, and track email delivery — employees download copies from their dashboard.",
   },
 ] as const;

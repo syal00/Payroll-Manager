@@ -1,9 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
+import { DEFAULT_BRAND_NAME } from "@/lib/brand";
 
 export const BRAND_LOGO_PATH = "/logo.png";
 
-const DEFAULT_BRAND = "Syal Operations Group";
+const DEFAULT_BRAND = DEFAULT_BRAND_NAME;
 
 type BrandLogoProps = {
   size?: number;

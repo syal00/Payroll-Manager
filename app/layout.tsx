@@ -19,8 +19,8 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Syal Operations Group — Intelligent Payroll",
-  description: "Streamline your payroll lifecycle",
+  title: "PayRun — Payroll & timesheets",
+  description: "Submit hours, approve timesheets, and generate payslips in one place.",
   icons: {
     icon: "/logo.png",
     apple: "/logo.png",
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Syal Payroll",
+    title: "PayRun",
   },
   other: {
     "mobile-web-app-capable": "yes",

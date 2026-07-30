@@ -3,7 +3,7 @@ import Link from "next/link";
 import { MarketingPage } from "@/components/marketing/MarketingPage";
 
 export const metadata: Metadata = {
-  title: "Admin access — WorkLedger",
+  title: "Admin access — PayRun",
   description: "Sign in as an admin or manager to review timesheets, manage employees, and run payroll.",
 };
 
@@ -46,8 +46,8 @@ export default function AdminAccessPage() {
         <div className="mkt-section mkt-prose">
         <h2>Who should use this login?</h2>
         <p>
-          Use the admin sign in if you are a <strong>main admin</strong>, <strong>manager</strong>,
-          or <strong>supervisor</strong> for your company workspace. Employees should use the{" "}
+          Use the admin sign in if you are a <strong>main admin</strong> or <strong>manager</strong>{" "}
+          for your company workspace. Employees should use the{" "}
           <Link href="/employee-portal">employee portal</Link> instead.
         </p>
       </div>

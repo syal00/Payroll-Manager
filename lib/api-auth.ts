@@ -1,5 +1,9 @@
 import { getSession, type SessionUser } from "@/lib/session";
 import { isStaffRole, isMainAdminRole, isSuperAdminRole, isSupervisorRole } from "@/lib/roles";
+import {
+  applySuperAdminTenantActing,
+  requireSuperAdminTenantActing,
+} from "@/lib/tenant-acting";
 
 /**
  * Authenticated session for API routes. Prefer `requireStaff` / `requireMainAdmin` / `requireSession` / `requireEmployee`
@@ -16,15 +20,12 @@ export async function requireSession(): Promise<SessionUser> {
   return s;
 }
 
-/** Main Admin or Manager — can use admin app & review assigned work. SUPER_ADMIN is rejected: tenant-
- *  scoped routes use session.companyId, which is always null for super admins and would mix every
- *  company's rows. Super admins must use /api/super-admin/companies/* instead. */
+/** Main Admin or Manager — can use admin app & review assigned work. SUPER_ADMIN may act as
+ *  MAIN_ADMIN for one tenant when `sa_tenant_company_id` cookie is set (company drill-down). */
 export async function requireStaff(): Promise<SessionUser> {
   const s = await requireSession();
   if (isSuperAdminRole(s.role)) {
-    const err = new Error("Super admin must use /api/super-admin/companies routes");
-    (err as Error & { status: number }).status = 403;
-    throw err;
+    return requireSuperAdminTenantActing(s);
   }
   if (!isStaffRole(s.role)) {
     const err = new Error("Forbidden");
@@ -34,13 +35,18 @@ export async function requireStaff(): Promise<SessionUser> {
   return s;
 }
 
-/** Full tenant control (create managers, settings, payslip issuance, etc.). SUPER_ADMIN also qualifies. */
+/** Full tenant control (create managers, settings, payslip issuance, etc.). SUPER_ADMIN with tenant
+ *  cookie acts as MAIN_ADMIN for that company; without cookie, platform-only routes still pass. */
 export async function requireMainAdmin(): Promise<SessionUser> {
   const s = await requireSession();
   if (!isMainAdminRole(s.role) && !isSuperAdminRole(s.role)) {
     const err = new Error("Forbidden");
     (err as Error & { status: number }).status = 403;
     throw err;
+  }
+  if (isSuperAdminRole(s.role)) {
+    const acting = await applySuperAdminTenantActing(s);
+    if (acting.companyId) return acting;
   }
   return s;
 }
@@ -60,9 +66,7 @@ export async function requireSuperAdmin(): Promise<SessionUser> {
 export async function requireSupervisorOrAbove(): Promise<SessionUser> {
   const s = await requireSession();
   if (isSuperAdminRole(s.role)) {
-    const err = new Error("Super admin must use /api/super-admin/companies routes");
-    (err as Error & { status: number }).status = 403;
-    throw err;
+    return requireSuperAdminTenantActing(s);
   }
   if (!isStaffRole(s.role) && !isSupervisorRole(s.role)) {
     const err = new Error("Forbidden");
@@ -80,7 +84,7 @@ export async function requireSupervisorOrAbove(): Promise<SessionUser> {
  * than trusting the request value directly, to prevent cross-tenant access via a tampered payload.
  */
 export function resolveCompanyId(session: SessionUser, requestedCompanyId?: string | null): string | null {
-  if (isSuperAdminRole(session.role) && requestedCompanyId) return requestedCompanyId;
+  if (requestedCompanyId?.trim()) return requestedCompanyId.trim();
   return session.companyId;
 }
 

@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { writeAuditLog } from "@/lib/audit";
 import { validateEmployeeEmailForOtp } from "@/lib/employee-code";
 import { normalizeUsername } from "@/lib/username-generator";
+import { buildEmployeeOtpEmail } from "@/lib/email/employee-otp";
+import { sendEmail } from "@/lib/mailer";
 import { z } from "zod";
 
 const bodySchema = z.object({
@@ -60,12 +62,17 @@ export async function POST(req: Request) {
 
     // OTP is sent to contactEmail only — username is a login handle, never routable mail.
     const deliverTo = employee.contactEmail;
+    const { subject, text, html } = buildEmployeeOtpEmail({ otp, expiresMinutes: 10 });
+    const emailResult = await sendEmail({ to: deliverTo, subject, text, html });
 
     return NextResponse.json({
       ok: true,
-      /** Shown in UI because outbound email is not configured in this deployment. */
-      devOtp: otp,
-      message: `Your one-time code was generated for ${deliverTo}. (In production this would be emailed to that address — never to your username.)`,
+      emailSent: emailResult.sent,
+      /** Shown in UI when outbound email is not configured. */
+      devOtp: emailResult.sent ? undefined : otp,
+      message: emailResult.sent
+        ? `Your one-time code was emailed to ${deliverTo}.`
+        : `Your one-time code was generated for ${deliverTo}. (Email not configured — use the code shown below.)`,
     });
   } catch (e) {
     if (e instanceof z.ZodError) {

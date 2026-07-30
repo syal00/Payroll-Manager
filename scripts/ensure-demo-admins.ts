@@ -54,7 +54,7 @@ async function main() {
 
   const syalOperations = await prisma.company.upsert({
     where: { slug: "syal-operations" },
-    create: { name: "Syal Operations", slug: "syal-operations", logoUrl: "/logo.png" },
+    create: { name: "PayRun Demo", slug: "syal-operations", logoUrl: "/logo.png" },
     update: {},
   });
 

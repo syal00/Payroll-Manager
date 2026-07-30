@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AlertCircle, Check, Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { ForgotAccessModal } from "@/components/auth/ForgotAccessModal";
 import { BrandLogo } from "@/components/brand/BrandLogo";
+import { APP_NAME } from "@/lib/brand";
 import "@/app/login/login.css";
 
 const FEATURES = [
@@ -40,7 +41,7 @@ function AuthBrandPanel({ companyName, companyLogoUrl }: AdminLoginFormProps) {
           <h1 className="login-brand-headline">
             Welcome back to
             <br />
-            <span>{companyName ?? "Syal Operations"}</span>
+            <span>{companyName ?? APP_NAME}</span>
           </h1>
           <p className="login-brand-desc">
             Sign in to manage payroll, approvals, and team operations from one secure workspace.

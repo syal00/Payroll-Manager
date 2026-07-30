@@ -36,7 +36,7 @@ const localIP = getLocalIP();
 const isLinkLocal = /^169\.254\./.test(localIP);
 
 console.log("");
-console.log(`🚀 WorkLedger running at http://localhost:${PORT}`);
+console.log(`🚀 PayRun running at http://localhost:${PORT}`);
 console.log(`📱 On your phone (same Wi-Fi): http://${localIP}:${PORT}`);
 console.log(`   Admin login:    syalrakesh00@gmail.com / PayrollDemo2026!`);
 console.log(`   Employee portal: http://${localIP}:${PORT}/employee-access`);

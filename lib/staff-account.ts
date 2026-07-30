@@ -16,6 +16,9 @@ type CreateStaffUserInput = {
   companyId: string | null;
   name?: string;
   createdById?: string | null;
+  mustChangePassword?: boolean;
+  /** When set (e.g. manager@rakesh-ironwatch.com), used instead of auto-generated username. */
+  username?: string;
 };
 
 export async function createStaffUser(input: CreateStaffUserInput) {
@@ -32,8 +35,18 @@ export async function createStaffUser(input: CreateStaffUserInput) {
     companySlug = company.slug;
   }
 
-  const username = await generateUsername(input.firstName, input.lastName, companySlug);
+  const username =
+    input.username?.trim().toLowerCase() ??
+    (await generateUsername(input.firstName, input.lastName, companySlug));
   assertUsernameNotContactEmail(username, contactEmail);
+
+  const existingUsername = await prisma.user.findUnique({
+    where: { username },
+    select: { id: true },
+  });
+  if (existingUsername) {
+    throw new Error("An account with this company login already exists.");
+  }
 
   const existingContact = await prisma.user.findUnique({
     where: { contactEmail },
@@ -52,6 +65,7 @@ export async function createStaffUser(input: CreateStaffUserInput) {
       role: input.role,
       companyId: input.companyId,
       createdById: input.createdById ?? null,
+      mustChangePassword: input.mustChangePassword ?? false,
     },
     select: {
       id: true,

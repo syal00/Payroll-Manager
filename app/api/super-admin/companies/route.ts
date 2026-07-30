@@ -6,6 +6,14 @@ import { Role, TimesheetStatus } from "@/lib/enums";
 import { writeAuditLog } from "@/lib/audit";
 import { validateEmailDeliverable, emailValidationMessage } from "@/lib/email-validation";
 import { createStaffUser, splitDisplayName } from "@/lib/staff-account";
+import { companySlugSchema, normalizeCompanySlug, validateCompanySlug } from "@/lib/company-slug";
+import { companyLogoUrlSchema } from "@/lib/company-logo-url";
+import { companyWebsiteUrlSchema } from "@/lib/website-url";
+import { createInitialPayPeriod } from "@/lib/company-provisioning";
+import { DEFAULT_COMPANY_TIMEZONE } from "@/lib/company-timezones";
+import { allocateCompanyLoginUsername } from "@/lib/company-login-email";
+import { DEFAULT_INITIAL_STAFF_PASSWORD } from "@/lib/default-staff-password";
+import { sendWelcomeAccessGrantedEmail } from "@/lib/email/welcome-access-granted";
 import { z } from "zod";
 
 /**
@@ -57,7 +65,10 @@ export async function GET() {
         id: c.id,
         name: c.name,
         slug: c.slug,
+        websiteUrl: c.websiteUrl,
         logoUrl: c.logoUrl,
+        primaryColor: c.primaryColor,
+        createdAt: c.createdAt.toISOString(),
         employeeCount: employeeCountByCompany.get(c.id) ?? 0,
         managerCount: managerCountByCompany.get(c.id) ?? 0,
         timesheetPendingCount: pendingCountByCompany.get(c.id) ?? 0,
@@ -70,28 +81,27 @@ export async function GET() {
 }
 
 /** Kept in sync with the reserved-subdomain list in proxy.ts — these can never resolve to a tenant. */
-const RESERVED_SLUGS = new Set(["app", "www"]);
-
-const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
-
 const createSchema = z.object({
   name: z.string().trim().min(1).max(120),
-  slug: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .min(2)
-    .max(63)
-    .regex(SLUG_PATTERN, "Slug must be lowercase alphanumeric with single hyphens (e.g. acme-corp)."),
-  logoUrl: z.string().trim().url().max(2048).nullable().optional(),
-  /** Optional initial staff account for the new tenant. No email-invite flow exists yet in this
-   *  codebase (see lib/api-auth.ts/managers route) — the caller sets the password directly, same
-   *  as manager creation, and communicates it out of band. */
+  slug: companySlugSchema,
+  websiteUrl: companyWebsiteUrlSchema,
+  logoUrl: companyLogoUrlSchema,
+  timezone: z.string().trim().min(1).max(64).default(DEFAULT_COMPANY_TIMEZONE),
+  payPeriod: z
+    .object({
+      type: z.enum(["biweekly", "custom"]),
+      startDate: z.string().optional(),
+      endDate: z.string().optional(),
+    })
+    .optional(),
+  /** Optional initial staff account — company login email is generated; welcome email goes to personal email. */
   initialAdmin: z
     .object({
       contactEmail: z.string().trim().email().max(320),
       name: z.string().trim().min(1).max(120),
-      password: z.string().min(8).max(128),
+      role: z.enum([Role.MAIN_ADMIN, Role.MANAGER]).default(Role.MAIN_ADMIN),
+      password: z.string().min(8).max(128).optional(),
+      mustChangePassword: z.boolean().optional(),
     })
     .optional(),
 });
@@ -101,11 +111,13 @@ export async function POST(req: Request) {
     const session = await requireSuperAdmin();
     const body = createSchema.parse(await req.json());
 
-    if (RESERVED_SLUGS.has(body.slug)) {
-      return NextResponse.json({ error: "This slug is reserved and cannot be used." }, { status: 409 });
+    const slug = normalizeCompanySlug(body.slug);
+    const slugErr = validateCompanySlug(slug);
+    if (slugErr) {
+      return NextResponse.json({ error: slugErr }, { status: 409 });
     }
 
-    const existingCompany = await prisma.company.findUnique({ where: { slug: body.slug } });
+    const existingCompany = await prisma.company.findUnique({ where: { slug } });
     if (existingCompany) {
       return NextResponse.json({ error: "A company with this slug already exists." }, { status: 409 });
     }
@@ -133,10 +145,21 @@ export async function POST(req: Request) {
     const company = await prisma.company.create({
       data: {
         name: body.name,
-        slug: body.slug,
+        slug,
+        websiteUrl: body.websiteUrl ?? null,
         logoUrl: body.logoUrl ?? null,
+        timezone: body.timezone ?? DEFAULT_COMPANY_TIMEZONE,
       },
     });
+
+    let payPeriod: { id: string; name: string | null; startDate: Date; endDate: Date } | null = null;
+    if (body.payPeriod) {
+      payPeriod = await createInitialPayPeriod({
+        type: body.payPeriod.type,
+        customStart: body.payPeriod.startDate,
+        customEnd: body.payPeriod.endDate,
+      });
+    }
 
     await writeAuditLog({
       actorId: session.id,
@@ -146,28 +169,69 @@ export async function POST(req: Request) {
       details: { name: company.name, slug: company.slug },
     });
 
-    let initialAdmin: { id: string; username: string; contactEmail: string; name: string } | null = null;
+    let initialAdmin: {
+      id: string;
+      username: string;
+      contactEmail: string;
+      name: string;
+      role: string;
+      welcomeEmailSent: boolean;
+      welcomeEmailDetail?: string;
+    } | null = null;
     if (body.initialAdmin) {
-      const passwordHash = await bcrypt.hash(body.initialAdmin.password, 12);
+      const password = body.initialAdmin.password ?? DEFAULT_INITIAL_STAFF_PASSWORD;
+      const mustChangePassword = body.initialAdmin.mustChangePassword ?? true;
+      const passwordHash = await bcrypt.hash(password, 12);
       const { firstName, lastName } = splitDisplayName(body.initialAdmin.name);
+      const companyLogin = await allocateCompanyLoginUsername(
+        body.initialAdmin.role,
+        firstName,
+        company.slug
+      );
       const admin = await createStaffUser({
         firstName,
         lastName,
         contactEmail: body.initialAdmin.contactEmail,
         passwordHash,
-        role: Role.MAIN_ADMIN,
+        role: body.initialAdmin.role,
         companyId: company.id,
         name: body.initialAdmin.name,
         createdById: session.id,
+        mustChangePassword,
+        username: companyLogin,
       });
-      initialAdmin = admin;
+
+      const welcomeResult = await sendWelcomeAccessGrantedEmail({
+        personalEmail: admin.contactEmail,
+        staffDisplayName: admin.name,
+        companyName: company.name,
+        companySlug: company.slug,
+        companyWebsiteUrl: company.websiteUrl,
+        role: body.initialAdmin.role,
+        generatedUsername: admin.username,
+        temporaryPassword: password,
+      });
+
+      initialAdmin = {
+        ...admin,
+        role: body.initialAdmin.role,
+        welcomeEmailSent: welcomeResult.sent,
+        welcomeEmailDetail: welcomeResult.detail,
+      };
 
       await writeAuditLog({
         actorId: session.id,
-        action: "MAIN_ADMIN_ACCOUNT_CREATED",
+        action: body.initialAdmin.role === Role.MAIN_ADMIN ? "MAIN_ADMIN_ACCOUNT_CREATED" : "MANAGER_ACCOUNT_CREATED",
         entityType: "User",
         entityId: admin.id,
-        details: { username: admin.username, contactEmail: admin.contactEmail, name: admin.name, companyId: company.id },
+        details: {
+          username: admin.username,
+          contactEmail: admin.contactEmail,
+          name: admin.name,
+          companyId: company.id,
+          role: body.initialAdmin.role,
+          welcomeEmailSent: welcomeResult.sent,
+        },
       });
     }
 
@@ -177,9 +241,19 @@ export async function POST(req: Request) {
         id: company.id,
         name: company.name,
         slug: company.slug,
+        websiteUrl: company.websiteUrl,
         logoUrl: company.logoUrl,
+        timezone: company.timezone,
         createdAt: company.createdAt.toISOString(),
       },
+      payPeriod: payPeriod
+        ? {
+            id: payPeriod.id,
+            name: payPeriod.name,
+            startDate: payPeriod.startDate.toISOString(),
+            endDate: payPeriod.endDate.toISOString(),
+          }
+        : null,
       initialAdmin,
     });
   } catch (e) {

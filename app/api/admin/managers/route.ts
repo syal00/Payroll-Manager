@@ -7,6 +7,7 @@ import { Role } from "@/lib/enums";
 import { writeAuditLog } from "@/lib/audit";
 import { validateEmailDeliverable, emailValidationMessage } from "@/lib/email-validation";
 import { createStaffUser } from "@/lib/staff-account";
+import { sendWelcomeAccessGrantedEmail } from "@/lib/email/welcome-access-granted";
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 
@@ -64,6 +65,7 @@ export async function POST(req: Request) {
       );
     }
 
+    const companyId = resolveCompanyId(session, body.companyId);
     const passwordHash = await bcrypt.hash(body.password, 12);
     const user = await createStaffUser({
       firstName: body.firstName,
@@ -71,9 +73,32 @@ export async function POST(req: Request) {
       contactEmail: body.contactEmail,
       passwordHash,
       role: Role.MANAGER,
-      companyId: resolveCompanyId(session, body.companyId),
+      companyId,
       createdById: session.id,
     });
+
+    const company = companyId
+      ? await prisma.company.findUnique({
+          where: { id: companyId },
+          select: { name: true, slug: true, websiteUrl: true },
+        })
+      : null;
+
+    if (company) {
+      const welcomeResult = await sendWelcomeAccessGrantedEmail({
+        personalEmail: user.contactEmail,
+        staffDisplayName: user.name,
+        companyName: company.name,
+        companySlug: company.slug,
+        companyWebsiteUrl: company.websiteUrl,
+        role: Role.MANAGER,
+        generatedUsername: user.username,
+        temporaryPassword: body.password,
+      });
+      if (!welcomeResult.sent) {
+        console.warn("[managers] Welcome email not sent:", welcomeResult.detail);
+      }
+    }
 
     await writeAuditLog({
       actorId: session.id,

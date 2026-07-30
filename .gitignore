@@ -36,6 +36,11 @@ yarn-error.log*
 .env*
 !.env.example
 
+# runtime uploads (company logos)
+/public/uploads/logos/*
+!/public/uploads/logos/.gitkeep
+!/public/uploads/logos/.gitignore
+
 # vercel
 .vercel
 

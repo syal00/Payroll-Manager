@@ -4,11 +4,15 @@ import * as jose from "jose";
 import { prisma } from "@/lib/prisma";
 import { isStaffRole, isSuperAdminRole, isSupervisorRole } from "@/lib/roles";
 import { trackApiRequestFireAndForget } from "@/lib/usage-tracker";
+import { TENANT_ACTING_COOKIE } from "@/lib/tenant-acting-constants";
+import { isTenantScopedApiPath } from "@/lib/tenant-acting";
 
 const COOKIE_NAME = "hr_session";
 
+import { RESERVED_COMPANY_SLUGS } from "@/lib/company-slug";
+
 /** Subdomains that never resolve to a tenant (marketing/app shell, generic www). */
-const RESERVED_SUBDOMAINS = new Set(["app", "www"]);
+const RESERVED_SUBDOMAINS = RESERVED_COMPANY_SLUGS;
 
 /** Base domain requests are served on; a single leading label in front of this is the tenant slug. */
 const ROOT_DOMAIN = process.env.ROOT_DOMAIN ?? "localhost";
@@ -174,25 +178,26 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/employee-access", request.url));
   }
 
-  // The legacy /admin app scopes queries via session.companyId, which is always null for
-  // SUPER_ADMIN — reaching it would mix every tenant's rows together (the bug the /super-admin
-  // route group exists to prevent). Keep the two surfaces mutually exclusive.
-  if (pathname.startsWith("/admin") && isSuperAdminRole(role)) {
+  // SUPER_ADMIN may use /admin and tenant APIs when inspecting a company (`sa_tenant_company_id`).
+  const tenantActingCompanyId = request.cookies.get(TENANT_ACTING_COOKIE)?.value?.trim() || null;
+  const superAdminTenantActing = isSuperAdminRole(role) && Boolean(tenantActingCompanyId);
+
+  if (pathname.startsWith("/admin") && isSuperAdminRole(role) && !superAdminTenantActing) {
     return NextResponse.redirect(new URL("/super-admin/companies", request.url));
   }
 
-  // Tenant-scoped APIs also use session.companyId — block SUPER_ADMIN from them so mixed rows
-  // can't leak via direct fetch. Platform operators use /api/super-admin/* only.
   if (
     isSuperAdminRole(role) &&
     pathname.startsWith("/api/") &&
     !pathname.startsWith("/api/super-admin/") &&
     !pathname.startsWith("/api/auth/")
   ) {
-    return NextResponse.json(
-      { error: "Super admin must use /api/super-admin/companies routes" },
-      { status: 403 }
-    );
+    if (!(superAdminTenantActing && isTenantScopedApiPath(pathname))) {
+      return NextResponse.json(
+        { error: "Super admin must use /api/super-admin/companies routes or open Admin console for a company." },
+        { status: 403 }
+      );
+    }
   }
 
   if (pathname.startsWith("/admin") && !isStaffRole(role) && !isSupervisorRole(role)) {
