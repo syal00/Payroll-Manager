@@ -7,7 +7,7 @@ import { findUserByLoginIdentity } from "@/lib/login-lookup";
 import { isStaffRole, isSupervisorRole, adminPortalLoginRedirect } from "@/lib/roles";
 import { normalizeUsername } from "@/lib/username-generator";
 import { beginAdmin2fa } from "@/lib/admin-login-2fa";
-import { createSession } from "@/lib/session";
+import { createSessionResponse } from "@/lib/session";
 import { isTestAccountBypass2fa } from "@/lib/test-account-bypass-2fa";
 import { z } from "zod";
 
@@ -92,21 +92,23 @@ export async function POST(req: Request) {
     }
 
     if (isTestAccountBypass2fa(user.contactEmail, user.username)) {
-      await createSession({
-        id: user.id,
-        username: user.username,
-        email: user.contactEmail,
-        role: user.role as "SUPER_ADMIN" | "MAIN_ADMIN" | "MANAGER" | "SUPERVISOR" | "ADMIN",
-        name: user.name,
-        companyId: user.companyId,
-      });
       clearLoginRateLimit(ip);
-      return NextResponse.json({
-        ok: true,
-        role: user.role,
-        mustChangePassword: user.mustChangePassword,
-        redirect: adminPortalLoginRedirect(user.role, user.mustChangePassword),
-      });
+      return createSessionResponse(
+        {
+          id: user.id,
+          username: user.username,
+          email: user.contactEmail,
+          role: user.role as "SUPER_ADMIN" | "MAIN_ADMIN" | "MANAGER" | "SUPERVISOR" | "ADMIN",
+          name: user.name,
+          companyId: user.companyId,
+        },
+        {
+          ok: true,
+          role: user.role,
+          mustChangePassword: user.mustChangePassword,
+          redirect: adminPortalLoginRedirect(user.role, user.mustChangePassword),
+        }
+      );
     }
 
     const tfa = await beginAdmin2fa({

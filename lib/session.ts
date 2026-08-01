@@ -1,8 +1,19 @@
 import { cookies } from "next/headers";
+import type { NextResponse } from "next/server";
 import * as jose from "jose";
 import { prisma } from "@/lib/prisma";
 
-const COOKIE_NAME = "hr_session";
+export const SESSION_COOKIE_NAME = "hr_session";
+
+const COOKIE_NAME = SESSION_COOKIE_NAME;
+
+export const SESSION_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax" as const,
+  path: "/",
+  maxAge: 60 * 60 * 24 * 7,
+};
 
 export type SessionUser = {
   id: string;
@@ -16,14 +27,14 @@ export type SessionUser = {
   companyId: string | null;
 };
 
-export async function createSession(user: SessionUser) {
+export async function createSessionToken(user: SessionUser): Promise<string> {
   const dbUser = await prisma.user.findUnique({
     where: { id: user.id },
     select: { tokenVersion: true },
   });
   const tv = dbUser?.tokenVersion ?? 0;
   const secret = new TextEncoder().encode(getSecret());
-  const token = await new jose.SignJWT({
+  return new jose.SignJWT({
     username: user.username,
     email: user.email,
     role: user.role,
@@ -36,15 +47,30 @@ export async function createSession(user: SessionUser) {
     .setExpirationTime("7d")
     .setIssuedAt()
     .sign(secret);
+}
 
+/** Attach session cookie to an API response (preferred in Route Handlers on Vercel). */
+export function attachSessionCookie(response: NextResponse, token: string) {
+  response.cookies.set(COOKIE_NAME, token, SESSION_COOKIE_OPTIONS);
+}
+
+export async function createSession(user: SessionUser) {
+  const token = await createSessionToken(user);
   const jar = await cookies();
-  jar.set(COOKIE_NAME, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7,
-  });
+  jar.set(COOKIE_NAME, token, SESSION_COOKIE_OPTIONS);
+}
+
+/** Create session and return a JSON response with the cookie set on the response object. */
+export async function createSessionResponse<T extends Record<string, unknown>>(
+  user: SessionUser,
+  body: T,
+  init?: ResponseInit
+): Promise<NextResponse> {
+  const { NextResponse: NR } = await import("next/server");
+  const token = await createSessionToken(user);
+  const response = NR.json(body, init);
+  attachSessionCookie(response, token);
+  return response;
 }
 
 export async function destroySession() {

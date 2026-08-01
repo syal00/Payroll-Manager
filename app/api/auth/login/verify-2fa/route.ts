@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { createSession } from "@/lib/session";
+import { createSessionResponse } from "@/lib/session";
 import { adminPortalLoginRedirect, isAdminPortalLoginRole } from "@/lib/roles";
 import { verifyAdmin2faChallenge, verifyAdminTotp } from "@/lib/admin-login-2fa";
 import { z } from "zod";
@@ -34,21 +34,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Account not found." }, { status: 404 });
     }
 
-    await createSession({
-      id: user.id,
-      username: user.username,
-      email: user.contactEmail,
-      role: user.role as "SUPER_ADMIN" | "MAIN_ADMIN" | "MANAGER" | "SUPERVISOR" | "ADMIN",
-      name: user.name,
-      companyId: user.companyId,
-    });
-
-    return NextResponse.json({
-      ok: true,
-      role: user.role,
-      mustChangePassword: user.mustChangePassword,
-      redirect: adminPortalLoginRedirect(user.role, user.mustChangePassword),
-    });
+    return createSessionResponse(
+      {
+        id: user.id,
+        username: user.username,
+        email: user.contactEmail,
+        role: user.role as "SUPER_ADMIN" | "MAIN_ADMIN" | "MANAGER" | "SUPERVISOR" | "ADMIN",
+        name: user.name,
+        companyId: user.companyId,
+      },
+      {
+        ok: true,
+        role: user.role,
+        mustChangePassword: user.mustChangePassword,
+        redirect: adminPortalLoginRedirect(user.role, user.mustChangePassword),
+      }
+    );
   } catch (e) {
     if (e instanceof z.ZodError) {
       return NextResponse.json({ error: "Invalid request", issues: e.issues }, { status: 400 });

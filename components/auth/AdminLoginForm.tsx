@@ -91,6 +91,7 @@ export function AdminLoginForm({ companyName, companyLogoUrl }: AdminLoginFormPr
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
         body: JSON.stringify({ username, password }),
       });
       const data = await res.json();
@@ -137,6 +138,7 @@ export function AdminLoginForm({ companyName, companyLogoUrl }: AdminLoginFormPr
       const res = await fetch("/api/auth/login/verify-2fa", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
         body: JSON.stringify({ challengeToken, code: otpCode }),
       });
       const data = await res.json();
