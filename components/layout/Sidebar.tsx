@@ -20,6 +20,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
+import { TenantLogoImage } from "@/components/brand/TenantLogoImage";
 import { DEFAULT_BRAND_NAME } from "@/lib/brand";
 import type { TenantBranding } from "@/lib/tenant-branding";
 import { tenantInitials } from "@/lib/tenant-branding";
@@ -137,13 +138,11 @@ export function Sidebar({
           <div className="sidebar-footer-user">
             <span className="sidebar-footer-avatar sidebar-footer-avatar--tenant">
               {tenantBranding?.logoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <TenantLogoImage
                   src={tenantBranding.logoUrl}
                   alt=""
+                  size={32}
                   className="sidebar-footer-avatar-img"
-                  width={32}
-                  height={32}
                 />
               ) : (
                 initials || "A"

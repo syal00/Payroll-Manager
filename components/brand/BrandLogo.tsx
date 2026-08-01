@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { DEFAULT_BRAND_NAME } from "@/lib/brand";
+import { TenantLogoImage } from "@/components/brand/TenantLogoImage";
 
 export const BRAND_LOGO_PATH = "/logo.png";
 
@@ -54,9 +55,12 @@ export function BrandLogo({
   const content = (
     <>
       {logoSrc ? (
-        // Tenant-supplied URL: not run through next/image (arbitrary host, not allow-listed).
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={logoSrc} alt={`${brand} logo`} width={size} height={size} className={imageClassName} />
+        <TenantLogoImage
+          src={logoSrc}
+          alt={`${brand} logo`}
+          size={size}
+          className={imageClassName}
+        />
       ) : (
         <Image
           src={BRAND_LOGO_PATH}

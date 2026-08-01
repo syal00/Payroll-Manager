@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronDown, LogOut, Settings, UserCircle } from "lucide-react";
 import type { TenantBranding } from "@/lib/tenant-branding";
 import { tenantInitials } from "@/lib/tenant-branding";
+import { TenantLogoImage } from "@/components/brand/TenantLogoImage";
 
 export function UserMenu({
   userName,
@@ -52,8 +53,12 @@ export function UserMenu({
       >
         <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--elite-accent)] text-xs font-bold text-white">
           {tenantBranding?.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={tenantBranding.logoUrl} alt="" className="h-full w-full object-cover" />
+            <TenantLogoImage
+              src={tenantBranding.logoUrl}
+              alt=""
+              size={32}
+              className="h-full w-full object-cover"
+            />
           ) : (
             initials || "A"
           )}
