@@ -16,10 +16,13 @@ export function EmployeePermanentDeleteButton({
   const [err, setErr] = useState<string | null>(null);
 
   async function handleDelete() {
-    const typed = window.prompt(
-      `Permanently delete ${employeeName}? This removes all timesheets, payslips, and portal access. Type DELETE to confirm.`
-    );
-    if (typed !== "DELETE") return;
+    if (
+      !window.confirm(
+        `Permanently delete ${employeeName}? This removes all timesheets, payslips, and portal access. This cannot be undone.`
+      )
+    ) {
+      return;
+    }
 
     setErr(null);
     setBusy(true);

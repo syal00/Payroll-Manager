@@ -3,6 +3,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { findPayPeriodByWindow } from "@/lib/pay-period-company";
 import { nextEmployeeCode } from "@/lib/employee-code";
+import { permanentlyDeleteEmployeeRecord } from "@/lib/employee-deletion";
 import type { Prisma } from "@prisma/client";
 
 /** Source tenant — records are created here. */
@@ -264,8 +265,10 @@ export async function deleteMirroredEmployeesForSource(sourceEmployeeId: string)
   });
   if (mirrors.length === 0) return [];
 
-  await prisma.employee.deleteMany({
-    where: { mirroredFromEmployeeId: sourceEmployeeId },
+  await prisma.$transaction(async (tx) => {
+    for (const mirror of mirrors) {
+      await permanentlyDeleteEmployeeRecord(tx, mirror.id);
+    }
   });
   return mirrors.map((m) => m.id);
 }

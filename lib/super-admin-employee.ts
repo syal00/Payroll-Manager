@@ -19,6 +19,7 @@ export async function requireCompanyEmployee(
       contactEmail: true,
       employeeCode: true,
       userId: true,
+      mirroredFromEmployeeId: true,
       deletedAt: true,
       isApproved: true,
       _count: { select: { timesheets: true, payslips: true } },

@@ -7,6 +7,7 @@ import {
   mirrorEmployeeToTargetCompany,
   syncMirroredEmployeeApproval,
 } from "@/lib/company-mirror";
+import { permanentlyDeleteEmployeeRecord } from "@/lib/employee-deletion";
 import { writeAuditLog } from "@/lib/audit";
 import { z } from "zod";
 
@@ -58,15 +59,7 @@ export async function PATCH(
       if (!employee.isApproved) {
         await deleteMirroredEmployeesForSource(id);
         await prisma.$transaction(async (tx) => {
-          await tx.employee.delete({ where: { id } });
-          if (employee.userId) {
-            const linkedCount = await tx.employee.count({
-              where: { userId: employee.userId },
-            });
-            if (linkedCount === 0) {
-              await tx.user.delete({ where: { id: employee.userId } });
-            }
-          }
+          await permanentlyDeleteEmployeeRecord(tx, id);
         });
         await writeAuditLog({
           actorId: session.id,

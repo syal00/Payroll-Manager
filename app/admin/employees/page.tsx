@@ -63,6 +63,7 @@ export default function AdminEmployeesPage() {
   const [err, setErr] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Row | null>(null);
+  const [deleteErr, setDeleteErr] = useState<string | null>(null);
   const [showAddEmployee, setShowAddEmployee] = useState(false);
   const [addFirstName, setAddFirstName] = useState("");
   const [addLastName, setAddLastName] = useState("");
@@ -113,18 +114,19 @@ export default function AdminEmployeesPage() {
   async function confirmSoftDelete() {
     if (!confirmDelete) return;
     setPendingId(confirmDelete.id);
+    setDeleteErr(null);
     try {
       const res = await fetch(`/api/admin/employees/${confirmDelete.id}`, { method: "DELETE" });
       const data = await res.json();
       if (!res.ok) {
-        setErr(data.error ?? "Delete failed");
+        setDeleteErr(data.error ?? "Delete failed");
         return;
       }
       setConfirmDelete(null);
       load();
       dispatchAdminStatsRefresh();
     } catch {
-      setErr("Network error");
+      setDeleteErr("Network error");
     } finally {
       setPendingId(null);
     }
@@ -396,7 +398,10 @@ export default function AdminEmployeesPage() {
                               variant="danger"
                               className="h-9 min-h-[44px] min-w-[44px] px-3 text-xs md:min-w-0"
                               disabled={pendingId === r.id}
-                              onClick={() => setConfirmDelete(r)}
+                              onClick={() => {
+                                setDeleteErr(null);
+                                setConfirmDelete(r);
+                              }}
                               title="Archive employee"
                             >
                               <Archive className="h-4 w-4 md:hidden" aria-hidden />
@@ -444,12 +449,20 @@ export default function AdminEmployeesPage() {
               <span className="text-slate-400"> · </span>
               <span className="font-mono text-xs">{confirmDelete.employeeCode}</span>
             </p>
+            {deleteErr ? (
+              <p className="mt-3 text-sm text-[var(--color-danger-text)]" role="alert">
+                {deleteErr}
+              </p>
+            ) : null}
             <div className="mt-6 flex flex-wrap justify-end gap-2">
               <Button
                 type="button"
                 variant="secondary"
                 disabled={pendingId === confirmDelete.id}
-                onClick={() => setConfirmDelete(null)}
+                onClick={() => {
+                  setConfirmDelete(null);
+                  setDeleteErr(null);
+                }}
               >
                 Cancel
               </Button>

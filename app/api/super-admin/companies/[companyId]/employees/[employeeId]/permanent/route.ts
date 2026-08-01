@@ -3,6 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { requireSuperAdminCompanyDrilldown } from "@/lib/super-admin-drilldown";
 import { requireCompanyEmployee } from "@/lib/super-admin-employee";
 import { writeAuditLog } from "@/lib/audit";
+import {
+  getMirroredEmployeeIds,
+  permanentlyDeleteEmployeeRecord,
+} from "@/lib/employee-deletion";
 
 /** Permanently remove employee, payroll records, and linked portal user. */
 export async function DELETE(
@@ -14,14 +18,15 @@ export async function DELETE(
     const { employeeId } = await ctx.params;
     const employee = await requireCompanyEmployee(session, companyId, employeeId);
 
+    const mirrorIds = employee.mirroredFromEmployeeId ? [] : await getMirroredEmployeeIds(employeeId);
+    let userRemoved = false;
+
     await prisma.$transaction(async (tx) => {
-      await tx.payslip.deleteMany({ where: { employeeId } });
-      await tx.timesheet.deleteMany({ where: { employeeId } });
-      await tx.employee.delete({ where: { id: employeeId } });
-      if (employee.userId) {
-        await tx.notification.deleteMany({ where: { userId: employee.userId } });
-        await tx.user.delete({ where: { id: employee.userId } });
+      for (const mirrorId of mirrorIds) {
+        await permanentlyDeleteEmployeeRecord(tx, mirrorId);
       }
+      const result = await permanentlyDeleteEmployeeRecord(tx, employeeId);
+      userRemoved = result.userRemoved;
     });
 
     await writeAuditLog({
@@ -37,7 +42,8 @@ export async function DELETE(
         name: employee.name,
         timesheetsRemoved: employee._count.timesheets,
         payslipsRemoved: employee._count.payslips,
-        userRemoved: Boolean(employee.userId),
+        mirrorsRemoved: mirrorIds.length,
+        userRemoved,
       },
     });
 

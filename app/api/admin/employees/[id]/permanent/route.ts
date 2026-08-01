@@ -3,6 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { requireMainAdmin } from "@/lib/api-auth";
 import { assertStaffCanAccessEmployee } from "@/lib/manager-scope";
 import { writeAuditLog } from "@/lib/audit";
+import {
+  getMirroredEmployeeIds,
+  permanentlyDeleteEmployeeRecord,
+} from "@/lib/employee-deletion";
 
 export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   try {
@@ -18,6 +22,7 @@ export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string 
         contactEmail: true,
         employeeCode: true,
         userId: true,
+        mirroredFromEmployeeId: true,
         _count: { select: { timesheets: true, payslips: true } },
       },
     });
@@ -29,14 +34,15 @@ export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string 
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    const mirrorIds = employee.mirroredFromEmployeeId ? [] : await getMirroredEmployeeIds(id);
+    let userRemoved = false;
+
     await prisma.$transaction(async (tx) => {
-      await tx.payslip.deleteMany({ where: { employeeId: id } });
-      await tx.timesheet.deleteMany({ where: { employeeId: id } });
-      await tx.employee.delete({ where: { id } });
-      if (employee.userId) {
-        await tx.notification.deleteMany({ where: { userId: employee.userId } });
-        await tx.user.delete({ where: { id: employee.userId } });
+      for (const mirrorId of mirrorIds) {
+        await permanentlyDeleteEmployeeRecord(tx, mirrorId);
       }
+      const result = await permanentlyDeleteEmployeeRecord(tx, id);
+      userRemoved = result.userRemoved;
     });
 
     await writeAuditLog({
@@ -51,7 +57,8 @@ export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string 
         name: employee.name,
         timesheetsRemoved: employee._count.timesheets,
         payslipsRemoved: employee._count.payslips,
-        userRemoved: Boolean(employee.userId),
+        mirrorsRemoved: mirrorIds.length,
+        userRemoved,
       },
     });
 

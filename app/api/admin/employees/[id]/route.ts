@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/api-auth";
 import { assertStaffCanAccessEmployee } from "@/lib/manager-scope";
+import { getMirroredEmployeeIds } from "@/lib/employee-deletion";
 import { writeAuditLog } from "@/lib/audit";
 import { payRateSchema } from "@/lib/pay-rates";
 import { z } from "zod";
@@ -165,7 +166,15 @@ export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string 
 
     const employee = await prisma.employee.findUnique({
       where: { id },
-      select: { id: true, deletedAt: true, name: true, username: true, contactEmail: true, employeeCode: true },
+      select: {
+        id: true,
+        deletedAt: true,
+        name: true,
+        username: true,
+        contactEmail: true,
+        employeeCode: true,
+        mirroredFromEmployeeId: true,
+      },
     });
 
     if (!employee) {
@@ -179,8 +188,13 @@ export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string 
     }
 
     const now = new Date();
-    await prisma.employee.update({
-      where: { id },
+    const archiveIds = [id];
+    if (!employee.mirroredFromEmployeeId) {
+      archiveIds.push(...(await getMirroredEmployeeIds(id)));
+    }
+
+    await prisma.employee.updateMany({
+      where: { id: { in: archiveIds }, deletedAt: null },
       data: { deletedAt: now },
     });
 
@@ -195,6 +209,7 @@ export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string 
         contactEmail: employee.contactEmail,
         name: employee.name,
         deletedAt: now.toISOString(),
+        mirroredProfilesArchived: archiveIds.length - 1,
       },
     });
 
