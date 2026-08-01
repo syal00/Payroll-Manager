@@ -65,6 +65,7 @@ export function BrandLogo({
           height={size}
           className={imageClassName}
           priority={priority}
+          style={{ width: size, height: "auto" }}
         />
       )}
       {showText ? (

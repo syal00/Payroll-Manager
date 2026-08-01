@@ -48,6 +48,24 @@ check(
   authSecret.length >= 32,
   'Generate one: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'base64\'))"'
 );
+
+const hasEmail =
+  Boolean(process.env.RESEND_API_KEY?.trim()) ||
+  Boolean(
+    process.env.SMTP_HOST?.trim() &&
+      process.env.SMTP_USER?.trim() &&
+      process.env.SMTP_PASS?.trim()
+  );
+const resendKey = process.env.RESEND_API_KEY?.trim() ?? "";
+const resendLooksValid = resendKey.startsWith("re_") && resendKey.length >= 30;
+if (hasEmail && resendKey && !resendLooksValid && !process.env.SMTP_HOST?.trim()) {
+  console.log("  ⚠️  RESEND_API_KEY looks invalid (too short or placeholder) — OTP emails will fail");
+  console.log("     Get a key at https://resend.com/api-keys and restart npm run dev");
+} else if (hasEmail) {
+  console.log("  ✅ Email delivery configured (Resend or SMTP)");
+} else {
+  console.log("  ⚠️  Email not configured — OTP codes show on screen only (add RESEND_API_KEY or SMTP_* to .env)");
+}
 console.log("");
 
 if (failed) {

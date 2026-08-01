@@ -252,9 +252,6 @@ export default function CompanyDrilldownDashboardPage({
       <DashboardActivityPanel
         recentApprovals={data.recentApprovals}
         recentAuditLogs={[]}
-        recentDemoRequests={[]}
-        demoRequestCount={0}
-        pendingEmployeeApprovals={0}
         isMainAdmin={false}
       />
     </div>

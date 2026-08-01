@@ -2,14 +2,13 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { requireMainAdmin, resolveCompanyId } from "@/lib/api-auth";
-import { isSuperAdminRole } from "@/lib/roles";
 import { Role } from "@/lib/enums";
 import { writeAuditLog } from "@/lib/audit";
 import { validateEmailDeliverable, emailValidationMessage } from "@/lib/email-validation";
 import { createStaffUser } from "@/lib/staff-account";
 import { sendWelcomeAccessGrantedEmail } from "@/lib/email/welcome-access-granted";
+import { resolveTenantCompanyId } from "@/lib/tenant-acting";
 import { z } from "zod";
-import type { Prisma } from "@prisma/client";
 
 const createSchema = z.object({
   firstName: z.string().trim().min(1).max(60),
@@ -22,10 +21,13 @@ const createSchema = z.object({
 export async function GET() {
   try {
     const session = await requireMainAdmin();
-    const where: Prisma.UserWhereInput = { role: Role.MANAGER };
-    if (!isSuperAdminRole(session.role)) where.companyId = session.companyId;
+    const companyId = await resolveTenantCompanyId(session);
+    if (!companyId) {
+      return NextResponse.json({ managers: [] });
+    }
+
     const managers = await prisma.user.findMany({
-      where,
+      where: { role: Role.MANAGER, companyId, deletedAt: null },
       orderBy: { createdAt: "asc" },
       select: {
         id: true,
@@ -66,6 +68,9 @@ export async function POST(req: Request) {
     }
 
     const companyId = resolveCompanyId(session, body.companyId);
+    if (!companyId) {
+      return NextResponse.json({ error: "Company context required" }, { status: 403 });
+    }
     const passwordHash = await bcrypt.hash(body.password, 12);
     const user = await createStaffUser({
       firstName: body.firstName,
@@ -92,7 +97,7 @@ export async function POST(req: Request) {
         companySlug: company.slug,
         companyWebsiteUrl: company.websiteUrl,
         role: Role.MANAGER,
-        generatedUsername: user.username,
+        loginEmail: user.username,
         temporaryPassword: body.password,
       });
       if (!welcomeResult.sent) {

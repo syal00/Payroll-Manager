@@ -45,7 +45,7 @@ export function LandingFooter() {
               <h4>{section.title}</h4>
               {section.links.map((link) => (
                 <Link
-                  key={link.href}
+                  key={link.testId}
                   href={link.href}
                   data-testid={`footer-link-${link.testId}`}
                 >

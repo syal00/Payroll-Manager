@@ -11,12 +11,15 @@ import { SuperAdminActingBanner } from "@/components/super-admin/SuperAdminActin
 
 const SIDEBAR_COLLAPSED_KEY = "sidebar-collapsed";
 
+import type { TenantBranding } from "@/lib/tenant-branding";
+
 export function AdminShell({
   userName,
   userEmail,
   header,
   isMainAdmin = true,
   superAdminActing,
+  tenantBranding,
   children,
 }: {
   userName: string;
@@ -24,6 +27,7 @@ export function AdminShell({
   header?: AdminShellHeader;
   isMainAdmin?: boolean;
   superAdminActing?: { companyId: string; companyName: string };
+  tenantBranding?: TenantBranding;
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -71,6 +75,7 @@ export function AdminShell({
         userName={userName}
         userRole={userRole}
         isMainAdmin={isMainAdmin}
+        tenantBranding={tenantBranding}
         onLogout={() => void logout()}
       />
 
@@ -86,6 +91,7 @@ export function AdminShell({
           userName={userName}
           userEmail={userEmail}
           pageTitle={pageTitle}
+          tenantBranding={tenantBranding}
           onLogout={() => void logout()}
         />
 

@@ -25,6 +25,7 @@ model Company {
 
   users     User[]
   employees Employee[]
+  payPeriods PayPeriod[]
 }
 
 model User {
@@ -38,6 +39,14 @@ model User {
   tokenVersion      Int       @default(0) @map("token_version")
   /// When true, user must set a new password before using the app (provisioning / reset).
   mustChangePassword Boolean  @default(false) @map("must_change_password")
+  /// Email OTP for super-admin two-step login (legacy; superseded by TOTP).
+  loginOtpCode       String?   @map("login_otp_code")
+  loginOtpExpires    DateTime? @map("login_otp_expires")
+  /// AES-GCM encrypted TOTP secret (base32) for admin portal authenticator apps.
+  totpSecretEnc      String?   @map("totp_secret_enc")
+  totpEnabled        Boolean   @default(false) @map("totp_enabled")
+  /// When set, staff cannot sign in (temporary suspension). Cleared on restore.
+  deletedAt          DateTime? @map("deleted_at")
   createdById       String?   @map("created_by_id")
   createdBy         User?     @relation("ManagerAccountsCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   managersCreated   User[]    @relation("ManagerAccountsCreatedBy")
@@ -47,7 +56,7 @@ model User {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  employee            Employee?
+  employee            Employee[]
   assignedEmployees    Employee[] @relation("EmployeeAssignedManager")
   supervisedEmployees  Employee[] @relation("EmployeeAssignedSupervisor")
   notifications        Notification[]
@@ -60,13 +69,17 @@ model User {
 model Employee {
   id             String    @id @default(cuid())
   employeeCode   String    @unique @map("employee_id")
-  username       String    @unique
+  username       String
   name           String
-  contactEmail   String    @unique @map("contact_email")
-  userId         String?   @unique
+  contactEmail   String    @map("contact_email")
+  userId         String?
   user           User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
   companyId      String?   @map("company_id")
   company        Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  /// When set, this row was auto-created in the target company from the source employee.
+  mirroredFromEmployeeId String?   @map("mirrored_from_employee_id")
+  mirroredFromEmployee   Employee? @relation("EmployeeMirror", fields: [mirroredFromEmployeeId], references: [id], onDelete: SetNull)
+  mirrorCopies           Employee[] @relation("EmployeeMirror")
   managerUserId  String?   @map("manager_user_id")
   managerUser    User?     @relation("EmployeeAssignedManager", fields: [managerUserId], references: [id], onDelete: SetNull)
   supervisorId   String?   @map("supervisor_id")
@@ -76,6 +89,7 @@ model Employee {
   department     String?
   jobTitle       String?
   isApproved     Boolean   @default(true) @map("is_approved")
+  emailVerified  Boolean   @default(false) @map("email_verified")
   otpCode        String?   @map("otp_code")
   otpExpires     DateTime? @map("otp_expires")
   deletedAt      DateTime? @map("deleted_at")
@@ -85,15 +99,21 @@ model Employee {
   timesheets Timesheet[]
   payslips   Payslip[]
 
+  @@unique([companyId, contactEmail])
+  @@unique([companyId, username])
   @@index([deletedAt])
   @@index([isApproved])
   @@index([companyId])
+  @@index([userId])
   @@index([managerUserId])
   @@index([supervisorId])
+  @@index([mirroredFromEmployeeId])
 }
 
 model PayPeriod {
   id        String   @id @default(cuid())
+  companyId String   @map("company_id")
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   name      String?
   startDate DateTime
   endDate   DateTime
@@ -105,6 +125,8 @@ model PayPeriod {
   timesheets Timesheet[]
   payslips   Payslip[]
 
+  @@unique([companyId, startDate, endDate])
+  @@index([companyId, isCurrent])
   @@index([startDate, endDate])
 }
 
@@ -171,6 +193,8 @@ model Payslip {
 
   hourlyRate      Float
   overtimeRate    Float
+  jobTitle        String?   @map("job_title")
+  department      String?   @map("department")
   regularHours    Float
   overtimeHours   Float
   grossPay        Float

@@ -1,15 +1,20 @@
 import { NextResponse } from "next/server";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { resolveRegistrationCompanyId } from "@/lib/employee-company-scope";
 import { PayPeriodStatus } from "@/lib/enums";
 
 export async function GET() {
   try {
+    const companyId = await resolveRegistrationCompanyId((await headers()).get("x-company-id"));
+    const periodWhere = companyId ? { companyId } : {};
+
     const current = await prisma.payPeriod.findFirst({
-      where: { isCurrent: true },
+      where: { ...periodWhere, isCurrent: true },
       orderBy: { startDate: "desc" },
     });
     const openPayPeriods = await prisma.payPeriod.findMany({
-      where: { status: PayPeriodStatus.OPEN },
+      where: { ...periodWhere, status: PayPeriodStatus.OPEN },
       orderBy: { startDate: "desc" },
     });
     return NextResponse.json({ current, openPayPeriods });

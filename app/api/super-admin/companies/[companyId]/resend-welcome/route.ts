@@ -48,7 +48,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ companyId: str
       companySlug: company.slug,
       companyWebsiteUrl: company.websiteUrl,
       role: user.role,
-      generatedUsername: user.username,
+      loginEmail: user.username,
       temporaryPassword: DEFAULT_INITIAL_STAFF_PASSWORD,
     });
 

@@ -8,7 +8,7 @@ import { normalizeEntryLocation } from "@/lib/timesheet-entry-fields";
 import { updateTimesheetEntryHours } from "@/lib/timesheet-entry-hours-update";
 import { writeAuditLog } from "@/lib/audit";
 import { validateTimesheetRowsAgainstPeriod } from "@/lib/timesheet-submit-validation";
-import { validateTimesheetWorkDatePolicy } from "@/lib/timesheet-work-date-policy";
+import { validateTimesheetWorkDatePolicyForEntry } from "@/lib/timesheet-work-date-policy";
 import { timesheetSaveRequestSchema } from "@/lib/timesheet-save-payload";
 import {
   readTimesheetJsonBody,
@@ -62,7 +62,7 @@ export async function POST(
       if (v) return NextResponse.json({ error: v }, { status: 400 });
       const row = sortedExisting[i];
       if (row) {
-        const dateErr = validateTimesheetWorkDatePolicy(row.workDate);
+        const dateErr = validateTimesheetWorkDatePolicyForEntry(row.workDate, body.entries[i]!);
         if (dateErr) return NextResponse.json({ error: dateErr }, { status: 400 });
       }
     }

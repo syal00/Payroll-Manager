@@ -37,12 +37,12 @@ export default function PublicProfilePage({
   }
   if (!emp) {
     return (
-      <div className="flex items-center gap-3 text-sm text-slate-500">
+      <div className="flex items-center gap-3 text-sm text-[var(--color-text-muted)]">
         <span
           className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--color-accent-tint)] border-t-violet-600"
           aria-hidden
         />
-        Loading profileâ€¦
+        Loading profile…
       </div>
     );
   }
@@ -63,45 +63,45 @@ export default function PublicProfilePage({
       <Card>
         <h2 className="card-heading">Employment</h2>
         <dl className="profile-info-grid mt-5 text-sm">
-          <div className="flex justify-between gap-4 border-b border-violet-50 pb-3">
-            <dt className="text-slate-500">Name</dt>
+          <div className="flex justify-between gap-4 border-b border-[var(--color-border)] pb-3">
+            <dt className="text-[var(--color-text-muted)]">Name</dt>
             <dd className="text-right font-semibold text-[var(--color-text-primary)]">{emp.name}</dd>
           </div>
-          <div className="flex justify-between gap-4 border-b border-violet-50 pb-3">
-            <dt className="text-slate-500">Username</dt>
+          <div className="flex justify-between gap-4 border-b border-[var(--color-border)] pb-3">
+            <dt className="text-[var(--color-text-muted)]">Username</dt>
             <dd className="font-mono text-right text-[var(--color-text-secondary)]">{emp.username}</dd>
           </div>
-          <div className="flex justify-between gap-4 border-b border-violet-50 pb-3">
-            <dt className="text-slate-500">Contact email</dt>
+          <div className="flex justify-between gap-4 border-b border-[var(--color-border)] pb-3">
+            <dt className="text-[var(--color-text-muted)]">Contact email</dt>
             <dd className="text-right text-[var(--color-text-secondary)]">{emp.contactEmail}</dd>
           </div>
-          <div className="flex justify-between gap-4 border-b border-violet-50 pb-3">
-            <dt className="text-slate-500">Employee ID</dt>
+          <div className="flex justify-between gap-4 border-b border-[var(--color-border)] pb-3">
+            <dt className="text-[var(--color-text-muted)]">Employee ID</dt>
             <dd className="font-mono font-semibold text-[var(--color-text-primary)]">{emp.employeeCode}</dd>
           </div>
-          <div className="flex justify-between gap-4 border-b border-violet-50 pb-3">
-            <dt className="text-slate-500">Hourly rate</dt>
+          <div className="flex justify-between gap-4 border-b border-[var(--color-border)] pb-3">
+            <dt className="text-[var(--color-text-muted)]">Hourly rate</dt>
             <dd className="tabular-nums font-medium">{money(emp.hourlyRate)}</dd>
           </div>
-          <div className="flex justify-between gap-4 border-b border-violet-50 pb-3">
-            <dt className="text-slate-500">Overtime rate</dt>
+          <div className="flex justify-between gap-4 border-b border-[var(--color-border)] pb-3">
+            <dt className="text-[var(--color-text-muted)]">Overtime rate</dt>
             <dd className="tabular-nums font-medium">{money(emp.overtimeRate)}</dd>
           </div>
           {emp.department && (
-            <div className="flex justify-between gap-4 border-b border-violet-50 pb-3">
-              <dt className="text-slate-500">Department</dt>
+            <div className="flex justify-between gap-4 border-b border-[var(--color-border)] pb-3">
+              <dt className="text-[var(--color-text-muted)]">Department</dt>
               <dd>{emp.department}</dd>
             </div>
           )}
           {emp.jobTitle && (
             <div className="flex justify-between gap-4">
-              <dt className="text-slate-500">Title</dt>
+              <dt className="text-[var(--color-text-muted)]">Title</dt>
               <dd>{emp.jobTitle}</dd>
             </div>
           )}
         </dl>
-        <p className="mt-5 rounded-xl border border-white/10 bg-[var(--color-bg-card)]/[0.04] px-3 py-2 text-xs text-slate-400">
-          Need an update? Ask your administratorâ€”this screen is read-only for employees.
+        <p className="mt-5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-secondary)] px-3 py-2 text-xs text-[var(--color-text-muted)]">
+          Need an update? Ask your administrator—this screen is read-only for employees.
         </p>
       </Card>
     </div>

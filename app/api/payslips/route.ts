@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/api-auth";
-import { isMainAdminRole, isStaffRole, isSupervisorRole } from "@/lib/roles";
+import { isStaffRole, isSupervisorRole } from "@/lib/roles";
 import { getEmployeeRecord } from "@/lib/employee-scope";
 import { payslipWhereForStaff } from "@/lib/manager-scope";
 import { z } from "zod";
@@ -21,40 +21,8 @@ export async function GET(req: Request) {
     const q = querySchema.parse(Object.fromEntries(url.searchParams.entries()));
     const skip = (q.page - 1) * q.pageSize;
 
-    if (isMainAdminRole(session.role)) {
-      const where: Prisma.PayslipWhereInput = {};
-      if (q.payPeriodId) where.payPeriodId = q.payPeriodId;
-      if (q.q?.trim()) {
-        const term = q.q.trim();
-        where.employee = {
-          OR: [
-            { name: { contains: term } },
-            { username: { contains: term } },
-            { contactEmail: { contains: term } },
-            { employeeCode: { contains: term } },
-            { user: { name: { contains: term } } },
-          ],
-        };
-      }
-      const [items, total] = await Promise.all([
-        prisma.payslip.findMany({
-          where,
-          orderBy: { createdAt: "desc" },
-          skip,
-          take: q.pageSize,
-          include: {
-            employee: { include: { user: true } },
-            payPeriod: true,
-            timesheet: true,
-          },
-        }),
-        prisma.payslip.count({ where }),
-      ]);
-      return NextResponse.json({ items, total, page: q.page, pageSize: q.pageSize });
-    }
-
     if (isStaffRole(session.role) || isSupervisorRole(session.role)) {
-      const scope = payslipWhereForStaff(session);
+      const scope = await payslipWhereForStaff(session);
       const parts: Prisma.PayslipWhereInput[] = [scope];
       if (q.payPeriodId) parts.push({ payPeriodId: q.payPeriodId });
       if (q.q?.trim()) {
@@ -62,11 +30,11 @@ export async function GET(req: Request) {
         parts.push({
           employee: {
             OR: [
-              { name: { contains: term } },
-              { username: { contains: term } },
-              { contactEmail: { contains: term } },
-              { employeeCode: { contains: term } },
-              { user: { name: { contains: term } } },
+              { name: { contains: term, mode: "insensitive" } },
+              { username: { contains: term, mode: "insensitive" } },
+              { contactEmail: { contains: term, mode: "insensitive" } },
+              { employeeCode: { contains: term, mode: "insensitive" } },
+              { user: { name: { contains: term, mode: "insensitive" } } },
             ],
           },
         });

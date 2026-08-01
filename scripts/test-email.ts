@@ -8,7 +8,7 @@ async function main() {
     companyName: "Ironwatch",
     companySlug: "ironwatch",
     role: "MAIN_ADMIN",
-    generatedUsername: "admin@anmol-ironwatch.com",
+    loginEmail: "admin@anmol-ironwatch.com",
     temporaryPassword: "Security123!",
   });
   console.log("SUBJECT:", preview.subject);

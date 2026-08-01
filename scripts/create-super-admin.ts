@@ -6,9 +6,7 @@
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { validateEmailDeliverableOrThrow } from "../lib/email-deliverable";
-import { generateUsername } from "../lib/username-generator";
-import { splitDisplayName, assertUsernameNotContactEmail } from "../lib/email-deliverable";
+import { normalizeContactEmail, loginUsernameFromContactEmail } from "../lib/display-name";
 
 const prisma = new PrismaClient();
 
@@ -23,11 +21,9 @@ async function main() {
     process.exit(1);
   }
 
-  const contactEmail = await validateEmailDeliverableOrThrow(contactEmailRaw);
+  const contactEmail = normalizeContactEmail(contactEmailRaw);
   const name = nameArg?.trim() || "Super Admin";
-  const { firstName, lastName } = splitDisplayName(name);
-  const username = await generateUsername(firstName, lastName, "platform");
-  assertUsernameNotContactEmail(username, contactEmail);
+  const username = loginUsernameFromContactEmail(contactEmail);
 
   const passwordHash = await bcrypt.hash(password, 12);
   const user = await prisma.user.upsert({

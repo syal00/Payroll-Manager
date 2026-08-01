@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { normalizeContactEmail } from "@/lib/email-deliverable";
+import { headers } from "next/headers";
+import { normalizeContactEmail } from "@/lib/display-name";
+import { resolveRegistrationCompanyId } from "@/lib/employee-company-scope";
+import { findEmployeeByContactEmailInCompany } from "@/lib/employee-lookup";
 import { z } from "zod";
 
 const bodySchema = z.object({
@@ -11,11 +13,12 @@ export async function POST(req: Request) {
   try {
     const body = bodySchema.parse(await req.json());
     const contactEmail = normalizeContactEmail(body.contactEmail);
+    const headerCompanyId = (await headers()).get("x-company-id");
+    const companyId = await resolveRegistrationCompanyId(headerCompanyId);
 
-    const employee = await prisma.employee.findUnique({
-      where: { contactEmail },
-      select: { employeeCode: true, deletedAt: true, isApproved: true },
-    });
+    const employee = companyId
+      ? await findEmployeeByContactEmailInCompany(contactEmail, companyId)
+      : null;
 
     if (!employee) {
       return NextResponse.json(
@@ -37,7 +40,7 @@ export async function POST(req: Request) {
     if (!employee.isApproved) {
       return NextResponse.json(
         {
-          error: "Your account is pending admin approval.",
+          error: "Your account is pending administrator approval.",
           pendingApproval: true,
         },
         { status: 403 }

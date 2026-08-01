@@ -4,7 +4,11 @@ import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { money } from "@/lib/format";
+import { employeeSignInEmail } from "@/lib/display-name";
 import { EmployeePayRatesEditor } from "@/components/admin/EmployeePayRatesEditor";
+import { EmployeeProfileEditor } from "@/components/admin/EmployeeProfileEditor";
+import { EmployeeRecordsPanel } from "@/components/admin/EmployeeRecordsPanel";
+import { EmployeePermanentDeleteButton } from "@/components/admin/EmployeePermanentDeleteButton";
 
 export default async function AdminEmployeeDetailPage({
   params,
@@ -17,7 +21,19 @@ export default async function AdminEmployeeDetailPage({
     where: { id },
     include: {
       user: { select: { username: true, contactEmail: true, name: true, role: true } },
-      _count: { select: { timesheets: true, payslips: true } },
+      timesheets: {
+        orderBy: { submittedAt: "desc" },
+        include: {
+          payPeriod: { select: { name: true, startDate: true, endDate: true } },
+          payslip: { select: { id: true, payslipNumber: true } },
+        },
+      },
+      payslips: {
+        orderBy: { createdAt: "desc" },
+        include: {
+          payPeriod: { select: { name: true, startDate: true, endDate: true } },
+        },
+      },
     },
   });
 
@@ -27,11 +43,36 @@ export default async function AdminEmployeeDetailPage({
 
   const isDeleted = Boolean(employee.deletedAt);
 
+  const timesheets = employee.timesheets.map((ts) => ({
+    id: ts.id,
+    status: ts.status,
+    totalHours: ts.totalHours,
+    submittedAt: ts.submittedAt?.toISOString() ?? null,
+    payPeriod: {
+      name: ts.payPeriod.name,
+      startDate: ts.payPeriod.startDate.toISOString(),
+      endDate: ts.payPeriod.endDate.toISOString(),
+    },
+    payslip: ts.payslip,
+  }));
+
+  const payslips = employee.payslips.map((ps) => ({
+    id: ps.id,
+    payslipNumber: ps.payslipNumber,
+    netPay: ps.netPay,
+    createdAt: ps.createdAt.toISOString(),
+    payPeriod: {
+      name: ps.payPeriod.name,
+      startDate: ps.payPeriod.startDate.toISOString(),
+      endDate: ps.payPeriod.endDate.toISOString(),
+    },
+  }));
+
   return (
-    <div className="page-container max-w-2xl space-y-8">
+    <div className="page-container max-w-3xl space-y-8">
       <div>
         <Link href="/admin/employees" className="link-accent text-sm">
-          â† Back to employees
+          ← Back to employees
         </Link>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <h1 className="page-title">{employee.name}</h1>
@@ -41,50 +82,43 @@ export default async function AdminEmployeeDetailPage({
             <Badge variant="success">Active</Badge>
           )}
         </div>
-        <p className="mt-1 font-mono text-sm text-slate-500">{employee.employeeCode}</p>
+        <p className="mt-1 font-mono text-sm text-[var(--color-text-muted)]">{employee.employeeCode}</p>
       </div>
 
       <Card>
         <h2 className="card-heading">Contact &amp; payroll</h2>
-        <p className="mt-1 text-xs text-slate-500">Rates and identifiers on file</p>
+        <p className="mt-1 text-xs text-[var(--color-text-muted)]">Rates and identifiers on file</p>
         <dl className="mt-5 space-y-4 text-sm">
-          <div className="flex justify-between gap-4 border-b border-violet-50 pb-3">
-            <dt className="text-slate-500">Username</dt>
-            <dd className="font-mono text-right font-medium text-[var(--color-text-secondary)]">{employee.username}</dd>
+          <div className="flex justify-between gap-4 border-b border-[var(--color-border)] pb-3">
+            <dt className="text-[var(--color-text-muted)]">Sign-in email</dt>
+            <dd className="text-right font-medium text-[var(--color-text-secondary)]">
+              {employeeSignInEmail(employee.username, employee.contactEmail)}
+            </dd>
           </div>
-          <div className="flex justify-between gap-4 border-b border-violet-50 pb-3">
-            <dt className="text-slate-500">Contact email</dt>
-            <dd className="text-right font-medium text-[var(--color-text-secondary)]">{employee.contactEmail}</dd>
+          <div className="flex justify-between gap-4 border-b border-[var(--color-border)] pb-3">
+            <dt className="text-[var(--color-text-muted)]">Hourly rate</dt>
+            <dd className="tabular-nums font-medium text-[var(--color-text-primary)]">{money(employee.hourlyRate)}</dd>
           </div>
-          <div className="flex justify-between gap-4 border-b border-violet-50 pb-3">
-            <dt className="text-slate-500">Hourly rate</dt>
-            <dd className="tabular-nums font-medium">{money(employee.hourlyRate)}</dd>
+          <div className="flex justify-between gap-4 border-b border-[var(--color-border)] pb-3">
+            <dt className="text-[var(--color-text-muted)]">Overtime rate</dt>
+            <dd className="tabular-nums font-medium text-[var(--color-text-primary)]">{money(employee.overtimeRate)}</dd>
           </div>
-          <div className="flex justify-between gap-4 border-b border-violet-50 pb-3">
-            <dt className="text-slate-500">Overtime rate</dt>
-            <dd className="tabular-nums font-medium">{money(employee.overtimeRate)}</dd>
-          </div>
-          {employee.department && (
-            <div className="flex justify-between gap-4 border-b border-violet-50 pb-3">
-              <dt className="text-slate-500">Department</dt>
-              <dd>{employee.department}</dd>
-            </div>
-          )}
-          {employee.jobTitle && (
-            <div className="flex justify-between gap-4 border-b border-violet-50 pb-3">
-              <dt className="text-slate-500">Job title</dt>
-              <dd>{employee.jobTitle}</dd>
-            </div>
-          )}
-          {employee.user && (
+          {employee.user ? (
             <div className="flex justify-between gap-4">
-              <dt className="text-slate-500">Linked user</dt>
-              <dd className="text-right text-xs text-slate-700">
+              <dt className="text-[var(--color-text-muted)]">Portal account</dt>
+              <dd className="text-right text-xs text-[var(--color-text-secondary)]">
                 {employee.user.name} ({employee.user.role})
               </dd>
             </div>
-          )}
+          ) : null}
         </dl>
+        <EmployeeProfileEditor
+          key={`${employee.jobTitle ?? ""}-${employee.department ?? ""}`}
+          employeeId={employee.id}
+          initialJobTitle={employee.jobTitle}
+          initialDepartment={employee.department}
+          disabled={isDeleted}
+        />
         <EmployeePayRatesEditor
           employeeId={employee.id}
           initialHourly={employee.hourlyRate}
@@ -94,29 +128,20 @@ export default async function AdminEmployeeDetailPage({
       </Card>
 
       <Card>
-        <h2 className="card-heading">Records retained</h2>
-        <p className="mt-1 text-sm text-slate-600">
-          History stays available even when someone is deactivated.
-        </p>
-        <ul className="mt-5 grid gap-3 text-sm text-[var(--color-text-secondary)] sm:grid-cols-2">
-          <li className="rounded-xl border border-[var(--color-accent-tint)]/80 bg-[var(--color-accent-soft)]/40 px-4 py-3">
-            Timesheets:{" "}
-            <span className="font-bold tabular-nums text-[var(--color-text-primary)]">{employee._count.timesheets}</span>
-          </li>
-          <li className="rounded-xl border border-[var(--color-accent-tint)]/80 bg-[var(--color-accent-soft)]/40 px-4 py-3">
-            Payslips:{" "}
-            <span className="font-bold tabular-nums text-[var(--color-text-primary)]">{employee._count.payslips}</span>
-          </li>
-        </ul>
-        <div className="mt-5">
-          <Link
-            href={`/admin/review?q=${encodeURIComponent(employee.name)}`}
-            className="link-accent text-sm font-semibold"
-          >
-            Open timesheet review (search by name) â†’
-          </Link>
-        </div>
+        <h2 className="card-heading">Hours &amp; payslips</h2>
+        <EmployeeRecordsPanel
+          employeeId={employee.id}
+          timesheets={timesheets}
+          payslips={payslips}
+          disabled={isDeleted}
+        />
       </Card>
+
+      {!isDeleted ? (
+        <Card>
+          <EmployeePermanentDeleteButton employeeId={employee.id} employeeName={employee.name} />
+        </Card>
+      ) : null}
     </div>
   );
 }

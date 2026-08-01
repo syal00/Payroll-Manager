@@ -1,14 +1,16 @@
 import { NextResponse } from "next/server";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getPublicEmployeeByCode } from "@/lib/public-employee";
+import { ensureEmployeeCompanyId } from "@/lib/employee-company-scope";
 import { PayPeriodStatus, TimesheetStatus } from "@/lib/enums";
 import { sumEntries, validateDayEntry } from "@/lib/timesheet-math";
 import { normalizeEntryLocation } from "@/lib/timesheet-entry-fields";
 import { updateTimesheetEntryHours } from "@/lib/timesheet-entry-hours-update";
 import { writeAuditLog } from "@/lib/audit";
-import { eachDayOfInterval } from "date-fns";
 import { validateTimesheetRowsAgainstPeriod } from "@/lib/timesheet-submit-validation";
-import { validateTimesheetWorkDatePolicy } from "@/lib/timesheet-work-date-policy";
+import { ensureTimesheetForPayPeriod } from "@/lib/timesheet-period-entries";
+import { validateTimesheetWorkDatePolicyForEntry } from "@/lib/timesheet-work-date-policy";
 import { timesheetSaveRequestSchema } from "@/lib/timesheet-save-payload";
 import {
   readTimesheetJsonBody,
@@ -28,55 +30,63 @@ export async function GET(
       return NextResponse.json({ error: "Employee not found" }, { status: 404 });
     }
 
+    const companyId = await ensureEmployeeCompanyId(employee, (await headers()).get("x-company-id"));
+
     const period = await prisma.payPeriod.findUnique({ where: { id: payPeriodId } });
-    if (!period || period.status !== PayPeriodStatus.OPEN) {
-      return NextResponse.json({ error: "Pay period not available for submission." }, { status: 400 });
+    if (!period) {
+      return NextResponse.json({ error: "Pay period not found." }, { status: 404 });
+    }
+    if (companyId && period.companyId !== companyId) {
+      return NextResponse.json({ error: "Pay period not available for your organization." }, { status: 403 });
     }
 
-    let timesheet = await prisma.timesheet.findUnique({
-      where: {
-        employeeId_payPeriodId: { employeeId: employee.id, payPeriodId },
-      },
-      include: {
-        entries: { orderBy: { workDate: "asc" } },
-        approvals: { orderBy: { createdAt: "desc" }, take: 10 },
-      },
-    });
+    const periodOpen = period.status === PayPeriodStatus.OPEN;
 
-    if (!timesheet) {
-      const days = eachDayOfInterval({ start: period.startDate, end: period.endDate });
-      timesheet = await prisma.timesheet.create({
-        data: {
-          employeeId: employee.id,
-          payPeriodId,
-          status: TimesheetStatus.DRAFT,
-          entries: {
-            create: days.map((workDate) => ({
-              workDate,
-              regularHours: 0,
-              overtimeHours: 0,
-              leaveHours: 0,
-            })),
-          },
-        },
-        include: {
-          entries: { orderBy: { workDate: "asc" } },
-          approvals: { orderBy: { createdAt: "desc" }, take: 10 },
+    let timesheet;
+    try {
+      timesheet = await ensureTimesheetForPayPeriod(prisma, {
+        employeeId: employee.id,
+        payPeriodId,
+        periodStart: period.startDate,
+        periodEnd: period.endDate,
+        periodOpen,
+        createAction: "TIMESHEET_DRAFT_CREATED_PUBLIC",
+        createDetails: { payPeriodId, employeeId },
+        writeAudit: async ({ action, entityId, details }) => {
+          await writeAuditLog({
+            actorId: null,
+            action,
+            entityType: "Timesheet",
+            entityId,
+            details,
+          });
         },
       });
-      await writeAuditLog({
-        actorId: null,
-        action: "TIMESHEET_DRAFT_CREATED_PUBLIC",
-        entityType: "Timesheet",
-        entityId: timesheet.id,
-        details: { payPeriodId, employeeId },
-      });
+    } catch (e) {
+      if (e instanceof Error && e.message === "TIMESHEET_NOT_FOUND_CLOSED") {
+        return NextResponse.json(
+          { error: "This pay period is closed and you have no submission on file." },
+          { status: 404 }
+        );
+      }
+      throw e;
     }
 
     const editable =
-      timesheet.status === TimesheetStatus.DRAFT || timesheet.status === TimesheetStatus.REJECTED;
+      periodOpen &&
+      (timesheet.status === TimesheetStatus.DRAFT || timesheet.status === TimesheetStatus.REJECTED);
 
-    return NextResponse.json({ timesheet, payPeriod: period, editable });
+    return NextResponse.json({
+      timesheet,
+      payPeriod: period,
+      editable,
+      periodClosed: !periodOpen,
+      readOnlyReason: !periodOpen
+        ? period.status === PayPeriodStatus.CLOSED
+          ? "This pay period has been closed by payroll. Your submitted hours are shown below (read-only)."
+          : "This pay period is no longer open for edits."
+        : null,
+    });
   } catch (e) {
     console.error(e);
     return timesheetUnknownErrorResponse(e);
@@ -97,9 +107,14 @@ export async function PUT(
       return NextResponse.json({ error: "Employee not found" }, { status: 404 });
     }
 
+    const companyId = await ensureEmployeeCompanyId(employee, (await headers()).get("x-company-id"));
+
     const period = await prisma.payPeriod.findUnique({ where: { id: payPeriodId } });
     if (!period || period.status !== PayPeriodStatus.OPEN) {
       return NextResponse.json({ error: "Pay period is not open." }, { status: 400 });
+    }
+    if (companyId && period.companyId !== companyId) {
+      return NextResponse.json({ error: "Pay period not available for your organization." }, { status: 403 });
     }
 
     const timesheet = await prisma.timesheet.findUnique({
@@ -128,7 +143,7 @@ export async function PUT(
       if (v) return NextResponse.json({ error: v }, { status: 400 });
       const row = sortedExisting[i];
       if (row) {
-        const dateErr = validateTimesheetWorkDatePolicy(row.workDate);
+        const dateErr = validateTimesheetWorkDatePolicyForEntry(row.workDate, body.entries[i]!);
         if (dateErr) return NextResponse.json({ error: dateErr }, { status: 400 });
       }
     }

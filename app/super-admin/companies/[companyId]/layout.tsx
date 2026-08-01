@@ -16,7 +16,7 @@ export default async function CompanyDrilldownLayout({
   const { companyId } = await params;
   const company = await prisma.company.findUnique({
     where: { id: companyId },
-    select: { name: true, slug: true, websiteUrl: true },
+    select: { name: true, slug: true, websiteUrl: true, logoUrl: true },
   });
 
   if (!company) notFound();
@@ -33,7 +33,17 @@ export default async function CompanyDrilldownLayout({
           All companies
         </Link>
         <span aria-hidden>·</span>
-        <span>
+        <span className="inline-flex items-center gap-2">
+          {company.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={company.logoUrl}
+              alt=""
+              width={24}
+              height={24}
+              className="rounded-md object-contain"
+            />
+          ) : null}
           Inspecting <strong>{company.name}</strong>
         </span>
         {company.websiteUrl ? (

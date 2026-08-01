@@ -1,0 +1,2 @@
+ALTER TABLE "Payslip" ADD COLUMN IF NOT EXISTS "job_title" TEXT;
+ALTER TABLE "Payslip" ADD COLUMN IF NOT EXISTS "department" TEXT;

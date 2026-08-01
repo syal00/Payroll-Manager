@@ -6,45 +6,26 @@ import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { DEMO_ADMIN_PASSWORD, DEMO_CREDENTIALS } from "../lib/demo-credentials";
-import { generateUsername } from "../lib/username-generator";
-import { splitDisplayName } from "../lib/email-deliverable";
+import { loginUsernameFromContactEmail, normalizeContactEmail } from "../lib/display-name";
 
 const prisma = new PrismaClient();
 
 async function backfillMissingUsernames() {
   const users = await prisma.$queryRaw<
-    { id: string; name: string; contact_email: string; company_id: string | null }[]
-  >`SELECT id, name, contact_email, company_id FROM "User" WHERE username IS NULL`;
+    { id: string; contact_email: string }[]
+  >`SELECT id, contact_email FROM "User" WHERE username IS NULL`;
 
   for (const user of users) {
-    const { firstName, lastName } = splitDisplayName(user.name);
-    let slug = "platform";
-    if (user.company_id) {
-      const company = await prisma.company.findUnique({
-        where: { id: user.company_id },
-        select: { slug: true },
-      });
-      slug = company?.slug ?? slug;
-    }
-    const username = await generateUsername(firstName, lastName, slug);
+    const username = loginUsernameFromContactEmail(user.contact_email);
     await prisma.user.update({ where: { id: user.id }, data: { username } });
   }
 
   const employees = await prisma.$queryRaw<
-    { id: string; name: string; contact_email: string; company_id: string | null }[]
-  >`SELECT id, name, contact_email, company_id FROM "Employee" WHERE username IS NULL`;
+    { id: string; contact_email: string }[]
+  >`SELECT id, contact_email FROM "Employee" WHERE username IS NULL`;
 
   for (const employee of employees) {
-    const { firstName, lastName } = splitDisplayName(employee.name);
-    let slug = "company";
-    if (employee.company_id) {
-      const company = await prisma.company.findUnique({
-        where: { id: employee.company_id },
-        select: { slug: true },
-      });
-      slug = company?.slug ?? slug;
-    }
-    const username = await generateUsername(firstName, lastName, slug);
+    const username = loginUsernameFromContactEmail(employee.contact_email);
     await prisma.employee.update({ where: { id: employee.id }, data: { username } });
   }
 }
@@ -62,22 +43,20 @@ async function main() {
   const admins = [
     {
       name: "Operations Admin",
-      username: DEMO_CREDENTIALS.admin.username,
       contactEmail: DEMO_CREDENTIALS.admin.contactEmail,
       role: "MAIN_ADMIN" as const,
     },
     {
       name: "Payroll Manager",
-      username: DEMO_CREDENTIALS.manager.username,
       contactEmail: DEMO_CREDENTIALS.manager.contactEmail,
       role: "MANAGER" as const,
     },
   ] as const;
 
   const primary = await prisma.user.upsert({
-    where: { username: admins[0]!.username },
+    where: { contactEmail: admins[0]!.contactEmail },
     create: {
-      username: admins[0]!.username,
+      username: normalizeContactEmail(admins[0]!.contactEmail),
       contactEmail: admins[0]!.contactEmail,
       passwordHash,
       name: admins[0]!.name,
@@ -85,6 +64,7 @@ async function main() {
       companyId: syalOperations.id,
     },
     update: {
+      username: normalizeContactEmail(admins[0]!.contactEmail),
       passwordHash,
       contactEmail: admins[0]!.contactEmail,
       name: admins[0]!.name,
@@ -94,9 +74,9 @@ async function main() {
   });
 
   await prisma.user.upsert({
-    where: { username: admins[1]!.username },
+    where: { contactEmail: admins[1]!.contactEmail },
     create: {
-      username: admins[1]!.username,
+      username: normalizeContactEmail(admins[1]!.contactEmail),
       contactEmail: admins[1]!.contactEmail,
       passwordHash,
       name: admins[1]!.name,
@@ -105,6 +85,7 @@ async function main() {
       createdById: primary.id,
     },
     update: {
+      username: normalizeContactEmail(admins[1]!.contactEmail),
       passwordHash,
       contactEmail: admins[1]!.contactEmail,
       name: admins[1]!.name,
@@ -116,7 +97,7 @@ async function main() {
 
   console.log(
     "[ensure-demo-admins] OK:",
-    admins.map((x) => `${x.username} (${x.contactEmail})`).join(", ")
+    admins.map((x) => x.contactEmail).join(", ")
   );
 }
 

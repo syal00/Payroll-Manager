@@ -6,6 +6,16 @@ import { getAdminHeaderForEmail } from "@/lib/admin-header";
 import { AdminLayoutClient } from "@/components/shells/AdminLayoutClient";
 import { getTenantActingCompanyId } from "@/lib/tenant-acting";
 import { prisma } from "@/lib/prisma";
+import type { TenantBranding } from "@/lib/tenant-branding";
+
+async function loadTenantBranding(companyId: string): Promise<TenantBranding | undefined> {
+  const company = await prisma.company.findUnique({
+    where: { id: companyId },
+    select: { name: true, logoUrl: true },
+  });
+  if (!company) return undefined;
+  return { name: company.name, logoUrl: company.logoUrl };
+}
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const headerList = await headers();
@@ -16,6 +26,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const session = await getSession();
 
   let superAdminActing: { companyId: string; companyName: string } | undefined;
+  let tenantBranding: TenantBranding | undefined;
 
   if (session && isSuperAdminRole(session.role)) {
     const tenantId = await getTenantActingCompanyId();
@@ -24,12 +35,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     }
     const company = await prisma.company.findUnique({
       where: { id: tenantId },
-      select: { id: true, name: true },
+      select: { id: true, name: true, logoUrl: true },
     });
     if (!company) {
       redirect("/super-admin/companies");
     }
     superAdminActing = { companyId: company.id, companyName: company.name };
+    tenantBranding = { name: company.name, logoUrl: company.logoUrl };
+  } else if (session?.companyId) {
+    tenantBranding = await loadTenantBranding(session.companyId);
   }
 
   if (
@@ -68,6 +82,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       header={header ?? undefined}
       isMainAdmin={isMainAdmin}
       superAdminActing={superAdminActing}
+      tenantBranding={tenantBranding}
     >
       {children}
     </AdminLayoutClient>

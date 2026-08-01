@@ -9,12 +9,13 @@ export default function EmployeeRegisterPage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [existsInfo, setExistsInfo] = useState<{ employeeCode: string; redirect: string } | null>(null);
+  const [existsInfo, setExistsInfo] = useState<{ employeeCode?: string } | null>(null);
   const [deactivated, setDeactivated] = useState(false);
-  const [pendingInfo, setPendingInfo] = useState<{ employeeCode: string; username: string; message: string } | null>(
-    null
-  );
+  const [pendingInfo, setPendingInfo] = useState<{ employeeCode: string; message: string } | null>(null);
+  const [adminEmailInUse, setAdminEmailInUse] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
@@ -23,16 +24,31 @@ export default function EmployeeRegisterPage() {
     setExistsInfo(null);
     setDeactivated(false);
     setPendingInfo(null);
+    setAdminEmailInUse(false);
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await fetch("/api/public/employees/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ firstName, lastName, contactEmail }),
+        body: JSON.stringify({ firstName, lastName, contactEmail, password }),
       });
       const data = await res.json();
-      if (res.status === 409 && data.exists && data.redirect) {
-        setExistsInfo({ employeeCode: data.employeeCode, redirect: data.redirect });
+      if (res.status === 409 && data.adminEmailInUse) {
+        setAdminEmailInUse(true);
+        setError(
+          data.error ??
+            "This email is already used for an administrator account. Use the admin sign-in page or register with a different email."
+        );
+        return;
+      }
+      if (res.status === 409 && data.exists && data.alreadyRegistered) {
+        setExistsInfo({ employeeCode: data.employeeCode });
         setError(data.error ?? "This contact email is already registered.");
         return;
       }
@@ -46,11 +62,10 @@ export default function EmployeeRegisterPage() {
       }
       if (res.ok && data.pendingApproval) {
         setPendingInfo({
-          employeeCode: data.employeeCode as string,
-          username: data.username as string,
+          employeeCode: data.employeeCode,
           message:
-            (data.message as string) ??
-            "Your account is pending admin approval. You will be able to sign in with your username after an administrator approves your profile.",
+            data.message ??
+            "Your account is pending administrator approval. You can sign in once an admin approves your request.",
         });
         return;
       }
@@ -62,7 +77,6 @@ export default function EmployeeRegisterPage() {
         }
         return;
       }
-      window.location.href = data.redirect ?? "/employee-access";
     } catch {
       setError("Network error");
     } finally {
@@ -78,98 +92,147 @@ export default function EmployeeRegisterPage() {
             ← Back to employee access
           </Link>
           <h1 className="mt-5 text-2xl font-bold tracking-tight text-[var(--color-text-primary)] sm:text-3xl">
-            Create your Employee ID
+            Create your account
           </h1>
-          <p className="mt-2 text-sm leading-relaxed text-slate-600">
-            We validate your contact email, assign a username and unique ID, then open your personal dashboard after
-            approval.
+          <p className="mt-2 text-sm leading-relaxed text-[var(--color-text-muted)]">
+            Enter your name, email, and password. An administrator will review and approve your account before you can
+            access the portal.
           </p>
         </div>
 
         <Card className="w-full max-w-md shadow-[var(--shadow-card)]">
-          <form onSubmit={onSubmit} className="space-y-5">
-            {error && (
-              <div className={deactivated ? "alert-warn" : "alert-error"} role="alert">
-                {error}
-              </div>
-            )}
-            {pendingInfo && (
-              <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-4 text-sm text-violet-950">
-                <p className="font-semibold">Pending admin approval</p>
-                <p className="mt-2 text-violet-900/90">{pendingInfo.message}</p>
-                <p className="mt-3 font-mono text-xs font-bold text-violet-950">Employee ID: {pendingInfo.employeeCode}</p>
-                <p className="mt-2 font-mono text-xs text-violet-900/90">Username: {pendingInfo.username}</p>
-                <p className="mt-2 text-xs text-violet-800/90">
-                  Save these details. An administrator must approve your profile before you can use the employee portal.
+          {pendingInfo ? (
+            <div className="space-y-5">
+              <div className="rounded-xl border border-[var(--color-primary-muted)] bg-[var(--color-primary-light)] px-4 py-4 text-sm text-[var(--color-text-primary)]">
+                <p className="font-semibold">Registration submitted</p>
+                <p className="mt-2 text-[var(--color-text-secondary)]">{pendingInfo.message}</p>
+                <p className="mt-3 text-[var(--color-text-secondary)]">
+                  Your employee ID:{" "}
+                  <span className="font-mono font-bold text-[var(--color-accent-light)]">{pendingInfo.employeeCode}</span>
                 </p>
               </div>
-            )}
-            {existsInfo && (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-950">
-                <p className="font-semibold">You&apos;re already set up</p>
-                <p className="mt-1 text-amber-900/90">
-                  Employee ID: <span className="font-mono font-bold">{existsInfo.employeeCode}</span>
-                </p>
+              <Link
+                href="/employee-access/existing"
+                className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-text-inverse)] shadow-sm transition hover:opacity-95"
+              >
+                Go to sign in
+              </Link>
+            </div>
+          ) : (
+            <form onSubmit={onSubmit} className="space-y-5">
+              {error && (
+                <div className={deactivated ? "alert-warn" : "alert-error"} role="alert">
+                  {error}
+                </div>
+              )}
+              {adminEmailInUse && (
                 <Link
-                  href={existsInfo.redirect}
-                  className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-xl bg-amber-800 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-900"
+                  href="/login"
+                  className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] px-4 text-sm font-semibold text-[var(--color-text-primary)] shadow-sm transition hover:bg-[var(--color-bg-elevated)]"
                 >
-                  Go to my dashboard
+                  Go to administrator sign in
                 </Link>
+              )}
+              {existsInfo && (
+                <div className="rounded-xl border border-[var(--color-warning-border)] bg-[var(--color-warning-bg)] px-4 py-4 text-sm text-[var(--color-text-primary)]">
+                  <p className="font-semibold">You&apos;re already registered</p>
+                  {existsInfo.employeeCode ? (
+                    <p className="mt-1 text-[var(--color-text-secondary)]">
+                      Employee ID: <span className="font-mono font-bold">{existsInfo.employeeCode}</span>
+                    </p>
+                  ) : null}
+                  <Link
+                    href="/employee-access/existing"
+                    className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-xl bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-text-inverse)] shadow-sm transition hover:opacity-95"
+                  >
+                    Sign in with email &amp; password
+                  </Link>
+                </div>
+              )}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="label-field" htmlFor="reg-first-name">
+                    First name
+                  </label>
+                  <input
+                    id="reg-first-name"
+                    type="text"
+                    autoComplete="given-name"
+                    required
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="input-field mt-1.5"
+                    placeholder="Jane"
+                  />
+                </div>
+                <div>
+                  <label className="label-field" htmlFor="reg-last-name">
+                    Last name
+                  </label>
+                  <input
+                    id="reg-last-name"
+                    type="text"
+                    autoComplete="family-name"
+                    required
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="input-field mt-1.5"
+                    placeholder="Doe"
+                  />
+                </div>
               </div>
-            )}
-            <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="label-field" htmlFor="reg-first-name">
-                  First name
+                <label className="label-field" htmlFor="reg-contact-email">
+                  Email
                 </label>
                 <input
-                  id="reg-first-name"
-                  type="text"
-                  autoComplete="given-name"
+                  id="reg-contact-email"
+                  type="email"
+                  autoComplete="email"
                   required
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
                   className="input-field mt-1.5"
-                  placeholder="Jane"
+                />
+                <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                  Use the email your employer recognizes for notifications.
+                </p>
+              </div>
+              <div>
+                <label className="label-field" htmlFor="reg-password">
+                  Password
+                </label>
+                <input
+                  id="reg-password"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  minLength={8}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="input-field mt-1.5"
                 />
               </div>
               <div>
-                <label className="label-field" htmlFor="reg-last-name">
-                  Last name
+                <label className="label-field" htmlFor="reg-confirm-password">
+                  Confirm password
                 </label>
                 <input
-                  id="reg-last-name"
-                  type="text"
-                  autoComplete="family-name"
+                  id="reg-confirm-password"
+                  type="password"
+                  autoComplete="new-password"
                   required
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
+                  minLength={8}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
                   className="input-field mt-1.5"
-                  placeholder="Doe"
                 />
               </div>
-            </div>
-            <div>
-              <label className="label-field" htmlFor="reg-contact-email">
-                Contact email
-              </label>
-              <input
-                id="reg-contact-email"
-                type="email"
-                autoComplete="email"
-                required
-                value={contactEmail}
-                onChange={(e) => setContactEmail(e.target.value)}
-                className="input-field mt-1.5"
-                placeholder="you@company.com"
-              />
-              <p className="mt-1 text-xs text-slate-500">Use the email your employer recognizes for notifications.</p>
-            </div>
-            <Button type="submit" className="h-11 w-full" disabled={loading}>
-              {loading ? "Creating your profile…" : "Create profile & continue"}
-            </Button>
-          </form>
+              <Button type="submit" className="h-11 w-full" disabled={loading}>
+                {loading ? "Submitting…" : "Create account"}
+              </Button>
+            </form>
+          )}
         </Card>
       </div>
     </div>

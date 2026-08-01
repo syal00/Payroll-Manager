@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { normalizeContactEmail } from "@/lib/email-deliverable";
+import { normalizeContactEmail } from "@/lib/display-name";
 import { z } from "zod";
 
 const bodySchema = z.object({
@@ -12,12 +12,13 @@ export async function POST(req: Request) {
     const body = bodySchema.parse(await req.json());
     const contactEmail = normalizeContactEmail(body.email);
 
-    const employee = await prisma.employee.findUnique({
-      where: { contactEmail },
-      select: { name: true, employeeCode: true, deletedAt: true },
+    const employee = await prisma.employee.findFirst({
+      where: { contactEmail, deletedAt: null },
+      select: { name: true, employeeCode: true },
+      orderBy: { createdAt: "asc" },
     });
 
-    if (!employee || employee.deletedAt) {
+    if (!employee) {
       return NextResponse.json({ found: false, message: "No account found" });
     }
 

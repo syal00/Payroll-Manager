@@ -8,10 +8,12 @@ import {
   ClipboardList,
   FileText,
   Settings,
+  Shield,
 } from "lucide-react";
 
 const TABS = [
   { href: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "staff", label: "Staff", icon: Shield },
   { href: "employees", label: "Employees", icon: Users },
   { href: "timesheets", label: "Timesheets", icon: ClipboardList },
   { href: "payslips", label: "Payslips", icon: FileText },

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import {
   emailValidationMessage,
   validateEmailDeliverable,
+  validateEmailForStoredOtp,
   type EmailValidationReason,
 } from "@/lib/email-validation";
 
@@ -39,7 +40,7 @@ export function normalizeEmployeeEmail(raw: string) {
   return raw.trim().toLowerCase();
 }
 
-/** Safety net before OTP delivery — catches invalid contact emails already stored in the DB. */
+/** Safety net before OTP delivery — syntax/policy only; MX was checked at registration or by an admin. */
 export async function validateEmployeeEmailForOtp(email: string): Promise<{
   ok: true;
 } | {
@@ -47,7 +48,7 @@ export async function validateEmployeeEmailForOtp(email: string): Promise<{
   reason: EmailValidationReason;
   message: string;
 }> {
-  const result = await validateEmailDeliverable(email);
+  const result = validateEmailForStoredOtp(email);
   if (result.valid) return { ok: true };
   return {
     ok: false,

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getPublicEmployeeByCode } from "@/lib/public-employee";
+import { ensureEmployeeCompanyId } from "@/lib/employee-company-scope";
 import { TimesheetStatus, PayPeriodStatus } from "@/lib/enums";
 
 export async function GET(
@@ -14,9 +16,18 @@ export async function GET(
       return NextResponse.json({ error: "Employee not found" }, { status: 404 });
     }
 
-    const currentPeriod = await prisma.payPeriod.findFirst({
-      where: { isCurrent: true, status: PayPeriodStatus.OPEN },
-    });
+    const companyId = await ensureEmployeeCompanyId(emp, (await headers()).get("x-company-id"));
+
+    const currentPeriod =
+      companyId != null
+        ? await prisma.payPeriod.findFirst({
+            where: {
+              companyId,
+              isCurrent: true,
+              status: PayPeriodStatus.OPEN,
+            },
+          })
+        : null;
 
     const notificationsPromise =
       emp.userId != null

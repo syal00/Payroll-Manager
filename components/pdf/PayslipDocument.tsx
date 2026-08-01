@@ -43,6 +43,8 @@ export type PayslipPdfProps = {
   payslipNumber: string;
   employeeName: string;
   employeeId: string;
+  jobTitle?: string | null;
+  department?: string | null;
   periodStart: string;
   periodEnd: string;
   regularHours: number;
@@ -78,6 +80,18 @@ export function PayslipDocument(p: PayslipPdfProps) {
           <Text style={styles.label}>Employee ID</Text>
           <Text style={styles.value}>{p.employeeId}</Text>
         </View>
+        {p.jobTitle ? (
+          <View style={styles.row}>
+            <Text style={styles.label}>Position</Text>
+            <Text style={styles.value}>{p.jobTitle}</Text>
+          </View>
+        ) : null}
+        {p.department ? (
+          <View style={styles.row}>
+            <Text style={styles.label}>Department</Text>
+            <Text style={styles.value}>{p.department}</Text>
+          </View>
+        ) : null}
         <View style={styles.row}>
           <Text style={styles.label}>Pay period</Text>
           <Text style={styles.value}>

@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { PageSearchBar } from "@/components/ui/PageSearchBar";
 import { TimesheetStatusBadge } from "@/components/status-badges";
-import { shortDate } from "@/lib/format";
+import { shortDate, formatPayPeriodLabel } from "@/lib/format";
 
 type Row = {
   id: string;
@@ -17,24 +19,46 @@ type Row = {
   totalHours: number;
   submittedAt: string | null;
   employee: { name: string; user: { name: string } | null };
-  payPeriod: { id: string; name: string | null; startDate: string };
+  payPeriod: { id: string; name: string | null; startDate: string; endDate: string };
 };
 
 type Period = { id: string; name: string | null; startDate: string };
 
 export default function AdminReviewPage() {
+  const searchParams = useSearchParams();
   const [items, setItems] = useState<Row[]>([]);
   const [periods, setPeriods] = useState<Period[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [payPeriodId, setPayPeriodId] = useState("");
   const [q, setQ] = useState("");
+  const [appliedQ, setAppliedQ] = useState("");
   const [status, setStatus] = useState("");
   const [sort, setSort] = useState("submittedAt");
   const [order, setOrder] = useState<"asc" | "desc">("desc");
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
   const pageSize = 15;
 
-  function load() {
+  useEffect(() => {
+    fetch("/api/pay-periods")
+      .then((r) => r.json())
+      .then((j) => {
+        if (j.payPeriods) setPeriods(j.payPeriods);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const urlQ = searchParams.get("q");
+    if (urlQ) {
+      setQ(urlQ);
+      setAppliedQ(urlQ);
+      setPage(1);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     const params = new URLSearchParams({
       page: String(page),
       pageSize: String(pageSize),
@@ -42,42 +66,57 @@ export default function AdminReviewPage() {
       order,
     });
     if (payPeriodId) params.set("payPeriodId", payPeriodId);
-    if (q.trim()) params.set("q", q.trim());
+    if (appliedQ) params.set("q", appliedQ);
     if (status) params.set("status", status);
+
+    let cancelled = false;
+    setLoading(true);
+    setErr(null);
     fetch(`/api/timesheets?${params}`)
       .then((r) => r.json())
       .then((j) => {
-        if (!j.error) {
-          setItems(j.items);
-          setTotal(j.total);
+        if (cancelled) return;
+        if (j.error) {
+          setErr(j.error);
+          setItems([]);
+          setTotal(0);
+          return;
         }
+        setItems(j.items ?? []);
+        setTotal(j.total ?? 0);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setErr("Failed to load timesheets");
+          setItems([]);
+          setTotal(0);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
       });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [page, payPeriodId, sort, order, status, appliedQ]);
+
+  function applyFilters() {
+    setPage(1);
+    setAppliedQ(q.trim());
   }
-
-  useEffect(() => {
-    fetch("/api/pay-periods")
-      .then((r) => r.json())
-      .then((j) => {
-        if (j.payPeriods) setPeriods(j.payPeriods);
-      });
-  }, []);
-
-  useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, payPeriodId, sort, order, status]);
 
   return (
     <div className="page-container max-w-7xl space-y-8">
       <PageHeader
         eyebrow="Compliance"
         title="Timesheet review"
-        description="Surface discrepancies fasterâ€”tie every adjustment to payroll periods without leaving the approvals fabric."
+        description="Surface discrepancies faster—tie every adjustment to payroll periods without leaving the approvals fabric."
       />
 
       <Card className="rounded-2xl border-[var(--color-border)] !bg-[var(--color-bg-card)]/95 backdrop-blur-sm">
-        <div className="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-end">
-          <div className="min-w-[180px] flex-1">
+        <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end">
+          <div className="min-w-[160px] flex-1">
             <label className="label-field" htmlFor="filter-period">
               Pay period
             </label>
@@ -98,7 +137,8 @@ export default function AdminReviewPage() {
               ))}
             </select>
           </div>
-          <div className="min-w-[160px] flex-1">
+
+          <div className="min-w-[140px] flex-1">
             <label className="label-field" htmlFor="filter-status">
               Status
             </label>
@@ -106,7 +146,10 @@ export default function AdminReviewPage() {
               id="filter-status"
               className="select-field mt-1.5"
               value={status}
-              onChange={(e) => setStatus(e.target.value)}
+              onChange={(e) => {
+                setPage(1);
+                setStatus(e.target.value);
+              }}
             >
               <option value="">Any status</option>
               <option value="DRAFT">Draft</option>
@@ -116,26 +159,28 @@ export default function AdminReviewPage() {
               <option value="REJECTED">Rejected</option>
             </select>
           </div>
+
           <div className="min-w-[200px] flex-[2]">
-            <label className="label-field" htmlFor="filter-q">
-              Employee name
-            </label>
-            <input
+            <PageSearchBar
               id="filter-q"
-              className="input-field mt-1.5"
-              placeholder="Search by nameâ€¦"
+              label="Employee name"
               value={q}
-              onChange={(e) => setQ(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && (setPage(1), load())}
+              placeholder="Search by name, email, or ID"
+              onChange={setQ}
+              onSubmit={applyFilters}
             />
           </div>
-          <div>
+
+          <div className="min-w-[200px] flex-1">
             <span className="label-field">Sort</span>
             <div className="mt-1.5 flex flex-wrap gap-2">
               <select
-                className="select-field min-w-[8.5rem]"
+                className="select-field min-w-[8.5rem] flex-1"
                 value={sort}
-                onChange={(e) => setSort(e.target.value)}
+                onChange={(e) => {
+                  setPage(1);
+                  setSort(e.target.value);
+                }}
                 aria-label="Sort by"
               >
                 <option value="submittedAt">Submitted</option>
@@ -143,9 +188,12 @@ export default function AdminReviewPage() {
                 <option value="status">Status</option>
               </select>
               <select
-                className="select-field min-w-[5.5rem]"
+                className="select-field min-w-[5.5rem] flex-1"
                 value={order}
-                onChange={(e) => setOrder(e.target.value as "asc" | "desc")}
+                onChange={(e) => {
+                  setPage(1);
+                  setOrder(e.target.value as "asc" | "desc");
+                }}
                 aria-label="Sort order"
               >
                 <option value="desc">Newest</option>
@@ -153,18 +201,14 @@ export default function AdminReviewPage() {
               </select>
             </div>
           </div>
-          <Button
-            variant="secondary"
-            className="md:mb-0.5"
-            onClick={() => {
-              setPage(1);
-              load();
-            }}
-          >
+
+          <Button type="button" variant="secondary" className="lg:mb-0.5 shrink-0" onClick={applyFilters}>
             Apply filters
           </Button>
         </div>
       </Card>
+
+      {err ? <div className="alert-error">{err}</div> : null}
 
       <Card padding={false} className="overflow-hidden rounded-2xl border-[var(--color-border)] !bg-[var(--color-bg-card)]/95 backdrop-blur-sm">
         <div className="overflow-x-auto">
@@ -181,29 +225,43 @@ export default function AdminReviewPage() {
               </tr>
             </thead>
             <tbody>
-              {items.length === 0 ? (
+              {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-14 text-center text-sm text-slate-500">
-                    <p className="font-medium text-slate-700">No timesheets match these filters</p>
-                    <p className="mt-1 text-xs">Try clearing the period or widening the status.</p>
+                  <td colSpan={7} className="px-4 py-14 text-center text-sm text-[var(--color-text-muted)]">
+                    Loading timesheets…
+                  </td>
+                </tr>
+              ) : items.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-14 text-center text-sm text-[var(--color-text-muted)]">
+                    <p className="font-medium text-[var(--color-text-primary)]">
+                      {appliedQ ? `No timesheets found for "${appliedQ}".` : "No timesheets match these filters"}
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
+                      {appliedQ
+                        ? "Try a different name or clear the search."
+                        : "Try clearing the period or widening the status."}
+                    </p>
                   </td>
                 </tr>
               ) : (
                 items.map((row) => (
-                  <tr key={row.id} className="table-row table-row-muted text-slate-700">
+                  <tr key={row.id} className="table-row table-row-muted">
                     <td className="px-4 py-3.5 font-medium text-[var(--color-text-primary)]">{row.employee.name}</td>
-                    <td className="px-4 py-3.5 text-slate-600">
-                      {row.payPeriod.name ?? shortDate(row.payPeriod.startDate)}
+                    <td className="px-4 py-3.5 text-[var(--color-text-secondary)]">
+                      {formatPayPeriodLabel(row.payPeriod)}
                     </td>
                     <td className="px-4 py-3.5">
                       <TimesheetStatusBadge status={row.status} />
                     </td>
-                    <td className="px-4 py-3.5 tabular-nums text-slate-600">
+                    <td className="px-4 py-3.5 tabular-nums text-[var(--color-text-secondary)]">
                       {row.totalRegular} / {row.totalOvertime} / {row.totalLeave}
                     </td>
-                    <td className="px-4 py-3.5 tabular-nums font-semibold text-[var(--color-text-primary)]">{row.totalHours}</td>
-                    <td className="px-4 py-3.5 text-slate-500">
-                      {row.submittedAt ? shortDate(row.submittedAt) : "â€”"}
+                    <td className="px-4 py-3.5 tabular-nums font-semibold text-[var(--color-text-primary)]">
+                      {row.totalHours}
+                    </td>
+                    <td className="px-4 py-3.5 text-[var(--color-text-muted)]">
+                      {row.submittedAt ? shortDate(row.submittedAt) : "—"}
                     </td>
                     <td className="px-4 py-3.5 text-right">
                       <Link
@@ -219,15 +277,15 @@ export default function AdminReviewPage() {
             </tbody>
           </table>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 px-4 py-3.5 text-sm text-slate-600">
-          <span>{total === 0 ? "No rows" : `Page ${page} Â· ${total} total`}</span>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--color-border)] px-4 py-3.5 text-sm text-[var(--color-text-secondary)]">
+          <span>{loading ? "Loading…" : total === 0 ? "No rows" : `Page ${page} · ${total} total`}</span>
           <div className="flex gap-2">
-            <Button variant="secondary" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+            <Button variant="secondary" disabled={loading || page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
               Previous
             </Button>
             <Button
               variant="secondary"
-              disabled={page * pageSize >= total}
+              disabled={loading || page * pageSize >= total}
               onClick={() => setPage((p) => p + 1)}
             >
               Next

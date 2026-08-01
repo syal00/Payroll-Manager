@@ -43,7 +43,7 @@ export function DashboardPendingQueue({ items }: { items: Row[] }) {
   }
 
   return (
-    <Card className="ui-panel !rounded-xl !border-[var(--elite-border)] !shadow-sm">
+    <Card className="ui-panel dash-panel !rounded-2xl !border-[var(--elite-border)] !shadow-sm">
       <div className="card-header !mb-0 flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="card-heading text-base text-[var(--elite-heading)]">Pending approvals</h2>

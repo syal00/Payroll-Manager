@@ -4,9 +4,11 @@ import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { TimesheetStatusBadge } from "@/components/status-badges";
-import { shortDate } from "@/lib/format";
+import { TimesheetStatusBadge, PayPeriodStatusBadge } from "@/components/status-badges";
+import { PayPeriodStatus } from "@/lib/enums";
+import { shortCalendarDate } from "@/lib/format";
 import { sumEntries } from "@/lib/timesheet-math";
+import { workDateToInputValue } from "@/lib/timesheet-period-entries";
 
 type Entry = {
   workDate: string;
@@ -45,11 +47,14 @@ export default function PublicTimesheetEntryPage({
     name: string | null;
     startDate: string;
     endDate: string;
+    status: string;
   } | null>(null);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState("");
   const [editable, setEditable] = useState(true);
+  const [periodClosed, setPeriodClosed] = useState(false);
+  const [readOnlyReason, setReadOnlyReason] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
@@ -78,6 +83,7 @@ export default function PublicTimesheetEntryPage({
           name: string | null;
           startDate: string;
           endDate: string;
+          status: string;
         };
         const sheet = j.timesheet as {
           notes: string | null;
@@ -89,9 +95,11 @@ export default function PublicTimesheetEntryPage({
         setNotes(sheet.notes ?? "");
         setStatus(sheet.status);
         setEditable(Boolean(j.editable));
+        setPeriodClosed(Boolean(j.periodClosed));
+        setReadOnlyReason(typeof j.readOnlyReason === "string" ? j.readOnlyReason : null);
         setEntries(
           sheet.entries.map((e) => ({
-            workDate: new Date(e.workDate).toISOString().slice(0, 10),
+            workDate: workDateToInputValue(e.workDate),
             regularHours: e.regularHours,
             overtimeHours: e.overtimeHours,
             leaveHours: e.leaveHours,
@@ -193,7 +201,7 @@ export default function PublicTimesheetEntryPage({
           className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--color-accent-tint)] border-t-violet-600"
           aria-hidden
         />
-        Loading timesheetâ€¦
+        Loading timesheet…
       </div>
     );
   }
@@ -201,17 +209,29 @@ export default function PublicTimesheetEntryPage({
   return (
     <div className="page-container max-w-5xl space-y-8">
       <div>
-        <Link href={`${base}/dashboard`} className="link-accent text-sm">
-          â† Dashboard
+        <Link href={`${base}/timesheet`} className="link-accent text-sm">
+          ← All timesheets
         </Link>
         <div className="mt-3 flex flex-wrap items-center gap-3">
-          <h1 className="page-title">Submit your hours</h1>
+          <h1 className="page-title">
+            {editable ? "Submit your hours" : "Your submitted hours"}
+          </h1>
           <TimesheetStatusBadge status={status} />
+          {period && <PayPeriodStatusBadge status={period.status} />}
         </div>
         <p className="page-description mt-1">
-          {period.name ?? `${shortDate(period.startDate)} â€“ ${shortDate(period.endDate)}`}
+          {period.name ?? `${shortCalendarDate(period.startDate)} – ${shortCalendarDate(period.endDate)}`}
         </p>
       </div>
+
+      {periodClosed && readOnlyReason && (
+        <div className="alert-warn">
+          <p className="font-semibold">
+            {period.status === PayPeriodStatus.CLOSED ? "Pay period closed" : "Period not open"}
+          </p>
+          <p className="mt-1 text-sm">{readOnlyReason}</p>
+        </div>
+      )}
 
       {rejectReason && (
         <div className="alert-error">
@@ -278,7 +298,7 @@ export default function PublicTimesheetEntryPage({
               {entries.map((e, i) => (
                 <tr key={e.workDate} className="table-row table-row-muted">
                   <td className="whitespace-nowrap px-4 py-2.5 font-medium text-[var(--color-text-secondary)]">
-                    {shortDate(e.workDate)}
+                    {shortCalendarDate(e.workDate)}
                   </td>
                   {editable ? (
                     <>
@@ -340,8 +360,8 @@ export default function PublicTimesheetEntryPage({
                       <td className="px-4 py-2.5 tabular-nums text-[var(--color-text-muted)]">{e.regularHours}</td>
                       <td className="px-4 py-2.5 tabular-nums text-[var(--color-text-muted)]">{e.overtimeHours}</td>
                       <td className="px-4 py-2.5 tabular-nums text-[var(--color-text-muted)]">{e.leaveHours}</td>
-                      <td className="max-w-[12rem] px-4 py-2.5 text-slate-400">{e.location?.trim() || "â€”"}</td>
-                      <td className="max-w-[14rem] px-4 py-2.5 text-slate-500">{e.notes || "â€”"}</td>
+                      <td className="max-w-[12rem] px-4 py-2.5 text-slate-400">{e.location?.trim() || "—"}</td>
+                      <td className="max-w-[14rem] px-4 py-2.5 text-slate-500">{e.notes || "—"}</td>
                     </>
                   )}
                 </tr>
@@ -361,10 +381,11 @@ export default function PublicTimesheetEntryPage({
           </Button>
         </div>
       ) : (
-        <Card className="border-white/10 bg-[var(--color-bg-card)]/[0.04]">
-          <p className="text-sm leading-relaxed text-slate-300">
-            This timesheet is locked while it&apos;s under review or finalized. If it was rejected, you can
-            edit and submit again from this page.
+        <Card className="border-[var(--color-border)] bg-[var(--color-surface-secondary)]">
+          <p className="text-sm leading-relaxed text-[var(--color-text-secondary)]">
+            {periodClosed
+              ? "This timesheet is read-only because the pay period is closed or your submission is finalized."
+              : "This timesheet is locked while it's under review. If it was rejected, you can edit and submit again."}
           </p>
         </Card>
       )}

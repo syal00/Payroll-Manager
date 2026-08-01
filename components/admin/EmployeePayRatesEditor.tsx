@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
-import { parsePositiveRateInput } from "@/lib/format";
+import { parsePayRateInput, PAY_RATE_VALIDATION_MESSAGE, PAY_RATE_MAX } from "@/lib/pay-rates";
 
 export function EmployeePayRatesEditor({
   employeeId,
@@ -35,10 +35,10 @@ export function EmployeePayRatesEditor({
       setErr("Enter both hourly and overtime rates.");
       return;
     }
-    const hr = parsePositiveRateInput(hourly);
-    const overtime = parsePositiveRateInput(ot);
+    const hr = parsePayRateInput(hourly);
+    const overtime = parsePayRateInput(ot);
     if (hr === undefined || overtime === undefined) {
-      setErr("Use valid positive numbers (e.g. 25.50 and 38.25). You can use a comma instead of a dot for decimals.");
+      setErr(PAY_RATE_VALIDATION_MESSAGE);
       return;
     }
     setBusy(true);
@@ -81,7 +81,7 @@ export function EmployeePayRatesEditor({
     <div className="mt-5 rounded-xl border border-[var(--color-border)] bg-[var(--color-page-bg)]/80 p-4">
       <h3 className="text-sm font-bold text-[var(--color-text-primary)]">Set pay rates</h3>
       <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-        Applies to this employee for all future timesheets and payslips. Use a dot or comma for decimals.
+        Hourly and overtime rates from 0 to {PAY_RATE_MAX}. Saved rates are used when you generate a payslip.
       </p>
       {err && <p className="mt-2 text-sm text-[var(--color-danger-text)]">{err}</p>}
       {msg && <p className="mt-2 text-sm text-emerald-700">{msg}</p>}

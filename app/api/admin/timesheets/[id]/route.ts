@@ -3,10 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/api-auth";
 import { assertStaffCanAccessEmployee } from "@/lib/manager-scope";
 import { writeAuditLog } from "@/lib/audit";
-import { validateTimesheetWorkDatePolicy } from "@/lib/timesheet-work-date-policy";
+import { validateTimesheetWorkDatePolicyForEntry } from "@/lib/timesheet-work-date-policy";
 import { sumEntries, validateDayEntry } from "@/lib/timesheet-math";
 import { normalizeEntryLocation } from "@/lib/timesheet-entry-fields";
 import { updateTimesheetEntryHours } from "@/lib/timesheet-entry-hours-update";
+import { payRateSchema } from "@/lib/pay-rates";
 import { z } from "zod";
 
 const entrySchema = z.object({
@@ -21,8 +22,8 @@ const entrySchema = z.object({
 const patchSchema = z.object({
   notes: z.string().nullable().optional(),
   entries: z.array(entrySchema).optional(),
-  hourlyRate: z.number().positive().optional(),
-  overtimeRate: z.number().positive().optional(),
+  hourlyRate: payRateSchema.optional(),
+  overtimeRate: payRateSchema.optional(),
   editSummary: z.string().max(500).optional().nullable(),
 });
 
@@ -75,14 +76,18 @@ export async function PATCH(
         if (!existing) {
           return NextResponse.json({ error: "Invalid entry id in payload." }, { status: 400 });
         }
-        const dateErr = validateTimesheetWorkDatePolicy(existing.workDate);
-        if (dateErr) return NextResponse.json({ error: dateErr }, { status: 400 });
         const v = validateDayEntry({
           regularHours: row.regularHours,
           overtimeHours: row.overtimeHours,
           leaveHours: row.leaveHours,
         });
         if (v) return NextResponse.json({ error: v }, { status: 400 });
+        const dateErr = validateTimesheetWorkDatePolicyForEntry(existing.workDate, {
+          regularHours: row.regularHours,
+          overtimeHours: row.overtimeHours,
+          leaveHours: row.leaveHours,
+        });
+        if (dateErr) return NextResponse.json({ error: dateErr }, { status: 400 });
       }
     }
 
@@ -184,6 +189,65 @@ export async function PATCH(
     if (e instanceof z.ZodError) {
       return NextResponse.json({ error: "Validation failed", issues: e.issues }, { status: 400 });
     }
+    const err = e as Error & { status?: number };
+    return NextResponse.json({ error: err.message }, { status: err.status ?? 500 });
+  }
+}
+
+export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await requireStaff();
+    const { id } = await ctx.params;
+
+    const ts = await prisma.timesheet.findUnique({
+      where: { id },
+      include: {
+        payslip: { select: { id: true, payslipNumber: true } },
+        employee: { select: { id: true, name: true, employeeCode: true, userId: true } },
+        payPeriod: { select: { name: true, startDate: true, endDate: true } },
+      },
+    });
+
+    if (!ts) {
+      return NextResponse.json({ error: "Timesheet not found" }, { status: 404 });
+    }
+    if (!(await assertStaffCanAccessEmployee(session, ts.employeeId))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    await prisma.$transaction(async (tx) => {
+      if (ts.payslip) {
+        await tx.payslip.delete({ where: { id: ts.payslip.id } });
+      }
+      await tx.timesheet.delete({ where: { id } });
+    });
+
+    if (ts.employee.userId) {
+      await prisma.notification.create({
+        data: {
+          userId: ts.employee.userId,
+          type: "TIMESHEET_REMOVED",
+          title: "Timesheet removed",
+          body: "An administrator removed a timesheet from your records.",
+        },
+      });
+    }
+
+    await writeAuditLog({
+      actorId: session.id,
+      action: "DELETE_TIMESHEET",
+      entityType: "Timesheet",
+      entityId: id,
+      details: {
+        employeeId: ts.employeeId,
+        employeeCode: ts.employee.employeeCode,
+        employeeName: ts.employee.name,
+        payslipRemoved: ts.payslip?.payslipNumber ?? null,
+      },
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (e) {
     const err = e as Error & { status?: number };
     return NextResponse.json({ error: err.message }, { status: err.status ?? 500 });
   }

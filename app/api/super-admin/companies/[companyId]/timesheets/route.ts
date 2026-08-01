@@ -27,7 +27,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ companyId: stri
     const url = new URL(req.url);
     const q = querySchema.parse(Object.fromEntries(url.searchParams.entries()));
 
-    const parts: Prisma.TimesheetWhereInput[] = [timesheetWhereForCompanyDrilldown(session, companyId)];
+    const parts: Prisma.TimesheetWhereInput[] = [await timesheetWhereForCompanyDrilldown(session, companyId)];
     if (q.payPeriodId) parts.push({ payPeriodId: q.payPeriodId });
     if (q.status) parts.push({ status: q.status });
     if (q.q?.trim()) {

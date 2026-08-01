@@ -43,12 +43,12 @@ export default function PublicPayslipDetailPage({
   }
   if (!p) {
     return (
-      <div className="flex items-center gap-3 text-sm text-slate-500">
+      <div className="flex items-center gap-3 text-sm text-[var(--color-text-muted)]">
         <span
           className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--color-accent-tint)] border-t-violet-600"
           aria-hidden
         />
-        Loading payslipâ€¦
+        Loading payslip…
       </div>
     );
   }
@@ -57,7 +57,7 @@ export default function PublicPayslipDetailPage({
     <div className="page-container max-w-2xl space-y-8 print:max-w-none">
       <div>
         <Link href={`${base}/payslips`} className="link-accent text-sm print-hidden">
-          â† All payslips
+          ← All payslips
         </Link>
         <p className="page-eyebrow mt-4">Payslip</p>
         <h1 className="page-title mt-1 font-mono text-2xl md:text-3xl">{p.payslipNumber}</h1>
@@ -66,10 +66,10 @@ export default function PublicPayslipDetailPage({
       <Card className="print:border print:shadow-none">
         <h2 className="card-heading">Pay period</h2>
         <p className="mt-2 text-sm font-medium text-[var(--color-text-secondary)]">
-          {p.payPeriod.name ?? `${shortDate(p.payPeriod.startDate)} â€“ ${shortDate(p.payPeriod.endDate)}`}
+          {p.payPeriod.name ?? `${shortDate(p.payPeriod.startDate)} – ${shortDate(p.payPeriod.endDate)}`}
         </p>
-        <p className="mt-2 text-xs text-slate-500">
-          {p.regularHours}h regular Â· {p.overtimeHours}h OT Â· {money(p.hourlyRate)} base Â·{" "}
+        <p className="mt-2 text-xs text-[var(--color-text-muted)]">
+          {p.regularHours}h regular · {p.overtimeHours}h OT · {money(p.hourlyRate)} base ·{" "}
           {money(p.overtimeRate)} OT
         </p>
         <a
@@ -83,20 +83,20 @@ export default function PublicPayslipDetailPage({
 
       <Card className="print:border print:shadow-none">
         <h2 className="card-heading">Earnings</h2>
-        <ul className="mt-4 divide-y divide-violet-100/90 text-sm">
+        <ul className="mt-4 divide-y divide-[var(--color-border)] text-sm">
           {p.items.map((it, i) => (
             <li key={i} className="flex justify-between py-3 first:pt-0">
-              <span className="text-slate-700">{it.label}</span>
+              <span className="text-[var(--color-text-secondary)]">{it.label}</span>
               <span className="tabular-nums font-semibold text-[var(--color-text-primary)]">{money(it.amount)}</span>
             </li>
           ))}
         </ul>
-        <div className="mt-4 space-y-2 border-t border-white/12 pt-4 text-sm">
+        <div className="mt-4 space-y-2 border-t border-[var(--color-border)] pt-4 text-sm">
           <div className="flex justify-between font-semibold text-[var(--color-text-primary)]">
             <span>Gross</span>
             <span className="tabular-nums">{money(p.grossPay)}</span>
           </div>
-          <div className="flex justify-between text-slate-600">
+          <div className="flex justify-between text-[var(--color-text-secondary)]">
             <span>Deductions (Est. tax & contributions)</span>
             <span className="tabular-nums">− {money(p.totalDeductions)}</span>
           </div>
@@ -105,11 +105,11 @@ export default function PublicPayslipDetailPage({
             <span className="tabular-nums">{money(p.netPay)}</span>
           </div>
         </div>
-        <p className="mt-4 text-xs text-slate-500">
+        <p className="mt-4 text-xs text-[var(--color-text-muted)]">
           * Deductions are estimates only. Consult your employer for exact figures.
         </p>
-        <p className="mt-5 border-t border-violet-50 pt-4 text-xs text-slate-500">
-          Approved by {p.adminSignoff ?? "â€”"} Â· {p.approvalDate ? shortDate(p.approvalDate) : "â€”"}
+        <p className="mt-5 border-t border-[var(--color-border)] pt-4 text-xs text-[var(--color-text-muted)]">
+          Approved by {p.adminSignoff ?? "—"} · {p.approvalDate ? shortDate(p.approvalDate) : "—"}
         </p>
       </Card>
     </div>

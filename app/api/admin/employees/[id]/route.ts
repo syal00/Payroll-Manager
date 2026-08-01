@@ -3,16 +3,24 @@ import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/api-auth";
 import { assertStaffCanAccessEmployee } from "@/lib/manager-scope";
 import { writeAuditLog } from "@/lib/audit";
+import { payRateSchema } from "@/lib/pay-rates";
 import { z } from "zod";
 
 const patchSchema = z
   .object({
-    hourlyRate: z.number().positive().max(999_999).optional(),
-    overtimeRate: z.number().positive().max(999_999).optional(),
+    hourlyRate: payRateSchema.optional(),
+    overtimeRate: payRateSchema.optional(),
+    jobTitle: z.string().trim().max(120).nullable().optional(),
+    department: z.string().trim().max(120).nullable().optional(),
   })
-  .refine((d) => d.hourlyRate !== undefined || d.overtimeRate !== undefined, {
-    message: "Provide hourlyRate and/or overtimeRate",
-  });
+  .refine(
+    (d) =>
+      d.hourlyRate !== undefined ||
+      d.overtimeRate !== undefined ||
+      d.jobTitle !== undefined ||
+      d.department !== undefined,
+    { message: "Provide at least one field to update" }
+  );
 
 export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   try {
@@ -86,7 +94,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     }
     if (existing.deletedAt) {
       return NextResponse.json(
-        { error: "Cannot edit pay rates for a deactivated employee. Restore the profile first." },
+        { error: "Cannot edit a deactivated employee. Restore the profile first." },
         { status: 400 }
       );
     }
@@ -96,22 +104,40 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
       data: {
         ...(body.hourlyRate !== undefined ? { hourlyRate: body.hourlyRate } : {}),
         ...(body.overtimeRate !== undefined ? { overtimeRate: body.overtimeRate } : {}),
+        ...(body.jobTitle !== undefined ? { jobTitle: body.jobTitle || null } : {}),
+        ...(body.department !== undefined ? { department: body.department || null } : {}),
       },
     });
 
-    await writeAuditLog({
-      actorId: session.id,
-      action: "EMPLOYEE_PAY_RATES_UPDATED",
-      entityType: "Employee",
-      entityId: id,
-      details: {
-        employeeCode: employee.employeeCode,
-        previousHourly: existing.hourlyRate,
-        previousOvertime: existing.overtimeRate,
-        hourlyRate: employee.hourlyRate,
-        overtimeRate: employee.overtimeRate,
-      },
-    });
+    if (body.hourlyRate !== undefined || body.overtimeRate !== undefined) {
+      await writeAuditLog({
+        actorId: session.id,
+        action: "EMPLOYEE_PAY_RATES_UPDATED",
+        entityType: "Employee",
+        entityId: id,
+        details: {
+          employeeCode: employee.employeeCode,
+          previousHourly: existing.hourlyRate,
+          previousOvertime: existing.overtimeRate,
+          hourlyRate: employee.hourlyRate,
+          overtimeRate: employee.overtimeRate,
+        },
+      });
+    }
+
+    if (body.jobTitle !== undefined || body.department !== undefined) {
+      await writeAuditLog({
+        actorId: session.id,
+        action: "EMPLOYEE_PROFILE_UPDATED",
+        entityType: "Employee",
+        entityId: id,
+        details: {
+          employeeCode: employee.employeeCode,
+          jobTitle: employee.jobTitle,
+          department: employee.department,
+        },
+      });
+    }
 
     return NextResponse.json({
       ok: true,
@@ -119,6 +145,8 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
         id: employee.id,
         hourlyRate: employee.hourlyRate,
         overtimeRate: employee.overtimeRate,
+        jobTitle: employee.jobTitle,
+        department: employee.department,
       },
     });
   } catch (e) {

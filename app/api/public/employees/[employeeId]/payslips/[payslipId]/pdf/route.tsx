@@ -39,6 +39,8 @@ export async function GET(
         payslipNumber={payslip.payslipNumber}
         employeeName={payslip.employee.name}
         employeeId={payslip.employee.employeeCode}
+        jobTitle={payslip.jobTitle ?? payslip.employee.jobTitle}
+        department={payslip.department ?? payslip.employee.department}
         periodStart={format(payslip.payPeriod.startDate, "MMM d, yyyy")}
         periodEnd={format(payslip.payPeriod.endDate, "MMM d, yyyy")}
         regularHours={payslip.regularHours}

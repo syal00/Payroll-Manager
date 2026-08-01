@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { FileText } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { shortDate } from "@/lib/format";
+import { PageSearchBar } from "@/components/ui/PageSearchBar";
+import { shortDate, money, formatPayPeriodLabel } from "@/lib/format";
 
 type P = {
   id: string;
@@ -17,33 +19,48 @@ type P = {
   emailSentAt: string | null;
   createdAt: string;
   employee: { name: string; user: { name: string } | null };
-  payPeriod: { name: string | null; startDate: string };
+  payPeriod: { name: string | null; startDate: string; endDate: string };
 };
 
 export default function AdminPayslipsPage() {
+  const searchParams = useSearchParams();
   const [items, setItems] = useState<P[]>([]);
   const [q, setQ] = useState("");
+  const [appliedQ, setAppliedQ] = useState("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const pageSize = 15;
 
-  function load() {
+  useEffect(() => {
     const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
-    if (q.trim()) params.set("q", q.trim());
+    if (appliedQ) params.set("q", appliedQ);
+
+    let cancelled = false;
     fetch(`/api/payslips?${params}`)
       .then((r) => r.json())
       .then((j) => {
-        if (!j.error) {
-          setItems(j.items);
-          setTotal(j.total);
-        }
+        if (cancelled || j.error) return;
+        setItems(j.items ?? []);
+        setTotal(j.total ?? 0);
       });
-  }
+    return () => {
+      cancelled = true;
+    };
+  }, [page, appliedQ]);
 
   useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+    const urlQ = searchParams.get("q");
+    if (urlQ) {
+      setQ(urlQ);
+      setAppliedQ(urlQ);
+      setPage(1);
+    }
+  }, [searchParams]);
+
+  function applySearch() {
+    setPage(1);
+    setAppliedQ(q.trim());
+  }
 
   return (
     <div className="page-container max-w-6xl space-y-8">
@@ -63,19 +80,16 @@ export default function AdminPayslipsPage() {
       <Card className="rounded-2xl border-[var(--color-border)] !bg-[var(--color-bg-card)]/95 backdrop-blur-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="min-w-0 flex-1">
-            <label className="label-field" htmlFor="payslip-q">
-              Employee name
-            </label>
-            <input
+            <PageSearchBar
               id="payslip-q"
-              className="input-field mt-1.5"
+              label="Employee name"
               value={q}
-              placeholder="Searchâ€¦"
-              onChange={(e) => setQ(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && (setPage(1), load())}
+              placeholder="Name, email, or employee ID"
+              onChange={setQ}
+              onSubmit={applySearch}
             />
           </div>
-          <Button variant="secondary" className="sm:mb-0.5" onClick={() => (setPage(1), load())}>
+          <Button type="button" variant="secondary" className="sm:mb-0.5 shrink-0" onClick={applySearch}>
             Search
           </Button>
         </div>
@@ -91,28 +105,38 @@ export default function AdminPayslipsPage() {
                 <th className="px-4 py-3.5">Period</th>
                 <th className="px-4 py-3.5">Net</th>
                 <th className="px-4 py-3.5">Sent</th>
-                <th className="px-4 py-3.5" />
+                <th className="px-4 py-3.5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
               {items.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-14 text-center text-sm text-slate-500">
-                    <p className="font-medium text-slate-700">No payslips found</p>
-                    <p className="mt-1 text-xs">Try another name or generate payslips from approved timesheets.</p>
+                  <td colSpan={6} className="px-4 py-14 text-center text-sm text-[var(--color-text-muted)]">
+                    <p className="font-medium text-[var(--color-text-primary)]">
+                      {appliedQ ? `No payslips found for "${appliedQ}".` : "No payslips found"}
+                    </p>
+                    <p className="mt-1 text-xs">
+                      {appliedQ
+                        ? "Try a different name or clear the search."
+                        : "Try another name or generate payslips from approved timesheets."}
+                    </p>
                   </td>
                 </tr>
               ) : (
                 items.map((p) => (
                   <tr key={p.id} className="table-row table-row-muted">
-                    <td className="px-4 py-3.5 font-mono text-sm font-medium text-slate-700">{p.payslipNumber}</td>
-                    <td className="px-4 py-3.5 font-medium text-slate-800">{p.employee.name}</td>
-                    <td className="px-4 py-3.5 text-slate-600">
-                      {p.payPeriod.name ?? shortDate(p.payPeriod.startDate)}
+                    <td className="px-4 py-3.5 font-mono text-sm font-medium text-[var(--color-text-secondary)]">
+                      {p.payslipNumber}
                     </td>
-                    <td className="px-4 py-3.5 tabular-nums font-semibold text-slate-700">${p.netPay.toFixed(2)}</td>
-                    <td className="px-4 py-3.5 text-slate-500">
-                      {p.markedSentAt ? shortDate(p.markedSentAt) : "â€”"}
+                    <td className="px-4 py-3.5 font-medium text-[var(--color-text-primary)]">{p.employee.name}</td>
+                    <td className="whitespace-nowrap px-4 py-3.5 text-sm text-[var(--color-text-secondary)]">
+                      {formatPayPeriodLabel(p.payPeriod)}
+                    </td>
+                    <td className="px-4 py-3.5 tabular-nums font-semibold text-[var(--color-text-primary)]">
+                      {money(p.netPay)}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3.5 text-sm text-[var(--color-text-muted)]">
+                      {p.markedSentAt ? shortDate(p.markedSentAt) : "—"}
                     </td>
                     <td className="px-4 py-3.5 text-right">
                       <Link
@@ -130,7 +154,7 @@ export default function AdminPayslipsPage() {
             </tbody>
           </table>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--color-accent-tint)] px-4 py-3.5 text-sm text-slate-600">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--color-accent-tint)] px-4 py-3.5 text-sm text-[var(--color-text-secondary)]">
           <span>Total {total}</span>
           <div className="flex gap-2">
             <Button variant="secondary" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>

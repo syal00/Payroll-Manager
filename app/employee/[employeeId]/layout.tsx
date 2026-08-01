@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PublicEmployeeShell } from "@/components/shells/PublicEmployeeShell";
+import { EmployeeAccessThemeBar } from "@/components/employee-access/EmployeeAccessThemeBar";
 import { findEmployeeByCodeAnyStatus } from "@/lib/public-employee";
 import { isValidEmployeeCodeFormat } from "@/lib/employee-code";
 
@@ -23,28 +24,33 @@ export default async function PublicEmployeeLayout({
 
   if (!record.isApproved) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--color-page-bg)] p-6">
+      <>
+        <EmployeeAccessThemeBar />
+        <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--color-page-bg)] p-6">
         <div className="modal w-full max-w-md rounded-[var(--radius-xl)] border border-[var(--color-border-strong)] bg-[var(--color-bg-card)] p-8 text-center shadow-[var(--shadow-card)]">
           <p className="text-xs font-bold uppercase tracking-wide text-[var(--color-accent-light)]">
-            Pending admin approval
+            Pending approval
           </p>
-          <h1 className="mt-3 text-xl font-bold text-[var(--color-text-primary)]">Almost there</h1>
+          <h1 className="mt-3 text-xl font-bold text-[var(--color-text-primary)]">Account awaiting review</h1>
           <p className="mt-3 text-sm leading-relaxed text-[var(--color-text-secondary)]">
-            Your account is pending admin approval. You will be able to access the portal once an administrator approves
-            your profile.
+            Your registration is waiting for an administrator to approve it. You will be able to access the portal once
+            approved.
           </p>
           <p className="mt-4 font-mono text-sm font-semibold text-[var(--color-text-primary)]">{record.employeeCode}</p>
-          <Link href="/employee-access" className="btn btn-primary mt-6 inline-block px-7 py-3">
-            Back to employee access
+          <Link href="/employee-access/existing" className="btn btn-primary mt-6 inline-block px-7 py-3">
+            Back to sign in
           </Link>
         </div>
       </div>
+      </>
     );
   }
 
   if (record.deletedAt) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--color-page-bg)] p-6">
+      <>
+        <EmployeeAccessThemeBar />
+        <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--color-page-bg)] p-6">
         <div className="modal w-full max-w-md rounded-[var(--radius-xl)] border border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] p-8 text-center shadow-[var(--shadow-card)]">
           <p className="text-xs font-bold uppercase tracking-wide text-[var(--color-danger-text)]">
             Account deactivated
@@ -58,6 +64,7 @@ export default async function PublicEmployeeLayout({
           </Link>
         </div>
       </div>
+      </>
     );
   }
 

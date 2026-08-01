@@ -3,6 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { requireSuperAdminCompanyDrilldown } from "@/lib/super-admin-drilldown";
 import { writeAuditLog } from "@/lib/audit";
 import { deleteCompanyAndTenantData } from "@/lib/company-deletion";
+import {
+  getPlatformWorkingCompanyId,
+  setPlatformWorkingCompanyId,
+} from "@/lib/platform-working-company";
 import { companySlugSchema, normalizeCompanySlug, validateCompanySlug } from "@/lib/company-slug";
 import { companyLogoUrlSchema } from "@/lib/company-logo-url";
 import { companyWebsiteUrlSchema } from "@/lib/website-url";
@@ -153,6 +157,10 @@ export async function DELETE(req: Request, ctx: { params: Promise<{ companyId: s
     }
 
     await deleteCompanyAndTenantData(companyId);
+
+    if ((await getPlatformWorkingCompanyId()) === companyId) {
+      await setPlatformWorkingCompanyId(null);
+    }
 
     await writeAuditLog({
       actorId: session.id,

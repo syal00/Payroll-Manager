@@ -42,11 +42,17 @@ export function DashboardQuickActions({
       badge: pendingSubmissions > 0 ? pendingSubmissions : undefined,
     },
     {
+      href: "/admin/pending-approval",
+      label: "Pending approvals",
+      description: "Review new employee registrations",
+      icon: Users,
+      badge: pendingEmployeeApprovals > 0 ? pendingEmployeeApprovals : undefined,
+    },
+    {
       href: "/admin/employees",
       label: "Manage employees",
       description: "Add, edit, or archive staff",
       icon: Users,
-      badge: pendingEmployeeApprovals > 0 ? pendingEmployeeApprovals : undefined,
     },
     {
       href: "/admin/pay-periods",

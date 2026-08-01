@@ -1,17 +1,22 @@
 "use client";
 
-import { Menu, Bell, Search } from "lucide-react";
+import { Menu, Bell } from "lucide-react";
 import { UserMenu } from "@/components/dashboard/UserMenu";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { TopbarSearch } from "@/components/layout/TopbarSearch";
+
+import type { TenantBranding } from "@/lib/tenant-branding";
+
 type TopbarProps = {
   onToggleSidebar: () => void;
   userName: string;
   userEmail?: string;
   pageTitle: string;
+  tenantBranding?: TenantBranding;
   onLogout: () => void;
 };
 
-export function Topbar({ onToggleSidebar, userName, userEmail, pageTitle, onLogout }: TopbarProps) {
+export function Topbar({ onToggleSidebar, userName, userEmail, pageTitle, tenantBranding, onLogout }: TopbarProps) {
   return (
     <header className="topbar topbar-dashboard">
       <div className="topbar-inner">
@@ -26,17 +31,19 @@ export function Topbar({ onToggleSidebar, userName, userEmail, pageTitle, onLogo
 
         <p className="topbar-page-title md:hidden">{pageTitle}</p>
 
-        <div className="topbar-search" role="search">
-          <Search className="topbar-search-icon" aria-hidden strokeWidth={2} />
-          <input type="search" readOnly placeholder="Search payroll, employees…" tabIndex={-1} aria-label="Search" />
-        </div>
+        <TopbarSearch />
 
         <div className="topbar-right">
           <ThemeToggle />
           <button type="button" className="topbar-action-btn" aria-label="Notifications">
             <Bell className="h-[18px] w-[18px]" strokeWidth={2} />
           </button>
-          <UserMenu userName={userName} emailHint={userEmail} onLogout={onLogout} />
+          <UserMenu
+            userName={userName}
+            emailHint={userEmail}
+            tenantBranding={tenantBranding}
+            onLogout={onLogout}
+          />
         </div>
       </div>
     </header>

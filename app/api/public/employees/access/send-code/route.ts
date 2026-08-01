@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { writeAuditLog } from "@/lib/audit";
 import { validateEmployeeEmailForOtp } from "@/lib/employee-code";
+import { findEmployeeByLoginIdentity } from "@/lib/login-lookup";
+import { sendEmployeeOtp } from "@/lib/employee-otp-delivery";
 import { normalizeUsername } from "@/lib/username-generator";
-import { buildEmployeeOtpEmail } from "@/lib/email/employee-otp";
-import { sendEmail } from "@/lib/mailer";
 import { z } from "zod";
 
 const bodySchema = z.object({
@@ -14,33 +13,25 @@ const bodySchema = z.object({
 export async function POST(req: Request) {
   try {
     const body = bodySchema.parse(await req.json());
-    const username = normalizeUsername(body.username);
+    const login = normalizeUsername(body.username);
 
-    const employee = await prisma.employee.findUnique({
-      where: { username },
-      select: { id: true, deletedAt: true, isApproved: true, contactEmail: true },
-    });
-
-    if (!employee || employee.deletedAt) {
-      return NextResponse.json({ error: "No employee profile found for that username." }, { status: 404 });
+    const employee = await findEmployeeByLoginIdentity(login);
+    if (!employee) {
+      return NextResponse.json({ error: "No employee profile found for that email." }, { status: 404 });
     }
 
-    if (!employee.isApproved) {
-      return NextResponse.json({ error: "Your account is pending admin approval." }, { status: 403 });
+    if (employee.deletedAt) {
+      return NextResponse.json(
+        {
+          error: "Your account has been deactivated. Please contact admin.",
+          deactivated: true,
+        },
+        { status: 403 }
+      );
     }
 
     const deliverable = await validateEmployeeEmailForOtp(employee.contactEmail);
     if (!deliverable.ok) {
-      await writeAuditLog({
-        actorId: null,
-        action: "EMPLOYEE_OTP_BLOCKED_UNDELIVERABLE_EMAIL",
-        entityType: "Employee",
-        entityId: employee.id,
-        details: {
-          contactEmail: employee.contactEmail,
-          reason: deliverable.reason,
-        },
-      });
       return NextResponse.json(
         {
           error: deliverable.message,
@@ -52,27 +43,20 @@ export async function POST(req: Request) {
       );
     }
 
-    const otp = String(Math.floor(100000 + Math.random() * 900000));
-    const expires = new Date(Date.now() + 10 * 60 * 1000);
-
-    await prisma.employee.update({
-      where: { id: employee.id },
-      data: { otpCode: otp, otpExpires: expires },
+    const otpResult = await sendEmployeeOtp({
+      employeeId: employee.id,
+      contactEmail: employee.contactEmail,
+      otpExpires: employee.otpExpires,
     });
-
-    // OTP is sent to contactEmail only — username is a login handle, never routable mail.
-    const deliverTo = employee.contactEmail;
-    const { subject, text, html } = buildEmployeeOtpEmail({ otp, expiresMinutes: 10 });
-    const emailResult = await sendEmail({ to: deliverTo, subject, text, html });
+    if (!otpResult.ok) {
+      return NextResponse.json(otpResult.body, { status: otpResult.status });
+    }
 
     return NextResponse.json({
       ok: true,
-      emailSent: emailResult.sent,
-      /** Shown in UI when outbound email is not configured. */
-      devOtp: emailResult.sent ? undefined : otp,
-      message: emailResult.sent
-        ? `Your one-time code was emailed to ${deliverTo}.`
-        : `Your one-time code was generated for ${deliverTo}. (Email not configured — use the code shown below.)`,
+      emailSent: otpResult.emailSent,
+      devOtp: otpResult.devOtp,
+      message: otpResult.message,
     });
   } catch (e) {
     if (e instanceof z.ZodError) {

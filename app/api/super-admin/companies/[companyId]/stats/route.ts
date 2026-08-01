@@ -6,9 +6,7 @@
 // [companyId]/dashboard) can reuse the exact same dashboard components MAIN_ADMIN sees, just fed from
 // this company-scoped endpoint instead of session-scoped /api/admin/stats.
 //
-// PayPeriod has no companyId column — open/current period metrics are derived from this tenant's
-// timesheet/payslip rows only (see lib/super-admin-drilldown.ts payPeriodIdsForCompany).
-// DemoRequest and AuditLog are omitted — they have no companyId and would leak global data.
+// PayPeriod rows are scoped by companyId; demo requests and audit logs stay global-only.
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { PayPeriodStatus, TimesheetStatus } from "@/lib/enums";
@@ -17,22 +15,20 @@ import {
   timesheetWhereForCompanyDrilldown,
   payslipWhereForCompanyDrilldown,
 } from "@/lib/manager-scope";
-import { payPeriodIdsForCompany, requireSuperAdminCompanyDrilldown } from "@/lib/super-admin-drilldown";
+import { requireSuperAdminCompanyDrilldown } from "@/lib/super-admin-drilldown";
 import type { Prisma } from "@prisma/client";
 
 export async function GET(_req: Request, ctx: { params: Promise<{ companyId: string }> }) {
   try {
     const { session, companyId } = await requireSuperAdminCompanyDrilldown(ctx.params);
 
-    const empExtra = scopeForCompanyDrilldown(session, companyId);
-    const tsExtra: Prisma.TimesheetWhereInput = timesheetWhereForCompanyDrilldown(session, companyId);
-    const payslipExtra: Prisma.PayslipWhereInput = payslipWhereForCompanyDrilldown(session, companyId);
+    const empExtra = await scopeForCompanyDrilldown(session, companyId);
+    const tsExtra: Prisma.TimesheetWhereInput = await timesheetWhereForCompanyDrilldown(session, companyId);
+    const payslipExtra: Prisma.PayslipWhereInput = await payslipWhereForCompanyDrilldown(session, companyId);
 
     const employeeBase: Prisma.EmployeeWhereInput = { deletedAt: null, isApproved: true, ...empExtra };
     const pendingEmployeeWhere: Prisma.EmployeeWhereInput = { deletedAt: null, isApproved: false, ...empExtra };
     const tsMerge = (w: Prisma.TimesheetWhereInput): Prisma.TimesheetWhereInput => ({ ...tsExtra, ...w });
-
-    const companyPeriodIds = await payPeriodIdsForCompany(companyId);
 
     const [
       totalEmployees,
@@ -45,21 +41,17 @@ export async function GET(_req: Request, ctx: { params: Promise<{ companyId: str
       currentPayPeriod,
     ] = await Promise.all([
       prisma.employee.count({ where: employeeBase }),
-      companyPeriodIds.length === 0
-        ? Promise.resolve(0)
-        : prisma.payPeriod.count({
-            where: { status: PayPeriodStatus.OPEN, id: { in: companyPeriodIds } },
-          }),
+      prisma.payPeriod.count({ where: { companyId, status: PayPeriodStatus.OPEN } }),
       prisma.timesheet.count({ where: tsMerge({ status: TimesheetStatus.PENDING }) }),
       prisma.timesheet.count({ where: tsMerge({ status: TimesheetStatus.APPROVED }) }),
       prisma.payslip.count({ where: payslipExtra }),
       prisma.timesheet.count({ where: tsMerge({ status: TimesheetStatus.UNDER_REVIEW }) }),
       prisma.employee.count({ where: pendingEmployeeWhere }),
       prisma.payPeriod.findFirst({
-        where:
-          companyPeriodIds.length > 0
-            ? { isCurrent: true, id: { in: companyPeriodIds } }
-            : { id: { in: [] } },
+        where: { companyId, isCurrent: true },
+        include: {
+          _count: { select: { timesheets: true, payslips: true } },
+        },
       }),
     ]);
 

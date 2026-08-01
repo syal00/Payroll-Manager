@@ -2,12 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Eye, Archive, Copy } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { dispatchAdminStatsRefresh } from "@/lib/admin-stats-refresh";
+import { employeeSignInEmail } from "@/lib/display-name";
 
 type Row = {
   id: string;
@@ -37,7 +39,7 @@ function CopyUsernameButton({ value }: { value: string }) {
       className="mt-2 inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] px-2 py-1 text-xs font-semibold text-[var(--color-accent)] hover:bg-[var(--color-accent-tint)]"
     >
       <Copy className="h-3.5 w-3.5" aria-hidden />
-      {copied ? "Copied" : "Copy username"}
+      {copied ? "Copied" : "Copy email"}
     </button>
   );
 }
@@ -53,6 +55,7 @@ type StatusFilter = "active" | "deleted" | "all";
 type EmailCheckStatus = "idle" | "checking" | "valid" | "invalid";
 
 export default function AdminEmployeesPage() {
+  const searchParams = useSearchParams();
   const [status, setStatus] = useState<StatusFilter>("active");
   const [q, setQ] = useState("");
   const [rows, setRows] = useState<Row[]>([]);
@@ -60,7 +63,6 @@ export default function AdminEmployeesPage() {
   const [err, setErr] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Row | null>(null);
-  const [pendingRows, setPendingRows] = useState<Row[]>([]);
   const [showAddEmployee, setShowAddEmployee] = useState(false);
   const [addFirstName, setAddFirstName] = useState("");
   const [addLastName, setAddLastName] = useState("");
@@ -74,13 +76,6 @@ export default function AdminEmployeesPage() {
   const [emailCheckStatus, setEmailCheckStatus] = useState<EmailCheckStatus>("idle");
   const [emailCheckMessage, setEmailCheckMessage] = useState<string | null>(null);
   const emailCheckTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const loadPending = useCallback(() => {
-    fetch(`/api/admin/employees?status=pending`)
-      .then((r) => r.json())
-      .then((j) => setPendingRows((j.employees ?? []) as Row[]))
-      .catch(() => setPendingRows([]));
-  }, []);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -96,59 +91,13 @@ export default function AdminEmployeesPage() {
   }, [status]);
 
   useEffect(() => {
-    loadPending();
-  }, [loadPending]);
+    const urlQ = searchParams.get("q");
+    if (urlQ) setQ(urlQ);
+  }, [searchParams]);
 
   useEffect(() => {
     load();
   }, [load]);
-
-  async function approvePending(id: string) {
-    setPendingId(id);
-    setErr(null);
-    try {
-      const res = await fetch(`/api/admin/employees/${id}/approve`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "approve" }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setErr(data.error ?? "Approve failed");
-        return;
-      }
-      loadPending();
-      load();
-      dispatchAdminStatsRefresh();
-    } catch {
-      setErr("Network error");
-    } finally {
-      setPendingId(null);
-    }
-  }
-
-  async function rejectPending(id: string) {
-    setPendingId(id);
-    setErr(null);
-    try {
-      const res = await fetch(`/api/admin/employees/${id}/approve`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "reject" }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setErr(data.error ?? "Reject failed");
-        return;
-      }
-      loadPending();
-      dispatchAdminStatsRefresh();
-    } catch {
-      setErr("Network error");
-    } finally {
-      setPendingId(null);
-    }
-  }
 
   const filteredRows = rows.filter((r) => {
     const query = q.trim().toLowerCase();
@@ -173,7 +122,6 @@ export default function AdminEmployeesPage() {
       }
       setConfirmDelete(null);
       load();
-      loadPending();
       dispatchAdminStatsRefresh();
     } catch {
       setErr("Network error");
@@ -192,7 +140,6 @@ export default function AdminEmployeesPage() {
         return;
       }
       load();
-      loadPending();
       dispatchAdminStatsRefresh();
     } catch {
       setErr("Network error");
@@ -300,7 +247,7 @@ export default function AdminEmployeesPage() {
       <PageHeader
         eyebrow="Directory"
         title="Employee management"
-        description="Deactivating keeps timesheets, payslips, and history intact â€” restore roster access anytime without losing immutable payroll records."
+        description="Deactivating keeps timesheets, payslips, and history intact — restore roster access anytime without losing immutable payroll records."
       >
         <Button
           type="button"
@@ -310,47 +257,6 @@ export default function AdminEmployeesPage() {
           Add employee
         </Button>
       </PageHeader>
-
-      {pendingRows.length > 0 && (
-        <Card className="rounded-2xl border-[var(--color-border)] !border-amber-200/80 !bg-amber-50/40 p-5">
-          <h2 className="text-base font-bold text-[var(--color-text-primary)]">Pending approvals</h2>
-          <p className="mt-1 text-sm text-slate-600">New self-registrations awaiting your decision.</p>
-          <ul className="mt-4 space-y-3">
-            {pendingRows.map((r) => (
-              <li
-                key={r.id}
-                className="flex flex-col gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div>
-                  <p className="font-semibold text-[var(--color-text-primary)]">{r.name}</p>
-                  <p className="font-mono text-xs text-slate-600">{r.username}</p>
-                  <p className="text-xs text-slate-500">{r.contactEmail}</p>
-                  <p className="mt-1 font-mono text-xs font-bold text-[var(--color-accent-light)]">{r.employeeCode}</p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    className="h-9 px-3 text-xs"
-                    disabled={pendingId === r.id}
-                    onClick={() => void approvePending(r.id)}
-                  >
-                    Approve
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="danger"
-                    className="h-9 px-3 text-xs"
-                    disabled={pendingId === r.id}
-                    onClick={() => void rejectPending(r.id)}
-                  >
-                    Reject
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
 
       <Card className="rounded-2xl border-[var(--color-border)] !bg-[var(--color-bg-card)]/95 shadow-[0_4px_22px_rgba(15,23,42,0.05)] backdrop-blur-sm">
         <div className="flex flex-col gap-4">
@@ -364,7 +270,7 @@ export default function AdminEmployeesPage() {
                 className="input-field mt-1.5"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Name, username, contact email, or employee ID"
+                placeholder="Name, email, or employee ID"
               />
             </div>
           </div>
@@ -423,7 +329,7 @@ export default function AdminEmployeesPage() {
                         className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--color-accent-tint)] border-t-violet-600"
                         aria-hidden
                       />
-                      Loading employeesâ€¦
+                      Loading employees…
                     </span>
                   </td>
                 </tr>
@@ -447,20 +353,21 @@ export default function AdminEmployeesPage() {
                           </span>
                           <div className="min-w-0">
                             <p className="truncate font-semibold text-[var(--color-text-primary)]">{r.name}</p>
-                            <p className="truncate font-mono text-[11px] font-medium text-[var(--color-text-secondary)]">{r.username}</p>
-                            <p className="truncate text-[11px] text-[var(--color-text-muted)]">{r.contactEmail}</p>
+                            <p className="truncate text-[11px] text-[var(--color-text-secondary)]">
+                              {employeeSignInEmail(r.username, r.contactEmail)}
+                            </p>
                             <p className="font-mono text-[10px] font-semibold text-[var(--color-accent-light)]/90">{r.employeeCode}</p>
                           </div>
                         </div>
                       </td>
                       <td className="max-w-[160px] px-4 py-3.5 text-sm text-[var(--color-text-secondary)]">
-                        {r.department?.trim() ? r.department : <span className="text-[var(--color-text-muted)]">â€”</span>}
+                        {r.department?.trim() ? r.department : <span className="text-[var(--color-text-muted)]">—</span>}
                       </td>
                       <td className="max-w-[180px] px-4 py-3.5 text-sm text-[var(--color-text-secondary)]">
-                        {r.jobTitle?.trim() ? r.jobTitle : <span className="text-[var(--color-text-muted)]">â€”</span>}
+                        {r.jobTitle?.trim() ? r.jobTitle : <span className="text-[var(--color-text-muted)]">—</span>}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3.5 text-xs font-medium text-[var(--color-text-secondary)]">
-                        {r.timesheetCount} ts Â· {r.payslipCount} slips
+                        {r.timesheetCount} ts · {r.payslipCount} slips
                       </td>
                       <td className="px-4 py-3.5">
                         {isDeleted ? (
@@ -534,7 +441,7 @@ export default function AdminEmployeesPage() {
             </p>
             <p className="mt-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-page-bg)] px-3 py-2 text-sm text-[var(--color-text-secondary)]">
               <span className="font-semibold">{confirmDelete.name}</span>
-              <span className="text-slate-400"> Â· </span>
+              <span className="text-slate-400"> · </span>
               <span className="font-mono text-xs">{confirmDelete.employeeCode}</span>
             </p>
             <div className="mt-6 flex flex-wrap justify-end gap-2">
@@ -571,8 +478,8 @@ export default function AdminEmployeesPage() {
               Add employee
             </h2>
             <p className="mt-2 text-sm text-slate-600">
-              Creates an approved profile with a generated login username. OTPs and notifications go to the contact
-              email.
+              Creates an approved profile. Employees sign in with their contact email; OTP codes are sent to the same
+              address.
             </p>
             {addFormErr && <div className="alert-error mt-4 text-sm">{addFormErr}</div>}
             {createdEmployee ? (
@@ -582,7 +489,7 @@ export default function AdminEmployeesPage() {
                   Employee ID: <code className="font-mono">{createdEmployee.employeeCode}</code>
                 </p>
                 <p className="mt-1">
-                  Login username: <code className="font-mono">{createdEmployee.username}</code>
+                  Sign-in email: <code className="font-mono">{createdEmployee.username}</code>
                 </p>
                 <CopyUsernameButton value={createdEmployee.username} />
                 <div className="mt-6 flex justify-end">

@@ -2,10 +2,12 @@
 
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { Card } from "@/components/ui/Card";
-import { TimesheetStatusBadge } from "@/components/status-badges";
+import { TimesheetStatusBadge, PayPeriodStatusBadge } from "@/components/status-badges";
 import { shortDate, money } from "@/lib/format";
 import { Button } from "@/components/ui/Button";
+import { PayPeriodStatus, TimesheetStatus } from "@/lib/enums";
 
 export default function PublicHistoryPage({
   params,
@@ -15,13 +17,19 @@ export default function PublicHistoryPage({
   const { employeeId } = use(params);
   const base = `/employee/${employeeId}`;
   const [payPeriodId, setPayPeriodId] = useState("");
-  const [periods, setPeriods] = useState<{ id: string; name: string | null; startDate: string }[]>([]);
+  const [periods, setPeriods] = useState<
+    { id: string; name: string | null; startDate: string; status: string }[]
+  >([]);
   const [timesheets, setTimesheets] = useState<
     {
       id: string;
       status: string;
       totalHours: number;
-      payPeriod: { name: string | null; startDate: string; endDate: string };
+      totalRegular: number;
+      totalOvertime: number;
+      totalLeave: number;
+      payPeriodId: string;
+      payPeriod: { id: string; name: string | null; startDate: string; endDate: string; status: string };
       payslip: { id: string; payslipNumber: string } | null;
     }[]
   >([]);
@@ -48,6 +56,11 @@ export default function PublicHistoryPage({
 
   return (
     <div className="page-container max-w-5xl space-y-8">
+      <Link href={`${base}/dashboard`} className="link-accent inline-flex items-center gap-1 text-sm font-semibold">
+        <ArrowLeft className="h-4 w-4" aria-hidden />
+        Back to dashboard
+      </Link>
+
       <div>
         <p className="page-eyebrow">Records</p>
         <h1 className="page-title mt-1">Your history</h1>
@@ -69,6 +82,7 @@ export default function PublicHistoryPage({
             {periods.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name ?? shortDate(p.startDate)}
+                {p.status === "CLOSED" ? " (closed)" : p.status === "OPEN" ? " (open)" : ""}
               </option>
             ))}
           </select>
@@ -80,44 +94,70 @@ export default function PublicHistoryPage({
 
       <Card>
         <h2 className="card-heading">Timesheets</h2>
-        <div className="mt-4 -mx-2 overflow-x-auto rounded-xl border border-violet-50/80">
+        <div className="mt-4 -mx-2 overflow-x-auto rounded-xl border border-[var(--color-border)]">
           <table className="table-shell min-w-[560px]">
             <thead>
               <tr className="table-head">
                 <th className="px-4 py-3">Period</th>
-                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Period status</th>
+                <th className="px-4 py-3">Submission</th>
                 <th className="px-4 py-3">Hours</th>
                 <th className="px-4 py-3">Payslip</th>
+                <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody>
               {timesheets.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-10 text-center text-sm text-slate-500">
+                  <td colSpan={6} className="px-4 py-10 text-center text-sm text-[var(--color-text-muted)]">
                     No timesheets for this filter.
                   </td>
                 </tr>
               ) : (
-                timesheets.map((t) => (
+                timesheets.map((t) => {
+                  const periodLabel =
+                    t.payPeriod.name ??
+                    `${shortDate(t.payPeriod.startDate)} – ${shortDate(t.payPeriod.endDate)}`;
+                  const timesheetHref = `${base}/timesheet/${t.payPeriod.id}`;
+                  const canSubmit =
+                    t.payPeriod.status === PayPeriodStatus.OPEN &&
+                    (t.status === TimesheetStatus.DRAFT || t.status === TimesheetStatus.REJECTED);
+                  return (
                   <tr key={t.id} className="table-row table-row-muted">
-                    <td className="px-4 py-3 text-[var(--color-text-secondary)]">
-                      {t.payPeriod.name ?? `${shortDate(t.payPeriod.startDate)} â€“ ${shortDate(t.payPeriod.endDate)}`}
+                    <td className="px-4 py-3">
+                      <Link href={timesheetHref} className="link-accent font-medium">
+                        {periodLabel}
+                      </Link>
+                      <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
+                        {t.totalRegular}h reg · {t.totalOvertime}h OT · {t.totalLeave}h leave
+                      </p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <PayPeriodStatusBadge status={t.payPeriod.status} />
                     </td>
                     <td className="px-4 py-3">
                       <TimesheetStatusBadge status={t.status} />
                     </td>
-                    <td className="px-4 py-3 tabular-nums font-medium text-[var(--color-text-primary)]">{t.totalHours}h</td>
+                    <td className="px-4 py-3 tabular-nums font-medium text-[var(--color-text-primary)]">
+                      {t.totalHours}h
+                    </td>
                     <td className="px-4 py-3">
                       {t.payslip ? (
-                        <Link className="link-accent font-mono text-xs" href={`${base}/payslips/${t.payslip.id}`}>
+                        <Link className="link-accent font-mono text-xs hover:underline" href={`${base}/payslips/${t.payslip.id}`}>
                           {t.payslip.payslipNumber}
                         </Link>
                       ) : (
-                        <span className="text-slate-400">â€”</span>
+                        <span className="text-[var(--color-text-muted)]">—</span>
                       )}
                     </td>
+                    <td className="px-4 py-3 text-right">
+                      <Link href={timesheetHref} className="link-accent text-sm font-semibold whitespace-nowrap">
+                        {canSubmit ? "Submit hours →" : "View hours →"}
+                      </Link>
+                    </td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -128,7 +168,7 @@ export default function PublicHistoryPage({
         <h2 className="card-heading">Payslips</h2>
         <ul className="mt-4 space-y-2 text-sm">
           {payslips.length === 0 ? (
-            <li className="rounded-xl border border-dashed border-white/12 px-4 py-8 text-center text-slate-500">
+            <li className="rounded-xl border border-dashed border-[var(--color-border)] px-4 py-8 text-center text-[var(--color-text-muted)]">
               No payslips yet for this view.
             </li>
           ) : (
@@ -139,7 +179,7 @@ export default function PublicHistoryPage({
               >
                 <div>
                   <p className="font-mono text-xs font-semibold text-[var(--color-text-primary)]">{p.payslipNumber}</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-[var(--color-text-muted)]">
                     {p.payPeriod.name ?? shortDate(p.payPeriod.startDate)}
                   </p>
                 </div>

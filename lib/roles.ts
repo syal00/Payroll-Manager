@@ -25,3 +25,15 @@ export function isSuperAdminRole(role: string): boolean {
 export function isSupervisorRole(role: string): boolean {
   return role === Role.SUPERVISOR;
 }
+
+/** Password login on /login — staff + supervisor; employees use the portal instead. */
+export function isAdminPortalLoginRole(role: string): boolean {
+  return isStaffRole(role) || isSupervisorRole(role);
+}
+
+/** Post-TOTP redirect for admin portal sessions. */
+export function adminPortalLoginRedirect(role: string, mustChangePassword: boolean): string {
+  if (mustChangePassword) return "/admin/change-password";
+  if (isSuperAdminRole(role)) return "/super-admin/companies";
+  return "/admin";
+}

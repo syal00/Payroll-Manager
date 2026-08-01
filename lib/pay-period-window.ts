@@ -1,5 +1,5 @@
 import { addDays, startOfDay } from "date-fns";
-import { isValidFourteenDayWindow, PAY_PERIOD_DAYS } from "@/lib/pay-period-utils";
+import { PAY_PERIOD_DAYS, parseCalendarDateInput, normalizePayPeriodDate } from "@/lib/pay-period-utils";
 import type { PayPeriodProvisionType } from "@/lib/company-timezones";
 
 export function defaultBiweeklyPayPeriodWindow(from = new Date()): { start: Date; end: Date } {
@@ -19,18 +19,15 @@ export function resolvePayPeriodWindow(
   if (!customStart?.trim() || !customEnd?.trim()) {
     return { error: "Custom pay period requires start and end dates." };
   }
-  const start = startOfDay(new Date(customStart));
-  const end = startOfDay(new Date(customEnd));
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+  const startParsed = parseCalendarDateInput(customStart.trim());
+  const endParsed = parseCalendarDateInput(customEnd.trim());
+  if (!startParsed || !endParsed) {
     return { error: "Invalid pay period dates." };
   }
+  const start = normalizePayPeriodDate(startParsed);
+  const end = normalizePayPeriodDate(endParsed);
   if (end < start) {
     return { error: "Pay period end date must be on or after the start date." };
-  }
-  if (!isValidFourteenDayWindow(start, end)) {
-    return {
-      error: `Custom pay period must span exactly ${PAY_PERIOD_DAYS} calendar days (inclusive).`,
-    };
   }
   return { start, end };
 }

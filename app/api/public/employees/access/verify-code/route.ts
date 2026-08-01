@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { findEmployeeByLoginIdentity } from "@/lib/login-lookup";
+import { ensureEmployeeCompanyId } from "@/lib/employee-company-scope";
 import { normalizeUsername } from "@/lib/username-generator";
 import { z } from "zod";
 
@@ -11,26 +14,11 @@ const bodySchema = z.object({
 export async function POST(req: Request) {
   try {
     const body = bodySchema.parse(await req.json());
-    const username = normalizeUsername(body.username);
+    const login = normalizeUsername(body.username);
 
-    const employee = await prisma.employee.findUnique({
-      where: { username },
-      select: {
-        id: true,
-        employeeCode: true,
-        deletedAt: true,
-        isApproved: true,
-        otpCode: true,
-        otpExpires: true,
-      },
-    });
-
+    const employee = await findEmployeeByLoginIdentity(login);
     if (!employee || employee.deletedAt) {
       return NextResponse.json({ error: "No employee profile found." }, { status: 404 });
-    }
-
-    if (!employee.isApproved) {
-      return NextResponse.json({ error: "Your account is pending admin approval." }, { status: 403 });
     }
 
     if (!employee.otpCode || !employee.otpExpires) {
@@ -47,8 +35,10 @@ export async function POST(req: Request) {
 
     await prisma.employee.update({
       where: { id: employee.id },
-      data: { otpCode: null, otpExpires: null },
+      data: { otpCode: null, otpExpires: null, emailVerified: true, isApproved: true },
     });
+
+    await ensureEmployeeCompanyId(employee, (await headers()).get("x-company-id"));
 
     return NextResponse.json({
       ok: true,

@@ -26,7 +26,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ companyId: stri
     const q = querySchema.parse(Object.fromEntries(url.searchParams.entries()));
     const skip = (q.page - 1) * q.pageSize;
 
-    const parts: Prisma.PayslipWhereInput[] = [payslipWhereForCompanyDrilldown(session, companyId)];
+    const parts: Prisma.PayslipWhereInput[] = [await payslipWhereForCompanyDrilldown(session, companyId)];
     if (q.payPeriodId) parts.push({ payPeriodId: q.payPeriodId });
     if (q.q?.trim()) {
       const term = q.q.trim();

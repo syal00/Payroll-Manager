@@ -7,6 +7,17 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 
+function profileInitials(source: string): string {
+  const cleaned = source.trim();
+  if (!cleaned) return "";
+  const parts = cleaned.replace(/[^a-zA-Z\u00C0-\u00FF\s@.]/g, " ").split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return `${parts[0]![0] ?? ""}${parts[1]![0] ?? ""}`.toUpperCase();
+  }
+  const token = (parts[0] ?? cleaned).replace(/[@.]/g, "");
+  return token.slice(0, 2).toUpperCase();
+}
+
 export default function AdminProfilePage() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -40,12 +51,9 @@ export default function AdminProfilePage() {
     else setMsg("Profile updated.");
   }
 
-  const initialsSource = name.trim() || username.trim() || contactEmail.trim() || "?";
-  const parts = initialsSource.replace(/[^a-zA-Z\u00C0-\u00FF\s@.]/g, " ").split(/\s+/).filter(Boolean);
-  const initials =
-    parts.length >= 2
-      ? `${parts[0]![0] ?? ""}${parts[1]![0] ?? ""}`.toUpperCase()
-      : parts[0]!.slice(0, 2).toUpperCase();
+  const initialsSource = name.trim() || username.trim() || contactEmail.trim();
+  const initials = profileInitials(initialsSource);
+  const showPlaceholderAvatar = !initials;
 
   return (
     <div className="page-container max-w-3xl space-y-8">
@@ -55,11 +63,11 @@ export default function AdminProfilePage() {
         description="Your visible identity when signing timesheets, emitting payslips, and recording compliance events."
       />
 
-      <div className="relative overflow-hidden rounded-2xl border border-[var(--color-border)] bg-gradient-to-br from-white via-violet-50/60 to-white p-6 shadow-[0_12px_42px_rgba(15,23,42,0.08)] backdrop-blur-md sm:p-8">
+      <div className="relative overflow-hidden rounded-2xl border border-[var(--color-border)] bg-gradient-to-br from-[var(--color-bg-card)] via-[var(--color-accent-soft)]/30 to-[var(--color-bg-elevated)] p-6 shadow-[var(--shadow-card)] backdrop-blur-md sm:p-8">
         <div className="absolute -right-24 -top-28 h-52 w-52 rounded-full bg-[var(--color-accent)]/25 blur-3xl" aria-hidden />
         <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center">
           <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--color-accent-hover)] to-[var(--color-accent-deep)] text-lg font-bold text-white shadow-lg shadow-violet-500/35">
-            {initialsSource === "?" ? <UserCircle className="h-10 w-10" strokeWidth={1.75} aria-hidden /> : initials}
+            {showPlaceholderAvatar ? <UserCircle className="h-10 w-10" strokeWidth={1.75} aria-hidden /> : initials}
           </div>
           <div className="min-w-0">
             <p className="text-lg font-extrabold text-[var(--color-text-primary)]">{name || "Administrator"}</p>
@@ -78,15 +86,15 @@ export default function AdminProfilePage() {
           <form onSubmit={save} className="space-y-5">
             <div>
               <label className="label-field" htmlFor="prof-username">
-                Username
+                Sign-in email
               </label>
-              <input id="prof-username" disabled className="input-field mt-1.5 cursor-not-allowed font-mono opacity-60" value={username} />
+              <input id="prof-username" disabled className="input-field mt-1.5 cursor-not-allowed font-mono" value={username} readOnly />
             </div>
             <div>
               <label className="label-field" htmlFor="prof-contact-email">
                 Contact email
               </label>
-              <input id="prof-contact-email" disabled className="input-field mt-1.5 cursor-not-allowed opacity-60" value={contactEmail} />
+              <input id="prof-contact-email" disabled className="input-field mt-1.5 cursor-not-allowed" value={contactEmail} readOnly />
               <p className="mt-1 text-xs text-[var(--color-text-muted)]">Contact email is anchored to your organization directory.</p>
             </div>
             <div>
@@ -108,7 +116,7 @@ export default function AdminProfilePage() {
               />
             </div>
             {msg ? (
-              <p className={`text-sm font-medium ${msg.includes("Failed") ? "text-rose-700" : "text-emerald-700"}`}>{msg}</p>
+              <p className={`text-sm font-medium ${msg.includes("Failed") ? "text-[var(--color-danger-text)]" : "text-[var(--color-success-text)]"}`}>{msg}</p>
             ) : null}
             <Button type="submit" className="h-11 rounded-xl">
               Save changes
@@ -138,7 +146,7 @@ export default function AdminProfilePage() {
               href="/admin/history"
               className="mt-4 inline-flex rounded-xl border border-[var(--color-accent-tint)] bg-[var(--color-accent-soft)] px-4 py-2 text-xs font-semibold text-[var(--color-accent-light)] transition hover:bg-[var(--color-accent-tint)]"
             >
-              Jump to history â†’
+              Jump to history →
             </Link>
           </Card>
         </div>

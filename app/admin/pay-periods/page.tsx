@@ -1,12 +1,14 @@
 ﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { CalendarClock, CalendarDays, Timer, TrendingUp } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { PayPeriodStatusBadge } from "@/components/status-badges";
 import { shortDate } from "@/lib/format";
+import { suggestedPayPeriodEndDate } from "@/lib/pay-period-utils";
 
 type Period = {
   id: string;
@@ -23,6 +25,7 @@ export default function AdminPayPeriodsPage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: "",
     startDate: "",
@@ -45,12 +48,20 @@ export default function AdminPayPeriodsPage() {
     load();
   }, []);
 
+  function onStartDateChange(startDate: string) {
+    setForm((f) => ({
+      ...f,
+      startDate,
+      endDate: startDate ? suggestedPayPeriodEndDate(startDate) : "",
+    }));
+  }
+
   async function createPeriod(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
     setMsg(null);
-    const start = new Date(form.startDate);
-    const end = new Date(form.endDate);
+    const start = new Date(form.startDate + "T00:00:00.000Z");
+    const end = new Date(form.endDate + "T00:00:00.000Z");
     const res = await fetch("/api/pay-periods", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -84,13 +95,39 @@ export default function AdminPayPeriodsPage() {
     else load();
   }
 
+  async function deletePeriod(id: string, label: string) {
+    const confirmed = window.confirm(
+      `Permanently delete "${label}"?\n\nAll timesheets and payslips in this period will be removed. This cannot be undone.`
+    );
+    if (!confirmed) return;
+    setErr(null);
+    setMsg(null);
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/pay-periods/${id}`, { method: "DELETE" });
+      const j = (await res.json()) as { error?: string };
+      if (!res.ok) {
+        setErr(j.error ?? "Delete failed");
+        return;
+      }
+      setMsg("Pay period deleted.");
+      load();
+    } catch {
+      setErr("Delete failed — check your connection and try again.");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   const current = periods.find((p) => p.isCurrent);
   const upcoming = useMemo(() => {
-    const openFuture = periods
+    const open = periods
       .filter((p) => p.status === "OPEN" && !p.isCurrent)
       .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
-    return openFuture[0] ?? null;
-  }, [periods]);
+    if (!current) return open[0] ?? null;
+    const currentStart = new Date(current.startDate).getTime();
+    return open.find((p) => new Date(p.startDate).getTime() > currentStart) ?? null;
+  }, [periods, current]);
 
   const submissionProgress =
     current && current._count
@@ -107,7 +144,7 @@ export default function AdminPayPeriodsPage() {
           className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--color-accent-tint)] border-t-violet-600"
           aria-hidden
         />
-        Loading pay periodsâ€¦
+        Loading pay periods…
       </div>
     );
   }
@@ -117,7 +154,7 @@ export default function AdminPayPeriodsPage() {
       <PageHeader
         eyebrow="Schedule"
         title="Pay period orchestration"
-        description="Cadence-aligned windows define how employees submitâ€”and how payroll batches stay auditable across every fortnight cycle."
+        description="Cadence-aligned windows define how employees submit—and how payroll batches stay auditable across every fortnight cycle."
       />
 
       {err && <div className="alert-error rounded-2xl">{err}</div>}
@@ -131,7 +168,7 @@ export default function AdminPayPeriodsPage() {
           </div>
           <p className="mt-3 text-lg font-extrabold text-[var(--color-text-primary)]">{current?.name ?? "Not assigned"}</p>
           <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-            {current ? `${shortDate(current.startDate)} â€” ${shortDate(current.endDate)}` : "Set a period as current"}
+            {current ? `${shortDate(current.startDate)} — ${shortDate(current.endDate)}` : "Set a period as current"}
           </p>
         </div>
         <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)]/90 p-4 shadow-[0_4px_18px_rgba(15,23,42,0.05)] backdrop-blur-sm">
@@ -140,7 +177,7 @@ export default function AdminPayPeriodsPage() {
             Next open period
           </div>
           <p className="mt-3 text-lg font-extrabold text-[var(--color-text-primary)]">
-            {upcoming ? upcoming.name ?? "Open period" : "â€”"}
+            {upcoming ? upcoming.name ?? "Open period" : "—"}
           </p>
           <p className="mt-1 text-xs text-[var(--color-text-muted)]">
             {upcoming ? `${shortDate(upcoming.startDate)} onward` : "Create another open window"}
@@ -151,7 +188,7 @@ export default function AdminPayPeriodsPage() {
             <Timer className="h-4 w-4 text-amber-500" aria-hidden />
             Payroll cutoff
           </div>
-          <p className="mt-3 text-lg font-extrabold text-[var(--color-text-primary)]">{current ? shortDate(current.endDate) : "â€”"}</p>
+          <p className="mt-3 text-lg font-extrabold text-[var(--color-text-primary)]">{current ? shortDate(current.endDate) : "—"}</p>
           <p className="mt-1 text-xs text-[var(--color-text-muted)]">Lock adjustments before close-out</p>
         </div>
         <div className="rounded-2xl border border-[var(--color-accent-tint)] bg-gradient-to-br from-[var(--color-bg-sidebar)] via-[var(--color-bg-card)] to-[var(--color-accent-deep)] p-4 text-white shadow-[0_8px_32px_rgba(0,0,0,0.45)]">
@@ -186,7 +223,7 @@ export default function AdminPayPeriodsPage() {
                 className="input-field mt-1.5"
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                placeholder="e.g. PP 12 â€” March"
+                placeholder="e.g. PP 12 — March"
               />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -200,12 +237,12 @@ export default function AdminPayPeriodsPage() {
                   required
                   className="input-field mt-1.5"
                   value={form.startDate}
-                  onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))}
+                  onChange={(e) => onStartDateChange(e.target.value)}
                 />
               </div>
               <div>
                 <label className="label-field" htmlFor="pp-end">
-                  End date (inclusive, 14 days)
+                  End date (inclusive)
                 </label>
                 <input
                   id="pp-end"
@@ -213,8 +250,14 @@ export default function AdminPayPeriodsPage() {
                   required
                   className="input-field mt-1.5"
                   value={form.endDate}
+                  min={form.startDate || undefined}
                   onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))}
                 />
+                {form.startDate && form.endDate ? (
+                  <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                    Defaults to 14 days from start — change to any length you need.
+                  </p>
+                ) : null}
               </div>
             </div>
             <div>
@@ -252,14 +295,16 @@ export default function AdminPayPeriodsPage() {
 
         <Card className="rounded-2xl border-[var(--color-border)] !bg-[var(--color-bg-card)]/95 backdrop-blur-sm">
           <h2 className="card-heading">All periods</h2>
-          <p className="mt-1 text-xs text-slate-500">Status, totals, and quick actions</p>
+          <p className="mt-1 text-xs text-[var(--color-text-muted)]">Open, close, view submissions, or delete</p>
           <div className="mt-5 max-h-[520px] space-y-3 overflow-y-auto pr-1">
             {periods.length === 0 ? (
-              <p className="rounded-xl border border-dashed border-[var(--color-accent-tint)] bg-[var(--color-accent-soft)]/40 py-10 text-center text-sm text-slate-500">
+              <p className="rounded-xl border border-dashed border-[var(--color-accent-tint)] bg-[var(--color-accent-soft)]/40 py-10 text-center text-sm text-[var(--color-text-muted)]">
                 No pay periods yet. Create one to get started.
               </p>
             ) : (
-              periods.map((p) => (
+              periods.map((p) => {
+                const periodLabel = p.name ?? `${shortDate(p.startDate)} – ${shortDate(p.endDate)}`;
+                return (
                 <div
                   key={p.id}
                   className={`rounded-2xl border p-4 text-sm shadow-sm ${
@@ -267,9 +312,7 @@ export default function AdminPayPeriodsPage() {
                   }`}
                 >
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-semibold text-[var(--color-text-primary)]">
-                      {p.name ?? `${shortDate(p.startDate)} â€“ ${shortDate(p.endDate)}`}
-                    </span>
+                    <span className="font-semibold text-[var(--color-text-primary)]">{periodLabel}</span>
                     <PayPeriodStatusBadge status={p.status} />
                     {p.isCurrent && (
                       <span className="rounded-lg bg-[var(--color-accent)] px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-white">
@@ -277,40 +320,47 @@ export default function AdminPayPeriodsPage() {
                       </span>
                     )}
                   </div>
-                  <p className="mt-1.5 text-xs text-slate-500">
-                    {shortDate(p.startDate)} â€” {shortDate(p.endDate)}
+                  <p className="mt-1.5 text-xs text-[var(--color-text-muted)]">
+                    {shortDate(p.startDate)} — {shortDate(p.endDate)}
                     {p._count
-                      ? ` Â· ${p._count.timesheets} timesheets Â· ${p._count.payslips} payslips`
+                      ? ` · ${p._count.timesheets} timesheets · ${p._count.payslips} payslips`
                       : ""}
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    <Button variant="secondary" className="h-8 px-2.5 text-xs" onClick={() => patch(p.id, { status: "OPEN" })}>
+                    <Button
+                      variant="secondary"
+                      className="h-8 px-2.5 text-xs"
+                      disabled={p.status === "OPEN"}
+                      onClick={() => patch(p.id, { status: "OPEN", isCurrent: true })}
+                    >
                       Open
                     </Button>
                     <Button
                       variant="secondary"
                       className="h-8 px-2.5 text-xs"
-                      onClick={() => patch(p.id, { status: "PROCESSING" })}
-                    >
-                      Processing
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      className="h-8 px-2.5 text-xs"
+                      disabled={p.status === "CLOSED"}
                       onClick={() => patch(p.id, { status: "CLOSED" })}
                     >
-                      Closed
+                      Close
                     </Button>
-                    <Button
-                      variant="secondary"
-                      className="h-8 px-2.5 text-xs"
-                      onClick={() => patch(p.id, { isCurrent: true })}
+                    <Link
+                      href={`/admin/pay-periods/${p.id}`}
+                      className="inline-flex h-8 items-center rounded-lg bg-[var(--color-accent)] px-3 text-xs font-semibold text-white shadow-sm hover:opacity-90"
                     >
-                      Make current
+                      View
+                    </Link>
+                    <Button
+                      variant="danger"
+                      className="h-8 px-2.5 text-xs"
+                      disabled={deletingId === p.id}
+                      onClick={() => void deletePeriod(p.id, periodLabel)}
+                    >
+                      {deletingId === p.id ? "Deleting…" : "Delete"}
                     </Button>
                   </div>
                 </div>
-              ))
+              );
+              })
             )}
           </div>
         </Card>

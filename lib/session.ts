@@ -63,9 +63,10 @@ export async function getSession(): Promise<SessionUser | null> {
     const tvClaim = Number(payload.tv ?? 0);
     const dbUser = await prisma.user.findUnique({
       where: { id },
-      select: { tokenVersion: true, username: true, contactEmail: true, role: true, name: true, companyId: true },
+      select: { tokenVersion: true, username: true, contactEmail: true, role: true, name: true, companyId: true, deletedAt: true },
     });
     if (!dbUser) return null;
+    if (dbUser.deletedAt) return null;
     if (dbUser.tokenVersion !== tvClaim) return null;
     return {
       id,

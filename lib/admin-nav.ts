@@ -9,6 +9,7 @@ export function resolveAdminPageTitle(pathname: string): string {
     if (segments.length >= 3 && segments[1] === "employees") return "Employee detail";
     if (segments.length >= 3 && segments[1] === "timesheets") return "Timesheet detail";
     if (segments.length >= 3 && segments[1] === "payslips") return "Payslip detail";
+    if (segments.length >= 3 && segments[1] === "history") return "Pay period history";
   }
 
   const map = new Map<string, string>([
@@ -22,8 +23,7 @@ export function resolveAdminPageTitle(pathname: string): string {
     ["/admin/pay-periods", "Pay periods"],
     ["/admin/timesheets", "Timesheets"],
     ["/admin/employees", "Employees"],
-    ["/admin/audit", "Audit log"],
-    ["/admin/demo-requests", "Demo requests"],
+    ["/admin/pending-approval", "Pending approvals"],
     ["/admin", "Payroll Command Center"],
   ]);
 

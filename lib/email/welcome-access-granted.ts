@@ -12,8 +12,10 @@ export type WelcomeAccessGrantedInput = {
   companySlug: string;
   companyWebsiteUrl?: string | null;
   role: string;
-  generatedUsername: string;
+  loginEmail: string;
   temporaryPassword: string;
+  /** e.g. PayRun Platform &lt;syal0005@algonquinlive.com&gt; */
+  from?: string;
 };
 
 export function buildCompanySignInUrl(companySlug: string, websiteUrl?: string | null): string {
@@ -36,7 +38,7 @@ export function buildWelcomeAccessGrantedEmail(input: WelcomeAccessGrantedInput)
     `A ${roleLabel} account has been created for you on ${APP_NAME} (${input.companyName}).`,
     "",
     "Sign-in details:",
-    `  Company login (username): ${input.generatedUsername}`,
+    `  Sign-in email: ${input.loginEmail}`,
     `  Temporary password: ${input.temporaryPassword}`,
     `  Sign in at: ${signInUrl}`,
     "",
@@ -53,8 +55,8 @@ export function buildWelcomeAccessGrantedEmail(input: WelcomeAccessGrantedInput)
   <p style="margin:0 0 8px;font-weight:600;color:#050a14;">Sign-in details</p>
   <table cellpadding="0" cellspacing="0" style="margin:0 0 16px;font-size:14px;">
     <tr>
-      <td style="padding:6px 16px 6px 0;color:#6c757d;vertical-align:top;">Company login (username)</td>
-      <td style="padding:6px 0;"><code style="background:#f8f9fa;padding:2px 6px;border-radius:4px;font-size:13px;">${escapeHtml(input.generatedUsername)}</code></td>
+      <td style="padding:6px 16px 6px 0;color:#6c757d;vertical-align:top;">Sign-in email</td>
+      <td style="padding:6px 0;"><code style="background:#f8f9fa;padding:2px 6px;border-radius:4px;font-size:13px;">${escapeHtml(input.loginEmail)}</code></td>
     </tr>
     <tr>
       <td style="padding:6px 16px 6px 0;color:#6c757d;vertical-align:top;">Temporary password</td>
@@ -78,7 +80,13 @@ export async function sendWelcomeAccessGrantedEmail(
   input: WelcomeAccessGrantedInput
 ): Promise<SendEmailResult> {
   const { subject, text, html } = buildWelcomeAccessGrantedEmail(input);
-  return sendEmail({ to: input.personalEmail, subject, html, text });
+  return sendEmail({
+    to: input.personalEmail,
+    subject,
+    html,
+    text,
+    from: input.from,
+  });
 }
 
 /** @deprecated Use sendWelcomeAccessGrantedEmail — kept for existing imports. */
@@ -109,7 +117,7 @@ export async function sendStaffWelcomeEmail(input: {
     companySlug: input.companySlug,
     companyWebsiteUrl: input.companyWebsiteUrl,
     role,
-    generatedUsername: input.companyLogin,
+    loginEmail: input.companyLogin,
     temporaryPassword: input.temporaryPassword,
   });
 }

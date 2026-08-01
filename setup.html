@@ -248,19 +248,17 @@
 
     <section>
       <h2>Step 5 — Demo administrator logins</h2>
-      <p class="intro">Sign in at <strong>/login</strong> with the <strong>username</strong> below (not the contact email). OTPs and notifications use the contact email only.</p>
+      <p class="intro">Sign in at <strong>/login</strong> with the <strong>email</strong> below and the password shown.</p>
       <table>
         <thead>
-          <tr><th>Username</th><th>Contact email</th><th>Password</th></tr>
+          <tr><th>Email</th><th>Password</th></tr>
         </thead>
         <tbody>
           <tr>
-            <td class="mono">operations.admin@syal-operations.local</td>
             <td class="mono">admin@syaloperations.com</td>
             <td class="mono">PayrollDemo2026!</td>
           </tr>
           <tr>
-            <td class="mono">payroll.manager@syal-operations.local</td>
             <td class="mono">manager@syaloperations.com</td>
             <td class="mono">PayrollDemo2026!</td>
           </tr>
@@ -335,7 +333,7 @@
 
     document.getElementById("btn-copy-creds").addEventListener("click", function (ev) {
       var txt =
-        "operations.admin@syal-operations.local\tPayrollDemo2026!\npayroll.manager@syal-operations.local\tPayrollDemo2026!";
+        "admin@syaloperations.com\tPayrollDemo2026!\nmanager@syaloperations.com\tPayrollDemo2026!";
       var toast = document.getElementById("toast-creds");
       copyText(txt, ev.currentTarget).then(function (ok) {
         toast.textContent = ok ? "Both rows copied to clipboard." : "Use the prompt to copy.";

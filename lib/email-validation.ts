@@ -1,3 +1,4 @@
+import "server-only";
 import dns from "node:dns/promises";
 import disposableDomains from "disposable-email-domains";
 import { z } from "zod";
@@ -51,6 +52,30 @@ export async function validateEmailDeliverable(email: string): Promise<EmailVali
     }
   } catch {
     return { valid: false, reason: "no_mx_records" };
+  }
+
+  return { valid: true };
+}
+
+/** Syntax and policy checks for OTP to an address already stored on an employee profile (no MX lookup). */
+export function validateEmailForStoredOtp(email: string): EmailValidationResult {
+  const normalized = email.trim().toLowerCase();
+
+  if (!emailSyntaxSchema.safeParse(normalized).success) {
+    return { valid: false, reason: "invalid_syntax" };
+  }
+
+  if (normalized.endsWith(".local")) {
+    return { valid: false, reason: "local_domain" };
+  }
+
+  const domain = extractDomain(normalized);
+  if (!domain) {
+    return { valid: false, reason: "invalid_syntax" };
+  }
+
+  if (DISPOSABLE_DOMAINS.has(domain)) {
+    return { valid: false, reason: "disposable_email" };
   }
 
   return { valid: true };

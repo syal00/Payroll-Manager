@@ -7,6 +7,10 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useTheme } from "@/components/theme/ThemeProvider";
+import {
+  parseDeductionPercentInput,
+  DEDUCTION_PERCENT_VALIDATION_MESSAGE,
+} from "@/lib/deduction-percent";
 import type { ThemeMode } from "@/lib/theme";
 
 export default function AdminSettingsPage() {
@@ -29,7 +33,12 @@ export default function AdminSettingsPage() {
     setTaxBusy(true);
     setTaxErr(null);
     setTaxMsg(null);
-    const n = parseFloat(taxRate);
+    const n = parseDeductionPercentInput(taxRate);
+    if (n === undefined) {
+      setTaxErr(DEDUCTION_PERCENT_VALIDATION_MESSAGE);
+      setTaxBusy(false);
+      return;
+    }
     try {
       const res = await fetch("/api/admin/settings", {
         method: "PATCH",
@@ -83,7 +92,8 @@ export default function AdminSettingsPage() {
         <Card className="border-[var(--color-border)] !bg-[var(--color-bg-card)]/80 backdrop-blur-md">
           <h2 className="text-base font-bold text-[var(--color-text-primary)]">Tax rate (%)</h2>
           <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-            Used for estimated deductions on new payslips when no custom deduction total is entered. Default 20%.
+            Default deduction rate (0–100%) for new payslips when no override is entered on the timesheet. Use 0 for no
+            automatic deductions.
           </p>
           {taxErr && <div className="alert-error mt-3 text-sm">{taxErr}</div>}
           {taxMsg && <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-950">{taxMsg}</div>}

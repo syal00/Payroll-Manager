@@ -69,6 +69,18 @@ export function formatCompanySubdomainUrl(slug: string, websiteUrl?: string | nu
   return `${protocol}://${host}`;
 }
 
+/** Admin sign-in URL for staff welcome emails — production link, not localhost tenant URLs. */
+export function staffWelcomeSignInUrl(): string {
+  const configured =
+    process.env.NEXT_PUBLIC_STAFF_SIGN_IN_URL?.trim() ??
+    process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (configured) {
+    const normalized = configured.replace(/\/+$/, "");
+    return normalized.endsWith("/login") ? normalized : `${normalized}/login`;
+  }
+  return "https://payroll-manager-lake.vercel.app/login";
+}
+
 /** Tenant login URL for emails — dev uses `{slug}.{NEXT_PUBLIC_APP_DOMAIN}/login`. */
 export function formatTenantLoginUrl(slug: string, websiteUrl?: string | null): string {
   const appDomain = getAppDomain();

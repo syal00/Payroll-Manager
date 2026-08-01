@@ -3,13 +3,26 @@ export const DEMO_ADMIN_PASSWORD = "PayrollDemo2026!";
 
 export const DEMO_CREDENTIALS = {
   admin: {
-    username: "operations.admin@syal-operations.local",
     contactEmail: "admin@syaloperations.com",
     password: DEMO_ADMIN_PASSWORD,
   },
   manager: {
-    username: "payroll.manager@syal-operations.local",
     contactEmail: "manager@syaloperations.com",
     password: DEMO_ADMIN_PASSWORD,
   },
 } as const;
+
+/** Legacy auto-generated usernames — login still accepts these until accounts are re-seeded. */
+export const LEGACY_DEMO_USERNAMES = [
+  "operations.admin@syal-operations.local",
+  "payroll.manager@syal-operations.local",
+] as const;
+
+export function isKnownDemoLogin(login: string): boolean {
+  const normalized = login.trim().toLowerCase();
+  return (
+    normalized === DEMO_CREDENTIALS.admin.contactEmail ||
+    normalized === DEMO_CREDENTIALS.manager.contactEmail ||
+    LEGACY_DEMO_USERNAMES.some((legacy) => legacy === normalized)
+  );
+}

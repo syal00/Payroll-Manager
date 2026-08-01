@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
-import { FileText } from "lucide-react";
+import { ArrowLeft, FileText } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { shortDate, money } from "@/lib/format";
 
@@ -25,6 +25,11 @@ export default function PublicPayslipsPage({
 
   return (
     <div className="page-container max-w-3xl space-y-8">
+      <Link href={`${base}/dashboard`} className="link-accent inline-flex items-center gap-1 text-sm font-semibold">
+        <ArrowLeft className="h-4 w-4" aria-hidden />
+        Back to dashboard
+      </Link>
+
       <div>
         <p className="page-eyebrow">Payroll</p>
         <h1 className="page-title mt-1 flex flex-wrap items-center gap-2">
@@ -39,8 +44,8 @@ export default function PublicPayslipsPage({
       <Card padding={false} className="overflow-hidden">
         <ul className="employee-payslip-grid">
           {items.length === 0 ? (
-            <li className="col-span-full px-6 py-12 text-center text-sm text-slate-500">
-              <p className="font-medium text-slate-700">No payslips yet</p>
+            <li className="col-span-full px-6 py-12 text-center text-sm text-[var(--color-text-muted)]">
+              <p className="font-medium text-[var(--color-text-primary)]">No payslips yet</p>
               <p className="mt-1 text-xs">They&apos;ll appear here after payroll generates them.</p>
             </li>
           ) : (
@@ -51,7 +56,7 @@ export default function PublicPayslipsPage({
               >
                 <div>
                   <p className="font-mono text-sm font-semibold text-[var(--color-text-primary)]">{p.payslipNumber}</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-[var(--color-text-muted)]">
                     {p.payPeriod.name ?? shortDate(p.payPeriod.startDate)}
                   </p>
                 </div>

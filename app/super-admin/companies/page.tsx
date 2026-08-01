@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Building2,
+  CheckCircle2,
   ExternalLink,
   Globe,
   Pencil,
@@ -30,6 +31,13 @@ type CompanyRow = {
   employeeCount: number;
   managerCount: number;
   timesheetPendingCount: number;
+  isWorkingCompany?: boolean;
+};
+
+type CompanyMirror = {
+  active: boolean;
+  source: { id: string; slug: string; name: string } | null;
+  target: { id: string; slug: string; name: string } | null;
 };
 
 type FormMode = "edit" | null;
@@ -62,6 +70,9 @@ export default function SuperAdminCompaniesPage() {
   const [busy, setBusy] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<CompanyRow | null>(null);
   const [deleteConfirmName, setDeleteConfirmName] = useState("");
+  const [workingCompanyId, setWorkingCompanyId] = useState<string | null>(null);
+  const [workingBusyId, setWorkingBusyId] = useState<string | null>(null);
+  const [companyMirror, setCompanyMirror] = useState<CompanyMirror | null>(null);
 
   const load = useCallback(() => {
     setErr(null);
@@ -74,6 +85,8 @@ export default function SuperAdminCompaniesPage() {
           return;
         }
         setCompanies(j.companies ?? []);
+        setWorkingCompanyId(j.workingCompanyId ?? null);
+        setCompanyMirror(j.companyMirror ?? null);
       })
       .catch(() => {
         setErr("Failed to load companies");
@@ -105,6 +118,29 @@ export default function SuperAdminCompaniesPage() {
       pending: companies.reduce((s, c) => s + c.timesheetPendingCount, 0),
     };
   }, [companies]);
+
+  async function setWorkingCompany(companyId: string | null) {
+    setWorkingBusyId(companyId ?? "clear");
+    setErr(null);
+    try {
+      const res = await fetch("/api/super-admin/companies/working-company", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ companyId }),
+      });
+      const j = await res.json();
+      if (!res.ok) {
+        setErr(j.error ?? "Could not update working company");
+        return;
+      }
+      setWorkingCompanyId(j.workingCompany?.id ?? null);
+      void load();
+    } catch {
+      setErr("Network error");
+    } finally {
+      setWorkingBusyId(null);
+    }
+  }
 
   function openCreate() {
     setCreateOpen(true);
@@ -200,8 +236,9 @@ export default function SuperAdminCompaniesPage() {
             Tenant workspaces
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-[var(--sa-muted)]">
-            Create and manage company workspaces. Each tenant gets an isolated subdomain — staff and
-            employees only see their own company; platform access stays invisible to them.
+            Create and manage company workspaces. Set a <strong className="text-[var(--sa-heading)]">current working</strong>{" "}
+            company to route all employee hour submissions there; clear it to use each company&apos;s own subdomain /
+            assignment.
           </p>
         </div>
         <button type="button" className="sa-btn-primary shrink-0" onClick={openCreate}>
@@ -222,6 +259,42 @@ export default function SuperAdminCompaniesPage() {
               <p className="mt-1 text-2xl font-bold text-[var(--sa-heading)]">{s.value}</p>
             </div>
           ))}
+        </div>
+      ) : null}
+
+      {workingCompanyId ? (
+        <div className="sa-panel flex flex-wrap items-center justify-between gap-3 border-[var(--sa-accent)]/40 bg-[var(--sa-accent-soft)]/40 px-5 py-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--sa-accent)]">Current working company</p>
+            <p className="mt-1 text-sm text-[var(--sa-heading)]">
+              All employee registrations and hour submissions go to{" "}
+              <strong>{companies?.find((c) => c.id === workingCompanyId)?.name ?? "selected company"}</strong>.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="sa-btn-ghost text-sm"
+            disabled={workingBusyId === "clear"}
+            onClick={() => void setWorkingCompany(null)}
+          >
+            {workingBusyId === "clear" ? "Clearing…" : "Clear — use each company"}
+          </button>
+        </div>
+      ) : (
+        <div className="sa-panel px-5 py-3 text-sm text-[var(--sa-muted)]">
+          No current working company selected — use the <strong className="text-[var(--sa-heading)]">Select</strong>{" "}
+          radio in the table below, or employees submit hours to their own company / subdomain.
+        </div>
+      )}
+
+      {companyMirror?.active && companyMirror.source && companyMirror.target ? (
+        <div className="sa-panel border-emerald-500/30 bg-emerald-500/10 px-5 py-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-300">Payroll sync active</p>
+          <p className="mt-1 text-sm text-[var(--sa-heading)]">
+            Employees, timesheets, and pay periods added in{" "}
+            <strong>{companyMirror.source.name}</strong> also appear in{" "}
+            <strong>{companyMirror.target.name}</strong>.
+          </p>
         </div>
       ) : null}
 
@@ -260,6 +333,7 @@ export default function SuperAdminCompaniesPage() {
                   <th>Subdomain</th>
                   <th>Roster</th>
                   <th>Pending</th>
+                  <th className="whitespace-nowrap">Current working</th>
                   <th>Created</th>
                   <th className="text-right">Actions</th>
                 </tr>
@@ -278,8 +352,14 @@ export default function SuperAdminCompaniesPage() {
                           </span>
                         )}
                         <div>
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex flex-wrap items-center gap-1.5">
                             <p className="font-semibold text-[var(--sa-heading)]">{c.name}</p>
+                            {companyMirror?.active && companyMirror.source?.id === c.id ? (
+                              <span className="sa-badge !bg-sky-500/15 !text-sky-300">Syncs → {companyMirror.target?.name}</span>
+                            ) : null}
+                            {companyMirror?.active && companyMirror.target?.id === c.id ? (
+                              <span className="sa-badge !bg-emerald-500/15 !text-emerald-300">Receives from {companyMirror.source?.name}</span>
+                            ) : null}
                             {c.websiteUrl ? (
                               <a
                                 href={c.websiteUrl}
@@ -325,6 +405,31 @@ export default function SuperAdminCompaniesPage() {
                       ) : (
                         <span className="text-xs text-[var(--sa-muted)]">—</span>
                       )}
+                    </td>
+                    <td>
+                      <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-[var(--sa-border)] px-2.5 py-1.5 hover:bg-white/5">
+                        <input
+                          type="radio"
+                          name="platform-working-company"
+                          className="h-4 w-4 accent-[var(--sa-accent)]"
+                          checked={c.isWorkingCompany === true}
+                          disabled={workingBusyId === c.id}
+                          onChange={() => void setWorkingCompany(c.id)}
+                          aria-label={`Set ${c.name} as current working company`}
+                        />
+                        <span className="text-xs font-medium text-[var(--sa-heading)]">
+                          {c.isWorkingCompany ? (
+                            <span className="inline-flex items-center gap-1 text-[var(--sa-accent)]">
+                              <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
+                              Selected
+                            </span>
+                          ) : workingBusyId === c.id ? (
+                            "Selecting…"
+                          ) : (
+                            "Select"
+                          )}
+                        </span>
+                      </label>
                     </td>
                     <td className="whitespace-nowrap text-xs text-[var(--sa-muted)]">
                       {new Date(c.createdAt).toLocaleDateString()}

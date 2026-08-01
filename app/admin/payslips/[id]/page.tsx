@@ -13,6 +13,8 @@ export default function AdminPayslipDetailPage({ params }: { params: Promise<{ i
     payslipNumber: string;
     hourlyRate: number;
     overtimeRate: number;
+    jobTitle: string | null;
+    department: string | null;
     regularHours: number;
     overtimeHours: number;
     grossPay: number;
@@ -24,7 +26,7 @@ export default function AdminPayslipDetailPage({ params }: { params: Promise<{ i
     emailSentAt: string | null;
     items: { label: string; amount: number; type: string }[];
     payPeriod: { name: string | null; startDate: string; endDate: string };
-    employee: { employeeCode: string; name: string; username: string; contactEmail: string };
+    employee: { employeeCode: string; name: string; username: string; contactEmail: string; jobTitle?: string | null; department?: string | null };
     timesheet: { id: string };
   } | null>(null);
   const [emailPreview, setEmailPreview] = useState<string | null>(null);
@@ -37,12 +39,12 @@ export default function AdminPayslipDetailPage({ params }: { params: Promise<{ i
 
   if (!p) {
     return (
-      <div className="flex items-center gap-3 text-sm text-slate-500">
+      <div className="flex items-center gap-3 text-sm text-[var(--color-text-muted)]">
         <span
           className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--color-accent-tint)] border-t-violet-600"
           aria-hidden
         />
-        Loading payslipâ€¦
+        Loading payslip…
       </div>
     );
   }
@@ -51,39 +53,51 @@ export default function AdminPayslipDetailPage({ params }: { params: Promise<{ i
     <div className="page-container max-w-3xl space-y-8 print:max-w-none">
       <div>
         <Link href="/admin/payslips" className="link-accent text-sm print-hidden">
-          â† All payslips
+          ← All payslips
         </Link>
         <div className="mt-4">
           <p className="page-eyebrow">Payslip</p>
           <h1 className="page-title mt-1 font-mono text-2xl tracking-tight md:text-3xl">{p.payslipNumber}</h1>
           <p className="page-description mt-2">
-            {p.employee.name} Â· <span className="font-mono text-slate-700">{p.employee.employeeCode}</span>
+            {p.employee.name}
+            {p.jobTitle ?? p.employee.jobTitle ? ` · ${p.jobTitle ?? p.employee.jobTitle}` : ""}
+            {" · "}
+            <span className="font-mono text-[var(--color-text-secondary)]">{p.employee.employeeCode}</span>
           </p>
         </div>
       </div>
 
       <Card className="print:border print:shadow-none">
         <h2 className="card-heading">Pay period &amp; hours</h2>
-        <p className="mt-1 text-sm text-slate-600">
-          {p.payPeriod.name ?? `${shortDate(p.payPeriod.startDate)} â€“ ${shortDate(p.payPeriod.endDate)}`}
+        <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+          {p.payPeriod.name ?? `${shortDate(p.payPeriod.startDate)} – ${shortDate(p.payPeriod.endDate)}`}
         </p>
         <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
-          <div className="rounded-xl border border-violet-50 bg-[var(--color-accent-soft)]/30 px-4 py-3">
-            <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Hours</dt>
+          <div className="rounded-xl border border-[var(--color-accent-tint)] bg-[var(--color-accent-soft)]/30 px-4 py-3">
+            <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Hours</dt>
             <dd className="mt-1 font-semibold text-[var(--color-text-primary)]">
-              {p.regularHours} reg Â· {p.overtimeHours} OT
+              {p.regularHours} reg · {p.overtimeHours} OT
             </dd>
           </div>
-          <div className="rounded-xl border border-violet-50 bg-[var(--color-accent-soft)]/30 px-4 py-3">
-            <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Rates</dt>
+          <div className="rounded-xl border border-[var(--color-accent-tint)] bg-[var(--color-accent-soft)]/30 px-4 py-3">
+            <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Rates</dt>
             <dd className="mt-1 font-semibold text-[var(--color-text-primary)]">
               {money(p.hourlyRate)} / {money(p.overtimeRate)} OT
             </dd>
           </div>
-          <div className="rounded-xl border border-violet-50 bg-[var(--color-accent-soft)]/30 px-4 py-3 sm:col-span-2">
-            <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Sign-off</dt>
+          <div className="rounded-xl border border-[var(--color-accent-tint)] bg-[var(--color-accent-soft)]/30 px-4 py-3 sm:col-span-2">
+            <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Role</dt>
             <dd className="mt-1 font-semibold text-[var(--color-text-primary)]">
-              {p.adminSignoff ?? "â€”"} Â· {p.approvalDate ? shortDate(p.approvalDate) : "â€”"}
+              {p.jobTitle ?? p.employee.jobTitle ?? "—"}
+              {p.department ?? p.employee.department
+                ? ` · ${p.department ?? p.employee.department}`
+                : ""}
+            </dd>
+          </div>
+          <div className="rounded-xl border border-[var(--color-accent-tint)] bg-[var(--color-accent-soft)]/30 px-4 py-3 sm:col-span-2">
+            <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Sign-off</dt>
+            <dd className="mt-1 font-semibold text-[var(--color-text-primary)]">
+              {p.adminSignoff ?? "—"} · {p.approvalDate ? shortDate(p.approvalDate) : "—"}
             </dd>
           </div>
         </dl>
@@ -91,20 +105,20 @@ export default function AdminPayslipDetailPage({ params }: { params: Promise<{ i
 
       <Card className="print:border print:shadow-none">
         <h2 className="card-heading">Earnings breakdown</h2>
-        <ul className="mt-4 divide-y divide-violet-100/90 text-sm">
+        <ul className="mt-4 divide-y divide-[var(--color-border)] text-sm">
           {p.items.map((it, i) => (
             <li key={i} className="flex justify-between py-3 first:pt-0">
-              <span className="text-slate-700">{it.label}</span>
+              <span className="text-[var(--color-text-secondary)]">{it.label}</span>
               <span className="tabular-nums font-semibold text-[var(--color-text-primary)]">{money(it.amount)}</span>
             </li>
           ))}
         </ul>
-        <div className="mt-4 space-y-2 border-t border-white/12 pt-4 text-sm">
+        <div className="mt-4 space-y-2 border-t border-[var(--color-border)] pt-4 text-sm">
           <div className="flex justify-between font-semibold text-[var(--color-text-primary)]">
             <span>Gross pay</span>
             <span className="tabular-nums">{money(p.grossPay)}</span>
           </div>
-          <div className="flex justify-between text-slate-600">
+          <div className="flex justify-between text-[var(--color-text-secondary)]">
             <span>Deductions (Est. tax & contributions)</span>
             <span className="tabular-nums">− {money(p.totalDeductions)}</span>
           </div>
@@ -113,14 +127,14 @@ export default function AdminPayslipDetailPage({ params }: { params: Promise<{ i
             <span className="tabular-nums">{money(p.netPay)}</span>
           </div>
         </div>
-        <p className="mt-4 text-xs text-slate-500">
+        <p className="mt-4 text-xs text-[var(--color-text-muted)]">
           * Deductions are estimates only. Consult your employer for exact figures.
         </p>
       </Card>
 
       <Card className="print-hidden">
         <h2 className="card-heading">Actions</h2>
-        <p className="mt-1 text-xs text-slate-500">Download, delivery, and related records</p>
+        <p className="mt-1 text-xs text-[var(--color-text-muted)]">Download, delivery, and related records</p>
         <div className="mt-4 flex flex-wrap gap-2">
           <a
             href={`/api/payslips/${id}/pdf`}

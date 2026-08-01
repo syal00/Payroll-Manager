@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getPublicEmployeeByCode } from "@/lib/public-employee";
+import { ensureEmployeeCompanyId } from "@/lib/employee-company-scope";
 import { PayPeriodStatus, TimesheetStatus } from "@/lib/enums";
 import { sumEntries, validateDayEntry } from "@/lib/timesheet-math";
 import { normalizeEntryLocation } from "@/lib/timesheet-entry-fields";
 import { updateTimesheetEntryHours } from "@/lib/timesheet-entry-hours-update";
 import { writeAuditLog } from "@/lib/audit";
 import { validateTimesheetRowsAgainstPeriod } from "@/lib/timesheet-submit-validation";
-import { validateTimesheetWorkDatePolicy } from "@/lib/timesheet-work-date-policy";
+import { validateTimesheetWorkDatePolicyForEntry } from "@/lib/timesheet-work-date-policy";
 import { timesheetSaveRequestSchema } from "@/lib/timesheet-save-payload";
 import {
   readTimesheetJsonBody,
@@ -30,9 +32,14 @@ export async function POST(
       return NextResponse.json({ error: "Employee not found" }, { status: 404 });
     }
 
+    const companyId = await ensureEmployeeCompanyId(employee, (await headers()).get("x-company-id"));
+
     const period = await prisma.payPeriod.findUnique({ where: { id: payPeriodId } });
     if (!period || period.status !== PayPeriodStatus.OPEN) {
       return NextResponse.json({ error: "Pay period is not open." }, { status: 400 });
+    }
+    if (companyId && period.companyId !== companyId) {
+      return NextResponse.json({ error: "Pay period not available for your organization." }, { status: 403 });
     }
 
     const timesheet = await prisma.timesheet.findUnique({
@@ -61,7 +68,7 @@ export async function POST(
       if (v) return NextResponse.json({ error: v }, { status: 400 });
       const row = sortedExisting[i];
       if (row) {
-        const dateErr = validateTimesheetWorkDatePolicy(row.workDate);
+        const dateErr = validateTimesheetWorkDatePolicyForEntry(row.workDate, body.entries[i]!);
         if (dateErr) return NextResponse.json({ error: dateErr }, { status: 400 });
       }
     }

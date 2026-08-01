@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireMainAdmin } from "@/lib/api-auth";
+import { requireStaff } from "@/lib/api-auth";
+import { assertStaffCanAccessEmployee } from "@/lib/manager-scope";
+import {
+  deleteMirroredEmployeesForSource,
+  mirrorEmployeeToTargetCompany,
+  syncMirroredEmployeeApproval,
+} from "@/lib/company-mirror";
 import { writeAuditLog } from "@/lib/audit";
 import { z } from "zod";
 
@@ -13,13 +19,18 @@ export async function PATCH(
   ctx: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await requireMainAdmin();
+    const session = await requireStaff();
     const { id } = await ctx.params;
     const body = bodySchema.parse(await req.json());
 
+    const canAccess = await assertStaffCanAccessEmployee(session, id);
+    if (!canAccess) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const employee = await prisma.employee.findUnique({
       where: { id },
-      select: { id: true, isApproved: true, name: true, username: true, contactEmail: true, employeeCode: true },
+      select: { id: true, isApproved: true, name: true, username: true, contactEmail: true, employeeCode: true, userId: true },
     });
 
     if (!employee) {
@@ -31,6 +42,8 @@ export async function PATCH(
         where: { id },
         data: { isApproved: true },
       });
+      await mirrorEmployeeToTargetCompany(id);
+      await syncMirroredEmployeeApproval(id, true);
       await writeAuditLog({
         actorId: session.id,
         action: "APPROVE_EMPLOYEE",
@@ -43,7 +56,18 @@ export async function PATCH(
 
     if (body.action === "reject") {
       if (!employee.isApproved) {
-        await prisma.employee.delete({ where: { id } });
+        await deleteMirroredEmployeesForSource(id);
+        await prisma.$transaction(async (tx) => {
+          await tx.employee.delete({ where: { id } });
+          if (employee.userId) {
+            const linkedCount = await tx.employee.count({
+              where: { userId: employee.userId },
+            });
+            if (linkedCount === 0) {
+              await tx.user.delete({ where: { id: employee.userId } });
+            }
+          }
+        });
         await writeAuditLog({
           actorId: session.id,
           action: "REJECT_EMPLOYEE_REGISTRATION",
@@ -65,6 +89,10 @@ export async function PATCH(
       return NextResponse.json({ error: "Validation failed", issues: e.issues }, { status: 400 });
     }
     const err = e as Error & { status?: number };
-    return NextResponse.json({ error: err.message }, { status: err.status ?? 500 });
+    console.error("[approve employee]", e);
+    return NextResponse.json(
+      { error: err.status ? err.message : "Could not complete this action. Restart the dev server and try again." },
+      { status: err.status ?? 500 }
+    );
   }
 }

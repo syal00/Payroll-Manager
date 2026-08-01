@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getPublicEmployeeByCode } from "@/lib/public-employee";
+import { ensureEmployeeCompanyId } from "@/lib/employee-company-scope";
 import { z } from "zod";
 
 const querySchema = z.object({
@@ -25,6 +27,8 @@ export async function GET(
     const skip = (q.page - 1) * q.pageSize;
     const tsWhere = { employeeId: emp.id, ...(q.payPeriodId ? { payPeriodId: q.payPeriodId } : {}) };
 
+    const companyId = await ensureEmployeeCompanyId(emp, (await headers()).get("x-company-id"));
+
     const [timesheets, payslips, payPeriods] = await Promise.all([
       prisma.timesheet.findMany({
         where: tsWhere,
@@ -43,7 +47,13 @@ export async function GET(
         take: 20,
         include: { payPeriod: true },
       }),
-      prisma.payPeriod.findMany({ orderBy: { startDate: "desc" }, take: 24 }),
+      companyId != null
+        ? prisma.payPeriod.findMany({
+            where: { companyId },
+            orderBy: { startDate: "desc" },
+            take: 24,
+          })
+        : Promise.resolve([]),
     ]);
 
     return NextResponse.json({ timesheets, payslips, payPeriods });

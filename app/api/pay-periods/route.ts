@@ -2,8 +2,15 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireSession, requireStaff } from "@/lib/api-auth";
 import { PayPeriodStatus } from "@/lib/enums";
-import { isValidFourteenDayWindow } from "@/lib/pay-period-utils";
+import { isValidPayPeriodWindow, normalizePayPeriodDate } from "@/lib/pay-period-utils";
+import {
+  clearCurrentPayPeriods,
+  findPayPeriodByWindow,
+  normalizeCurrentPayPeriod,
+  requireStaffCompanyId,
+} from "@/lib/pay-period-company";
 import { writeAuditLog } from "@/lib/audit";
+import { mirrorPayPeriodToTargetCompany } from "@/lib/company-mirror";
 import { z } from "zod";
 import { isStaffRole, isSupervisorRole } from "@/lib/roles";
 
@@ -11,7 +18,10 @@ export async function GET() {
   try {
     const session = await requireSession();
     if (isStaffRole(session.role) || isSupervisorRole(session.role)) {
+      const companyId = requireStaffCompanyId(session);
+      await normalizeCurrentPayPeriod(prisma, companyId);
       const rows = await prisma.payPeriod.findMany({
+        where: { companyId },
         orderBy: { startDate: "desc" },
         include: {
           _count: { select: { timesheets: true, payslips: true } },
@@ -19,12 +29,13 @@ export async function GET() {
       });
       return NextResponse.json({ payPeriods: rows });
     }
+    const companyId = requireStaffCompanyId(session);
     const current = await prisma.payPeriod.findFirst({
-      where: { isCurrent: true },
+      where: { companyId, isCurrent: true },
       orderBy: { startDate: "desc" },
     });
     const open = await prisma.payPeriod.findMany({
-      where: { status: PayPeriodStatus.OPEN },
+      where: { companyId, status: PayPeriodStatus.OPEN },
       orderBy: { startDate: "desc" },
     });
     return NextResponse.json({ current, openPayPeriods: open });
@@ -45,21 +56,32 @@ const createSchema = z.object({
 export async function POST(req: Request) {
   try {
     const session = await requireStaff();
+    const companyId = requireStaffCompanyId(session);
     const body = createSchema.parse(await req.json());
-    const start = new Date(body.startDate);
-    const end = new Date(body.endDate);
-    if (!isValidFourteenDayWindow(start, end)) {
+    const start = normalizePayPeriodDate(new Date(body.startDate));
+    const end = normalizePayPeriodDate(new Date(body.endDate));
+    if (!isValidPayPeriodWindow(start, end)) {
       return NextResponse.json(
-        { error: "Pay period must span exactly 14 calendar days (inclusive)." },
+        { error: "Pay period end date must be on or after the start date." },
         { status: 400 }
       );
     }
+
+    const duplicate = await findPayPeriodByWindow(prisma, companyId, start, end);
+    if (duplicate) {
+      return NextResponse.json(
+        { error: "A pay period with these dates already exists for your company." },
+        { status: 409 }
+      );
+    }
+
     const period = await prisma.$transaction(async (tx) => {
       if (body.setAsCurrent) {
-        await tx.payPeriod.updateMany({ data: { isCurrent: false } });
+        await clearCurrentPayPeriods(tx, companyId);
       }
       return tx.payPeriod.create({
         data: {
+          companyId,
           name: body.name ?? null,
           startDate: start,
           endDate: end,
@@ -73,8 +95,18 @@ export async function POST(req: Request) {
       action: "PAY_PERIOD_CREATED",
       entityType: "PayPeriod",
       entityId: period.id,
-      details: { status: period.status, isCurrent: period.isCurrent },
+      details: { status: period.status, isCurrent: period.isCurrent, companyId },
     });
+
+    await mirrorPayPeriodToTargetCompany({
+      sourceCompanyId: companyId,
+      name: period.name,
+      startDate: period.startDate,
+      endDate: period.endDate,
+      status: period.status,
+      isCurrent: period.isCurrent,
+    });
+
     return NextResponse.json({ payPeriod: period });
   } catch (e) {
     if (e instanceof z.ZodError) {

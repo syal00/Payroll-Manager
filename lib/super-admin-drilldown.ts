@@ -26,19 +26,11 @@ export async function requireSuperAdminCompanyDrilldown(
   return { session, companyId, company };
 }
 
-/** PayPeriod has no companyId column — derive relevant period ids from this tenant's rows only. */
+/** @deprecated Prefer querying PayPeriod by companyId directly. */
 export async function payPeriodIdsForCompany(companyId: string): Promise<string[]> {
-  const [fromTimesheets, fromPayslips] = await Promise.all([
-    prisma.timesheet.findMany({
-      where: { employee: { companyId } },
-      select: { payPeriodId: true },
-      distinct: ["payPeriodId"],
-    }),
-    prisma.payslip.findMany({
-      where: { employee: { companyId } },
-      select: { payPeriodId: true },
-      distinct: ["payPeriodId"],
-    }),
-  ]);
-  return [...new Set([...fromTimesheets.map((r) => r.payPeriodId), ...fromPayslips.map((r) => r.payPeriodId)])];
+  const rows = await prisma.payPeriod.findMany({
+    where: { companyId },
+    select: { id: true },
+  });
+  return rows.map((r) => r.id);
 }

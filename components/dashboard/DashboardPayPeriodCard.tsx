@@ -28,7 +28,7 @@ export function DashboardPayPeriodCard({
   const title = period.name ?? "Current pay period";
 
   return (
-    <Card className="ui-panel dash-pay-period !rounded-xl !border-[var(--elite-border)] !shadow-sm">
+    <Card className="ui-panel dash-panel dash-pay-period !rounded-2xl !border-[var(--elite-border)] !shadow-sm">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3">
           <span className="dash-pay-period-icon" aria-hidden>

@@ -3,8 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/api-auth";
 import { assertStaffCanAccessEmployee } from "@/lib/manager-scope";
 import { getTaxRatePercent } from "@/lib/app-settings";
+import { computePayslipGross, resolvePayslipEmployeeProfile } from "@/lib/payslip-profile";
 import { TimesheetStatus, PayslipItemType, canonicalTimesheetStatus } from "@/lib/enums";
 import { writeAuditLog } from "@/lib/audit";
+import { payRateSchema } from "@/lib/pay-rates";
+import { deductionPercentSchema, deductionAmountFromPercent } from "@/lib/deduction-percent";
 import { z } from "zod";
 
 const itemSchema = z.object({
@@ -15,8 +18,13 @@ const itemSchema = z.object({
 
 const bodySchema = z.object({
   extraDeductions: z.array(itemSchema).optional(),
-  /** Single aggregate deduction line (optional shortcut). Omit or null to use configured tax %. */
+  /** Deduction as % of gross (0–100). Overrides configured tax rate when set. */
+  deductionPercent: deductionPercentSchema.optional(),
+  /** @deprecated Prefer deductionPercent — fixed USD deduction total. */
   deductionTotal: z.number().min(0).nullable().optional(),
+  /** Use pay rates from the timesheet editor when generating (syncs to employee profile). */
+  hourlyRate: payRateSchema.optional(),
+  overtimeRate: payRateSchema.optional(),
 });
 
 function nextPayslipNumber(): string {
@@ -67,10 +75,17 @@ export async function POST(
       );
     }
 
-    const { hourlyRate, overtimeRate } = ts.employee;
-    const regPay = ts.totalRegular * hourlyRate;
-    const otPay = ts.totalOvertime * overtimeRate;
-    const grossPay = regPay + otPay;
+    const profile = await resolvePayslipEmployeeProfile(ts.employeeId, {
+      hourlyRate: body.hourlyRate,
+      overtimeRate: body.overtimeRate,
+    });
+    const { hourlyRate, overtimeRate, jobTitle, department } = profile;
+    const { regPay, otPay, grossPay } = computePayslipGross({
+      regularHours: ts.totalRegular,
+      overtimeHours: ts.totalOvertime,
+      hourlyRate,
+      overtimeRate,
+    });
 
     const baseItems = [
       { label: "Regular earnings", amount: regPay, type: PayslipItemType.EARNING },
@@ -78,10 +93,20 @@ export async function POST(
     ];
     const extra = body.extraDeductions ?? [];
     const taxPct = await getTaxRatePercent();
-    const taxRate = taxPct / 100;
     let deductions: { label: string; amount: number; type: string }[] = [];
     if (extra.length > 0) {
       deductions = extra.filter((i) => i.type === "DEDUCTION");
+    } else if (body.deductionPercent !== undefined) {
+      if (body.deductionPercent > 0) {
+        const amt = deductionAmountFromPercent(grossPay, body.deductionPercent);
+        deductions = [
+          {
+            label: `Deductions (${body.deductionPercent}% est. tax & contributions)`,
+            amount: amt,
+            type: "DEDUCTION" as const,
+          },
+        ];
+      }
     } else if (body.deductionTotal != null && body.deductionTotal > 0) {
       deductions = [
         {
@@ -90,8 +115,8 @@ export async function POST(
           type: "DEDUCTION" as const,
         },
       ];
-    } else {
-      const amt = Math.round(grossPay * taxRate * 100) / 100;
+    } else if (taxPct > 0) {
+      const amt = deductionAmountFromPercent(grossPay, taxPct);
       if (amt > 0) {
         deductions = [
           {
@@ -124,6 +149,8 @@ export async function POST(
         payPeriodId: ts.payPeriodId,
         hourlyRate,
         overtimeRate,
+        jobTitle,
+        department,
         regularHours: ts.totalRegular,
         overtimeHours: ts.totalOvertime,
         grossPay,

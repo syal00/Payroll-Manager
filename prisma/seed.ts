@@ -4,8 +4,7 @@ import bcrypt from "bcryptjs";
 import { addDays } from "date-fns";
 import { nextEmployeeCode } from "../lib/employee-code";
 import { DEMO_ADMIN_PASSWORD, DEMO_CREDENTIALS } from "../lib/demo-credentials";
-import { generateUsername } from "../lib/username-generator";
-import { splitDisplayName } from "../lib/email-deliverable";
+import { normalizeContactEmail } from "../lib/display-name";
 
 const prisma = new PrismaClient();
 
@@ -36,21 +35,19 @@ async function main() {
   const primaryAdmins = [
     {
       name: "Operations Admin",
-      username: DEMO_CREDENTIALS.admin.username,
       contactEmail: DEMO_CREDENTIALS.admin.contactEmail,
       role: "MAIN_ADMIN" as const,
     },
     {
       name: "Payroll Manager",
-      username: DEMO_CREDENTIALS.manager.username,
       contactEmail: DEMO_CREDENTIALS.manager.contactEmail,
       role: "MANAGER" as const,
     },
   ] as const;
   const admin = await prisma.user.upsert({
-    where: { username: primaryAdmins[0]!.username },
+    where: { contactEmail: primaryAdmins[0]!.contactEmail },
     create: {
-      username: primaryAdmins[0]!.username,
+      username: normalizeContactEmail(primaryAdmins[0]!.contactEmail),
       contactEmail: primaryAdmins[0]!.contactEmail,
       passwordHash: adminPwHash,
       name: primaryAdmins[0]!.name,
@@ -58,6 +55,7 @@ async function main() {
       companyId: syalOperations.id,
     },
     update: {
+      username: normalizeContactEmail(primaryAdmins[0]!.contactEmail),
       passwordHash: adminPwHash,
       contactEmail: primaryAdmins[0]!.contactEmail,
       name: primaryAdmins[0]!.name,
@@ -66,9 +64,9 @@ async function main() {
     },
   });
   const managerUser = await prisma.user.upsert({
-    where: { username: primaryAdmins[1]!.username },
+    where: { contactEmail: primaryAdmins[1]!.contactEmail },
     create: {
-      username: primaryAdmins[1]!.username,
+      username: normalizeContactEmail(primaryAdmins[1]!.contactEmail),
       contactEmail: primaryAdmins[1]!.contactEmail,
       passwordHash: adminPwHash,
       name: primaryAdmins[1]!.name,
@@ -77,6 +75,7 @@ async function main() {
       createdById: admin.id,
     },
     update: {
+      username: normalizeContactEmail(primaryAdmins[1]!.contactEmail),
       passwordHash: adminPwHash,
       contactEmail: primaryAdmins[1]!.contactEmail,
       name: primaryAdmins[1]!.name,
@@ -97,8 +96,7 @@ async function main() {
   }[] = [];
   for (let i = 0; i < empSeed.length; i++) {
     const u = empSeed[i]!;
-    const { firstName, lastName } = splitDisplayName(u.name);
-    const username = await generateUsername(firstName, lastName, syalOperations.slug);
+    const username = normalizeContactEmail(u.contactEmail);
     const user = await prisma.user.create({
       data: {
         username,
@@ -138,6 +136,7 @@ async function main() {
 
   const closedPeriod = await prisma.payPeriod.create({
     data: {
+      companyId: syalOperations.id,
       name: `Period ending ${p1End.toISOString().slice(0, 10)}`,
       startDate: p1Start,
       endDate: p1End,
@@ -148,6 +147,7 @@ async function main() {
 
   const openPeriod = await prisma.payPeriod.create({
     data: {
+      companyId: syalOperations.id,
       name: `Period ending ${p2End.toISOString().slice(0, 10)}`,
       startDate: p2Start,
       endDate: p2End,
@@ -284,9 +284,9 @@ async function main() {
 
   console.log("Seed complete.");
   console.log("Admins (same password for demo):");
-  console.log(`  ${primaryAdmins[0]!.name} — login ${primaryAdmins[0]!.username} / ${DEMO_ADMIN_PASSWORD}`);
-  console.log(`  ${primaryAdmins[1]!.name} — login ${primaryAdmins[1]!.username} / ${DEMO_ADMIN_PASSWORD}`);
-  console.log("Demo employees: sign in at employee access with their username; OTP goes to contact email.");
+  console.log(`  ${primaryAdmins[0]!.name} — login ${primaryAdmins[0]!.contactEmail} / ${DEMO_ADMIN_PASSWORD}`);
+  console.log(`  ${primaryAdmins[1]!.name} — login ${primaryAdmins[1]!.contactEmail} / ${DEMO_ADMIN_PASSWORD}`);
+  console.log("Demo employees: sign in at employee access with their contact email.");
 }
 
 main()

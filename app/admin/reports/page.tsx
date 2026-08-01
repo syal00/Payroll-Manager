@@ -2,9 +2,22 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { BarChart3, PieChart as PieChartIcon } from "lucide-react";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell } from "recharts";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+} from "recharts";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Card } from "@/components/ui/Card";
+import { formatAuditAction } from "@/lib/format";
 
 type Stats = {
   totalEmployees: number;
@@ -15,10 +28,54 @@ type Stats = {
 
 type Log = { action: string };
 
+type AuditBarRow = {
+  action: string;
+  label: string;
+  total: number;
+};
+
 const violet = "#7c3aed";
 const indigo = "#6366f1";
 const emerald = "#10b981";
 const amber = "#f59e0b";
+
+const chartGrid = "var(--color-border, #e2e8f0)";
+const chartTick = "var(--color-text-muted, #64748b)";
+
+function AuditTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: { payload: AuditBarRow }[];
+}) {
+  if (!active || !payload?.[0]) return null;
+  const row = payload[0].payload;
+  return (
+    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] px-3 py-2 text-xs shadow-md">
+      <p className="font-semibold text-[var(--color-text-primary)]">{row.label}</p>
+      <p className="mt-0.5 font-mono text-[10px] text-[var(--color-text-muted)]">{row.action}</p>
+      <p className="mt-1 tabular-nums text-[var(--color-text-secondary)]">{row.total} events</p>
+    </div>
+  );
+}
+
+function ThroughputTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: { payload: { name: string; value: number } }[];
+}) {
+  if (!active || !payload?.[0]) return null;
+  const row = payload[0].payload;
+  return (
+    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] px-3 py-2 text-xs shadow-md">
+      <p className="font-semibold text-[var(--color-text-primary)]">{row.name}</p>
+      <p className="mt-0.5 tabular-nums text-[var(--color-text-secondary)]">{row.value} timesheets</p>
+    </div>
+  );
+}
 
 export default function AdminReportsPage() {
   const [stats, setStats] = useState<Stats | null>(null);
@@ -59,17 +116,36 @@ export default function AdminReportsPage() {
     ];
   }, [stats]);
 
-  const deptBar = useMemo(() => {
-    const entries = Object.entries(actions).sort((a, b) => b[1] - a[1]).slice(0, 6);
-    return entries.map(([name, total]) => ({ name: name.length > 18 ? `${name.slice(0, 16)}â€¦` : name, total }));
+  const pieData = useMemo(() => {
+    if (!stats) return [];
+    return [
+      { name: "Employees", value: Math.max(stats.totalEmployees, 0), fill: violet },
+      { name: "Payslips issued", value: Math.max(stats.generatedPayslips, 0), fill: indigo },
+    ];
+  }, [stats]);
+
+  const auditBars = useMemo((): AuditBarRow[] => {
+    return Object.entries(actions)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([action, total]) => ({
+        action,
+        label: formatAuditAction(action),
+        total,
+      }));
   }, [actions]);
+
+  const throughputMax = useMemo(() => {
+    const top = Math.max(stats?.approvedSubmissions ?? 0, stats?.pendingSubmissions ?? 0, 1);
+    return Math.ceil(top * 1.15);
+  }, [stats]);
 
   return (
     <div className="page-container space-y-8">
       <PageHeader
         eyebrow="Insights"
         title="Operational analytics"
-        description="High-signal aggregates from live payroll workloadsâ€”composed from submissions, approvals, and audit entries already in your workspace."
+        description="High-signal aggregates from live payroll workloads—composed from submissions, approvals, and audit entries already in your workspace."
       />
 
       {loading ? (
@@ -91,22 +167,34 @@ export default function AdminReportsPage() {
                   <p className="text-sm text-[var(--color-text-muted)]">Comparison of finalized vs queued timesheets.</p>
                 </div>
               </div>
-              <div className="mt-6 h-[260px] w-full">
+              <div className="mt-4 flex flex-wrap gap-4 text-sm">
+                <span className="inline-flex items-center gap-2 text-[var(--color-text-secondary)]">
+                  <span className="h-2.5 w-2.5 rounded-sm" style={{ background: violet }} aria-hidden />
+                  Approved: <strong className="tabular-nums">{stats.approvedSubmissions}</strong>
+                </span>
+                <span className="inline-flex items-center gap-2 text-[var(--color-text-secondary)]">
+                  <span className="h-2.5 w-2.5 rounded-sm" style={{ background: amber }} aria-hidden />
+                  Pending: <strong className="tabular-nums">{stats.pendingSubmissions}</strong>
+                </span>
+              </div>
+              <div className="mt-4 h-[240px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={pipeData} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
-                    <CartesianGrid strokeDasharray="3 6" stroke="#e2e8f0" vertical={false} />
-                    <XAxis dataKey="name" stroke="#64748b" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-                    <YAxis width={42} stroke="#64748b" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                    <Tooltip
-                      contentStyle={{
-                        borderRadius: 12,
-                        border: "1px solid #e2e8f0",
-                        fontSize: 12,
-                      }}
+                  <BarChart data={pipeData} barCategoryGap="28%" margin={{ top: 8, right: 16, bottom: 4, left: 4 }}>
+                    <CartesianGrid strokeDasharray="3 6" stroke={chartGrid} vertical={false} />
+                    <XAxis dataKey="name" stroke={chartTick} tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
+                    <YAxis
+                      width={36}
+                      stroke={chartTick}
+                      tick={{ fontSize: 11 }}
+                      axisLine={false}
+                      tickLine={false}
+                      allowDecimals={false}
+                      domain={[0, throughputMax]}
                     />
-                    <Bar dataKey="value" radius={[10, 10, 6, 6]}>
-                      {pipeData.map((entry, idx) => (
-                        <Cell key={entry.name} fill={idx === 0 ? violet : amber} />
+                    <Tooltip content={<ThroughputTooltip />} cursor={{ fill: "var(--color-accent-soft)", opacity: 0.35 }} />
+                    <Bar dataKey="value" maxBarSize={56} radius={[8, 8, 4, 4]}>
+                      {pipeData.map((entry) => (
+                        <Cell key={entry.name} fill={entry.fill} />
                       ))}
                     </Bar>
                   </BarChart>
@@ -116,7 +204,7 @@ export default function AdminReportsPage() {
 
             <Card className="border-[var(--color-border)] !bg-[var(--color-bg-card)]/95 backdrop-blur-md">
               <div className="flex items-start gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--color-accent-soft)] border border-[var(--color-accent-tint)] text-[var(--color-accent-light)]">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--color-accent-tint)] bg-[var(--color-accent-soft)] text-[var(--color-accent-light)]">
                   <PieChartIcon className="h-5 w-5" aria-hidden strokeWidth={2} />
                 </span>
                 <div>
@@ -124,66 +212,99 @@ export default function AdminReportsPage() {
                   <p className="text-sm text-[var(--color-text-muted)]">Active employees versus issued payslips.</p>
                 </div>
               </div>
-              <div className="mt-6 h-[220px] w-full">
-                {stats.totalEmployees === 0 && stats.generatedPayslips === 0 ? (
-                  <p className="flex min-h-[200px] items-center justify-center rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-accent-soft)]/80 px-4 text-center text-sm text-[var(--color-text-muted)]">
-                    Hire employees and issue payslips to unlock ratio insights.
-                  </p>
-                ) : (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={[
-                          { name: "Employees", value: Math.max(stats.totalEmployees, 0), fill: violet },
-                          { name: "Payslips", value: Math.max(stats.generatedPayslips, 0), fill: indigo },
-                        ]}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={48}
-                        outerRadius={74}
-                        paddingAngle={3}
-                        stroke="#fff"
-                        strokeWidth={2}
-                      />
-                      <Tooltip
-                        formatter={(value) => [Number(value ?? 0), "Total"]}
-                        contentStyle={{
-                          borderRadius: 12,
-                          border: "1px solid #e2e8f0",
-                          fontSize: 12,
-                        }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                )}
-              </div>
+              {stats.totalEmployees === 0 && stats.generatedPayslips === 0 ? (
+                <p className="mt-6 flex min-h-[220px] items-center justify-center rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-accent-soft)]/80 px-4 text-center text-sm text-[var(--color-text-muted)]">
+                  Hire employees and issue payslips to unlock ratio insights.
+                </p>
+              ) : (
+                <>
+                  <div className="mt-4 h-[200px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          dataKey="value"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={44}
+                          outerRadius={68}
+                          paddingAngle={3}
+                          stroke="var(--color-bg-card, #fff)"
+                          strokeWidth={2}
+                        >
+                          {pieData.map((entry) => (
+                            <Cell key={entry.name} fill={entry.fill} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          formatter={(value, name) => [Number(value ?? 0), name]}
+                          contentStyle={{
+                            borderRadius: 12,
+                            border: "1px solid var(--color-border, #e2e8f0)",
+                            fontSize: 12,
+                            background: "var(--color-bg-card, #fff)",
+                          }}
+                        />
+                        <Legend
+                          verticalAlign="bottom"
+                          iconType="circle"
+                          iconSize={8}
+                          formatter={(value) => (
+                            <span className="text-xs text-[var(--color-text-secondary)]">{value}</span>
+                          )}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <dl className="mt-2 grid grid-cols-2 gap-3 text-center text-sm">
+                    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-accent-soft)]/50 px-3 py-2">
+                      <dt className="text-xs text-[var(--color-text-muted)]">Employees</dt>
+                      <dd className="mt-0.5 text-lg font-bold tabular-nums text-[var(--color-text-primary)]">
+                        {stats.totalEmployees}
+                      </dd>
+                    </div>
+                    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-accent-soft)]/50 px-3 py-2">
+                      <dt className="text-xs text-[var(--color-text-muted)]">Payslips</dt>
+                      <dd className="mt-0.5 text-lg font-bold tabular-nums text-[var(--color-text-primary)]">
+                        {stats.generatedPayslips}
+                      </dd>
+                    </div>
+                  </dl>
+                </>
+              )}
             </Card>
           </div>
 
           <Card className="border-[var(--color-border)] !bg-[var(--color-bg-card)]/95 backdrop-blur-md">
             <h2 className="text-base font-bold text-[var(--color-text-primary)]">Audit action distribution</h2>
             <p className="text-sm text-[var(--color-text-muted)]">Top actions surfaced from recent compliance history.</p>
-            <div className="mt-6 h-[280px] w-full">
-              {deptBar.length === 0 ? (
+            <div className="mt-6 w-full" style={{ height: Math.max(280, auditBars.length * 52) }}>
+              {auditBars.length === 0 ? (
                 <p className="flex min-h-[200px] items-center justify-center rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-accent-soft)]/80 px-6 text-center text-sm text-[var(--color-text-muted)]">
-                  Logs will illuminate once admins take additional actions beyond seeding events.
+                  Logs will appear once admins take additional actions beyond seed events.
                 </p>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart layout="vertical" data={deptBar} margin={{ top: 4, right: 24, left: 8, bottom: 4 }}>
-                    <CartesianGrid strokeDasharray="3 6" stroke="#e2e8f0" horizontal />
-                    <XAxis type="number" stroke="#64748b" tick={{ fontSize: 11 }} />
-                    <YAxis type="category" dataKey="name" width={120} stroke="#64748b" tick={{ fontSize: 11 }} />
-                    <Tooltip
-                      contentStyle={{
-                        borderRadius: 12,
-                        border: "1px solid #e2e8f0",
-                        fontSize: 12,
-                      }}
+                  <BarChart
+                    layout="vertical"
+                    data={auditBars}
+                    margin={{ top: 4, right: 24, left: 4, bottom: 4 }}
+                    barCategoryGap="18%"
+                  >
+                    <CartesianGrid strokeDasharray="3 6" stroke={chartGrid} horizontal={false} />
+                    <XAxis type="number" stroke={chartTick} tick={{ fontSize: 11 }} allowDecimals={false} />
+                    <YAxis
+                      type="category"
+                      dataKey="label"
+                      width={148}
+                      stroke={chartTick}
+                      tick={{ fontSize: 11, fill: chartTick }}
+                      tickLine={false}
+                      axisLine={false}
                     />
-                    <Bar dataKey="total" radius={[0, 10, 10, 0]} fill={emerald} />
+                    <Tooltip content={<AuditTooltip />} cursor={{ fill: "var(--color-accent-soft)", opacity: 0.35 }} />
+                    <Bar dataKey="total" maxBarSize={28} radius={[0, 8, 8, 0]} fill={emerald} />
                   </BarChart>
                 </ResponsiveContainer>
               )}

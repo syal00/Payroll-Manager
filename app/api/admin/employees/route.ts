@@ -37,7 +37,7 @@ export async function GET(req: Request) {
     }
     if (status === "deleted") where.deletedAt = { not: null };
 
-    const scope = employeeWhereForStaff(session);
+    const scope = await employeeWhereForStaff(session);
     if (scope) {
       Object.assign(where, scope);
     }

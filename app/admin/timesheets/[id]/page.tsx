@@ -5,7 +5,13 @@ import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TimesheetStatusBadge } from "@/components/status-badges";
-import { shortDate, money, parsePositiveRateInput } from "@/lib/format";
+import { shortDate, money, formatPayPeriodLabel } from "@/lib/format";
+import { parsePayRateInput, PAY_RATE_VALIDATION_MESSAGE, PAY_RATE_MAX } from "@/lib/pay-rates";
+import {
+  parseDeductionPercentInput,
+  DEDUCTION_PERCENT_VALIDATION_MESSAGE,
+  DEDUCTION_PERCENT_MAX,
+} from "@/lib/deduction-percent";
 import { TimesheetStatus, canonicalTimesheetStatus } from "@/lib/enums";
 import { sumEntries } from "@/lib/timesheet-math";
 import { dispatchAdminStatsRefresh } from "@/lib/admin-stats-refresh";
@@ -162,16 +168,16 @@ export default function AdminTimesheetDetailPage({
     setErr(null);
     setMsg(null);
     setBusy(true);
-    const hr = parsePositiveRateInput(editHourly);
-    const ot = parsePositiveRateInput(editOT);
+    const hr = parsePayRateInput(editHourly);
+    const ot = parsePayRateInput(editOT);
     if (editHourly.trim() !== "" && hr === undefined) {
       setBusy(false);
-      setErr("Enter a valid hourly rate (e.g. 25 or 25,50).");
+      setErr(PAY_RATE_VALIDATION_MESSAGE);
       return;
     }
     if (editOT.trim() !== "" && ot === undefined) {
       setBusy(false);
-      setErr("Enter a valid overtime rate (e.g. 37.5 or 37,5).");
+      setErr(PAY_RATE_VALIDATION_MESSAGE);
       return;
     }
     const res = await fetch(`/api/admin/timesheets/${id}`, {
@@ -206,6 +212,10 @@ export default function AdminTimesheetDetailPage({
   async function approveAction(newStatus: "UNDER_REVIEW" | "APPROVED" | "REJECTED") {
     setErr(null);
     setMsg(null);
+    if (newStatus === "REJECTED" && !rejectReason.trim()) {
+      setErr("Rejection requires a reason for the employee.");
+      return;
+    }
     setBusy(true);
     try {
       const res = await fetch(`/api/admin/timesheets/${id}/approval`, {
@@ -217,7 +227,7 @@ export default function AdminTimesheetDetailPage({
           rejectionReason: newStatus === "REJECTED" ? rejectReason : null,
         }),
       });
-      let j: { error?: string } = {};
+      let j: { error?: string; payslipVoided?: string | null } = {};
       try {
         j = await res.json();
       } catch {
@@ -228,7 +238,11 @@ export default function AdminTimesheetDetailPage({
         setErr(typeof j.error === "string" ? j.error : "Failed");
         return;
       }
-      setMsg("Status updated.");
+      setMsg(
+        j.payslipVoided
+          ? `Status updated. Payslip ${j.payslipVoided} was voided.`
+          : "Status updated."
+      );
       setComment("");
       setRejectReason("");
       load();
@@ -243,11 +257,25 @@ export default function AdminTimesheetDetailPage({
     setMsg(null);
     setBusy(true);
     try {
-      const d = parseFloat(deduction);
-      const payload =
-        deduction.trim() === "" || !Number.isFinite(d)
-          ? {}
-          : { deductionTotal: Math.max(0, d) };
+      const deductionPct = parseDeductionPercentInput(deduction);
+      const hr = parsePayRateInput(editHourly);
+      const ot = parsePayRateInput(editOT);
+      if (editHourly.trim() !== "" && hr === undefined) {
+        setErr(PAY_RATE_VALIDATION_MESSAGE);
+        return;
+      }
+      if (editOT.trim() !== "" && ot === undefined) {
+        setErr(PAY_RATE_VALIDATION_MESSAGE);
+        return;
+      }
+      if (deduction.trim() !== "" && deductionPct === undefined) {
+        setErr(DEDUCTION_PERCENT_VALIDATION_MESSAGE);
+        return;
+      }
+      const payload: Record<string, number> = {};
+      if (deductionPct !== undefined) payload.deductionPercent = deductionPct;
+      if (hr !== undefined) payload.hourlyRate = hr;
+      if (ot !== undefined) payload.overtimeRate = ot;
       const res = await fetch(`/api/admin/timesheets/${id}/payslip`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -283,7 +311,7 @@ export default function AdminTimesheetDetailPage({
           className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--color-accent-tint)] border-t-violet-600"
           aria-hidden
         />
-        Loading timesheetâ€¦
+        Loading timesheet…
       </div>
     );
   }
@@ -295,13 +323,13 @@ export default function AdminTimesheetDetailPage({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <Link href="/admin/review" className="link-accent text-sm">
-            â† Back to review queue
+            ← Back to review queue
           </Link>
           <p className="page-eyebrow mt-3">Timesheet detail</p>
           <h1 className="page-title mt-1">{ts.employee.name}</h1>
           <p className="page-description mt-1">
             <span className="font-mono font-semibold text-[var(--color-text-secondary)]">{ts.employee.employeeCode}</span>
-            <span className="text-slate-300"> Â· </span>
+            <span className="text-slate-300"> · </span>
             {ts.employee.username}
             <span className="text-slate-300"> · </span>
             {ts.employee.contactEmail}
@@ -318,7 +346,7 @@ export default function AdminTimesheetDetailPage({
       <Card>
         <h2 className="card-heading">Pay period summary</h2>
         <p className="mt-1 text-sm text-slate-600">
-          {ts.payPeriod.name ?? `${shortDate(ts.payPeriod.startDate)} â€“ ${shortDate(ts.payPeriod.endDate)}`}
+          {formatPayPeriodLabel(ts.payPeriod)}
         </p>
         <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div className="rounded-xl border border-[var(--color-accent-tint)]/80 bg-[var(--color-accent-soft)]/40 px-3 py-3">
@@ -361,7 +389,7 @@ export default function AdminTimesheetDetailPage({
                 onChange={(e) => setEditHourly(e.target.value)}
                 autoComplete="off"
               />
-              <p className="mt-1 text-xs text-slate-500">Used for payslip gross pay. Decimals: 25.50 or 25,50.</p>
+              <p className="mt-1 text-xs text-slate-500">0–{PAY_RATE_MAX} USD. Decimals: 25.50 or 25,50.</p>
             </div>
             <div>
               <label className="label-field" htmlFor="ts-ot">
@@ -376,11 +404,12 @@ export default function AdminTimesheetDetailPage({
                 onChange={(e) => setEditOT(e.target.value)}
                 autoComplete="off"
               />
+              <p className="mt-1 text-xs text-slate-500">0–{PAY_RATE_MAX} USD. Use 0 if no overtime pay.</p>
             </div>
           </div>
         ) : (
           <p className="mt-4 text-xs text-slate-500">
-            Pay rates: {money(ts.employee.hourlyRate)} hourly Â· {money(ts.employee.overtimeRate)} OT
+            Pay rates: {money(ts.employee.hourlyRate)} hourly · {money(ts.employee.overtimeRate)} OT
           </p>
         )}
       </Card>
@@ -399,7 +428,7 @@ export default function AdminTimesheetDetailPage({
             id="ts-edit-summary"
             className="textarea-field mt-1.5 min-h-[4.5rem]"
             rows={2}
-            placeholder="e.g. Corrected Monâ€“Wed to match access logs."
+            placeholder="e.g. Corrected Mon–Wed to match access logs."
             value={editSummary}
             onChange={(e) => setEditSummary(e.target.value)}
           />
@@ -506,10 +535,10 @@ export default function AdminTimesheetDetailPage({
                       <td className="px-4 py-2.5 tabular-nums text-[var(--color-text-secondary)]">{e.overtimeHours}</td>
                       <td className="px-4 py-2.5 tabular-nums text-[var(--color-text-secondary)]">{e.leaveHours}</td>
                       <td className="max-w-[12rem] px-4 py-2.5 text-slate-400">
-                        {e.location?.trim() || "â€”"}
+                        {e.location?.trim() || "—"}
                       </td>
                       <td className="max-w-[220px] truncate px-4 py-2.5 text-slate-500">
-                        {e.notes ?? "â€”"}
+                        {e.notes ?? "—"}
                       </td>
                     </>
                   )}
@@ -522,13 +551,29 @@ export default function AdminTimesheetDetailPage({
 
       <Card>
         <h2 className="card-heading">Review &amp; decision</h2>
-        <p className="mt-1 text-xs text-slate-500">
-          Flow: Pending → Under review → Approved (or reject with a reason the employee will see).
+        <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+          Flow: Pending → Under review → Approved (or reject with a reason). Rejected timesheets can be
+          approved again; approved timesheets can still be rejected if signed off in error.
         </p>
+        {workflowStatus === TimesheetStatus.REJECTED ? (
+          <p className="mt-4 rounded-xl border border-[var(--color-warning-border)] bg-[var(--color-warning-bg)] px-4 py-3 text-sm text-[var(--color-text-secondary)]">
+            This timesheet was rejected. After the employee corrects their hours (or if the rejection was
+            mistaken), use <strong>Approve again</strong> to restore approval.
+          </p>
+        ) : null}
         {workflowStatus === TimesheetStatus.APPROVED ? (
           <p className="mt-4 rounded-xl border border-[var(--color-accent-tint)] bg-[var(--color-accent-soft)]/40 px-4 py-3 text-sm text-[var(--color-text-secondary)]">
-            This timesheet is already approved, so these actions are closed. Use <strong>Generate payslip</strong> below
-            (or open the existing payslip link if one was created).
+            This timesheet is approved. You can still <strong>reject</strong> it if corrections are needed
+            {ts.payslip ? (
+              <>
+                {" "}
+                — any linked payslip (<Link className="link-accent font-semibold" href={`/admin/payslips/${ts.payslip.id}`}>{ts.payslip.payslipNumber}</Link>
+                ) will be voided.
+              </>
+            ) : (
+              "."
+            )}{" "}
+            Otherwise use <strong>Generate payslip</strong> below.
           </p>
         ) : null}
         <label className="label-field mt-4" htmlFor="ts-comment">
@@ -564,23 +609,24 @@ export default function AdminTimesheetDetailPage({
           <Button
             disabled={
               busy ||
-              (workflowStatus !== TimesheetStatus.PENDING && workflowStatus !== TimesheetStatus.UNDER_REVIEW)
+              (workflowStatus !== TimesheetStatus.PENDING &&
+                workflowStatus !== TimesheetStatus.UNDER_REVIEW &&
+                workflowStatus !== TimesheetStatus.REJECTED)
             }
             onClick={() => approveAction("APPROVED")}
           >
-            Approve
+            {workflowStatus === TimesheetStatus.REJECTED ? "Approve again" : "Approve"}
           </Button>
           <Button
             disabled={
               busy ||
               workflowStatus === TimesheetStatus.DRAFT ||
-              workflowStatus === TimesheetStatus.APPROVED ||
               workflowStatus === TimesheetStatus.REJECTED
             }
             variant="danger"
             onClick={() => approveAction("REJECTED")}
           >
-            Reject
+            {workflowStatus === TimesheetStatus.APPROVED ? "Reject approval" : "Reject"}
           </Button>
         </div>
       </Card>
@@ -600,18 +646,20 @@ export default function AdminTimesheetDetailPage({
             <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
               <div className="min-w-0 flex-1 space-y-2">
                 <label className="label-field" htmlFor="ts-deduction">
-                  Total deductions (USD)
+                  Deduction rate (%)
                 </label>
                 <input
                   id="ts-deduction"
+                  type="text"
+                  inputMode="decimal"
                   className="input-field mt-1.5 sm:w-44"
                   value={deduction}
                   onChange={(e) => setDeduction(e.target.value)}
-                  placeholder="Leave blank for auto"
+                  placeholder={`Default ${taxPct}%`}
                 />
                 <p className="text-xs text-slate-500">
-                  Note: Deductions are estimated at {taxPct}% including income tax and statutory contributions. Actual
-                  amounts may vary. Leave blank to use the configured rate on gross pay.
+                  0–{DEDUCTION_PERCENT_MAX}% of gross pay (0 = no deductions). Leave blank to use the configured rate
+                  ({taxPct}%) from settings.
                 </p>
               </div>
               <Button disabled={busy} onClick={genPayslip}>

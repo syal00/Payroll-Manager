@@ -1,12 +1,8 @@
 const YMD = /^\d{4}-\d{2}-\d{2}$/;
 
-/** UTC calendar date string YYYY-MM-DD (stable vs server local timezone). */
-export function utcDateKey(d: Date): string {
-  const y = d.getUTCFullYear();
-  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(d.getUTCDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
+import { utcDateKey } from "@/lib/pay-period-utils";
+
+export { utcDateKey } from "@/lib/pay-period-utils";
 
 /** Normalize client payload: plain YYYY-MM-DD or ISO timestamp → UTC YYYY-MM-DD. */
 export function normalizeClientWorkDate(raw: string): string | null {

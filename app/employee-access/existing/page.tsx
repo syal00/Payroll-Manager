@@ -6,25 +6,24 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 
 export default function EmployeeExistingAccessPage() {
-  const [step, setStep] = useState<1 | 2>(1);
-  const [username, setUsername] = useState("");
-  const [code, setCode] = useState("");
-  const [devOtp, setDevOtp] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [deactivated, setDeactivated] = useState(false);
+  const [pendingApproval, setPendingApproval] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  async function sendCode(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setDeactivated(false);
-    setDevOtp(null);
+    setPendingApproval(false);
     setLoading(true);
     try {
-      const res = await fetch("/api/public/employees/access/send-code", {
+      const res = await fetch("/api/public/employees/access/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username }),
+        body: JSON.stringify({ username: email, password }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -33,31 +32,12 @@ export default function EmployeeExistingAccessPage() {
           setError(data.error ?? "Your account has been deactivated. Please contact admin.");
           return;
         }
-        setError(data.error ?? "Could not send code");
-        return;
-      }
-      if (typeof data.devOtp === "string") setDevOtp(data.devOtp);
-      setStep(2);
-    } catch {
-      setError("Network error");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function verify(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-    try {
-      const res = await fetch("/api/public/employees/access/verify-code", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, code }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Verification failed");
+        if (data.pendingApproval) {
+          setPendingApproval(true);
+          setError(data.error ?? "Your account is pending administrator approval.");
+          return;
+        }
+        setError(data.error ?? "Could not sign in");
         return;
       }
       window.location.href = data.redirect ?? "/employee-access";
@@ -76,98 +56,56 @@ export default function EmployeeExistingAccessPage() {
             ← Back to employee access
           </Link>
           <h1 className="mt-5 text-2xl font-bold tracking-tight text-[var(--color-text-primary)] sm:text-3xl">
-            {step === 1 ? "Welcome back" : "Enter your code"}
+            Welcome back
           </h1>
-          <p className="mt-2 text-sm leading-relaxed text-slate-600">
-            {step === 1
-              ? "Enter your username. We will send a one-time code to your contact email on file."
-              : "Enter the 6-digit code we generated for your account."}
+          <p className="mt-2 text-sm leading-relaxed text-[var(--color-text-muted)]">
+            Sign in with the email and password you used when registering.
           </p>
         </div>
 
         <Card className="w-full max-w-md shadow-[var(--shadow-card)]">
-          {step === 1 ? (
-            <form onSubmit={sendCode} className="space-y-5">
-              {error && (
-                <div className={deactivated ? "alert-warn" : "alert-error"} role="alert">
-                  {error}
-                </div>
-              )}
-              <div>
-                <label className="label-field" htmlFor="ex-username">
-                  Username
-                </label>
-                <input
-                  id="ex-username"
-                  type="text"
-                  autoComplete="username"
-                  required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="input-field mt-1.5 font-mono"
-                  placeholder="jane.doe@acme.local"
-                />
+          <form onSubmit={onSubmit} className="space-y-5">
+            {error && (
+              <div className={deactivated || pendingApproval ? "alert-warn" : "alert-error"} role="alert">
+                {error}
               </div>
-              <Button type="submit" className="h-11 w-full" disabled={loading}>
-                {loading ? "Sending…" : "Send code"}
-              </Button>
-            </form>
-          ) : (
-            <form onSubmit={verify} className="space-y-5">
-              {devOtp && (
-                <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-950">
-                  <p className="font-semibold">Your one-time code is: {devOtp}</p>
-                  <p className="mt-1 text-xs text-violet-900/90">
-                    (In production this would be emailed to your contact email on file.)
-                  </p>
-                </div>
-              )}
-              {error && (
-                <div className="alert-error" role="alert">
-                  {error}
-                </div>
-              )}
-              <div>
-                <label className="label-field" htmlFor="ex-code">
-                  One-time code
-                </label>
-                <input
-                  id="ex-code"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  maxLength={6}
-                  required
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  className="input-field mt-1.5 font-mono tracking-widest"
-                  placeholder="000000"
-                />
-              </div>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="h-11 flex-1"
-                  disabled={loading}
-                  onClick={() => {
-                    setStep(1);
-                    setCode("");
-                    setError(null);
-                    setDevOtp(null);
-                  }}
-                >
-                  Back
-                </Button>
-                <Button type="submit" className="h-11 flex-1" disabled={loading}>
-                  {loading ? "Verifying…" : "Verify"}
-                </Button>
-              </div>
-            </form>
-          )}
-          <p className="mt-6 border-t border-[var(--color-accent-tint)] pt-5 text-center text-xs text-slate-500">
+            )}
+            <div>
+              <label className="label-field" htmlFor="ex-email">
+                Email
+              </label>
+              <input
+                id="ex-email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="input-field mt-1.5"
+              />
+            </div>
+            <div>
+              <label className="label-field" htmlFor="ex-password">
+                Password
+              </label>
+              <input
+                id="ex-password"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="input-field mt-1.5"
+              />
+            </div>
+            <Button type="submit" className="h-11 w-full" disabled={loading}>
+              {loading ? "Signing in…" : "Sign in"}
+            </Button>
+          </form>
+          <p className="mt-6 border-t border-[var(--color-border)] pt-5 text-center text-xs text-[var(--color-text-muted)]">
             First visit?{" "}
             <Link href="/employee-access/register" className="link-accent font-semibold">
-              Create your Employee ID
+              Create your account
             </Link>
           </p>
         </Card>

@@ -4,15 +4,18 @@ import { requireStaff } from "@/lib/api-auth";
 import { PayPeriodStatus, TimesheetStatus } from "@/lib/enums";
 import { isMainAdminRole } from "@/lib/roles";
 import { employeeWhereForStaff, payslipWhereForStaff, timesheetWhereForStaff } from "@/lib/manager-scope";
+import { auditLogWhereForCompany } from "@/lib/audit-log-scope";
+import { requireStaffCompanyId } from "@/lib/pay-period-company";
 import type { Prisma } from "@prisma/client";
 
 export async function GET() {
   try {
     const session = await requireStaff();
+    const companyId = requireStaffCompanyId(session);
     const isMainAdmin = isMainAdminRole(session.role);
-    const empExtra = employeeWhereForStaff(session);
-    const tsExtra: Prisma.TimesheetWhereInput = timesheetWhereForStaff(session);
-    const payslipExtra: Prisma.PayslipWhereInput = payslipWhereForStaff(session);
+    const empExtra = await employeeWhereForStaff(session);
+    const tsExtra: Prisma.TimesheetWhereInput = await timesheetWhereForStaff(session);
+    const payslipExtra: Prisma.PayslipWhereInput = await payslipWhereForStaff(session);
 
     const employeeBase: Prisma.EmployeeWhereInput = {
       deletedAt: null,
@@ -39,14 +42,14 @@ export async function GET() {
       currentPayPeriod,
     ] = await Promise.all([
       prisma.employee.count({ where: employeeBase }),
-      prisma.payPeriod.count({ where: { status: PayPeriodStatus.OPEN } }),
+      prisma.payPeriod.count({ where: { companyId, status: PayPeriodStatus.OPEN } }),
       prisma.timesheet.count({ where: tsMerge({ status: TimesheetStatus.PENDING }) }),
       prisma.timesheet.count({ where: tsMerge({ status: TimesheetStatus.APPROVED }) }),
       prisma.payslip.count({ where: payslipExtra }),
       prisma.timesheet.count({ where: tsMerge({ status: TimesheetStatus.UNDER_REVIEW }) }),
       prisma.employee.count({ where: pendingEmployeeWhere }),
       prisma.payPeriod.findFirst({
-        where: { isCurrent: true },
+        where: { companyId, isCurrent: true },
         include: {
           _count: { select: { timesheets: true, payslips: true } },
         },
@@ -59,17 +62,6 @@ export async function GET() {
       }),
       orderBy: { submittedAt: "desc" },
       take: 6,
-      include: { employee: { include: { user: true } }, payPeriod: true },
-    });
-
-    const recentSubmissions = await prisma.timesheet.findMany({
-      where: tsMerge({
-        status: {
-          in: [TimesheetStatus.PENDING, TimesheetStatus.UNDER_REVIEW, TimesheetStatus.APPROVED],
-        },
-      }),
-      orderBy: { submittedAt: "desc" },
-      take: 8,
       include: { employee: { include: { user: true } }, payPeriod: true },
     });
 
@@ -145,10 +137,13 @@ export async function GET() {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+      const auditScope = await auditLogWhereForCompany(companyId);
+
       const [demoCount, demoItems, auditItems] = await Promise.all([
         prisma.demoRequest.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
         prisma.demoRequest.findMany({ orderBy: { createdAt: "desc" }, take: 4 }),
         prisma.auditLog.findMany({
+          where: auditScope,
           orderBy: { createdAt: "desc" },
           take: 6,
           include: { actor: { select: { name: true } } },
@@ -197,7 +192,6 @@ export async function GET() {
           }
         : null,
       timesheetsAwaitingAction,
-      recentSubmissions,
       recentApprovals,
       recentPayslips,
       payrollSummary,

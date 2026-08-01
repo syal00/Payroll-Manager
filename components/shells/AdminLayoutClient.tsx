@@ -5,12 +5,15 @@ import type { ReactNode } from "react";
 import { AdminShell } from "@/components/shells/AdminShell";
 import type { AdminShellHeader } from "@/lib/admin-header";
 
+import type { TenantBranding } from "@/lib/tenant-branding";
+
 export function AdminLayoutClient({
   userName,
   userEmail,
   header,
   isMainAdmin,
   superAdminActing,
+  tenantBranding,
   children,
 }: {
   userName: string;
@@ -18,6 +21,7 @@ export function AdminLayoutClient({
   header?: AdminShellHeader;
   isMainAdmin: boolean;
   superAdminActing?: { companyId: string; companyName: string };
+  tenantBranding?: TenantBranding;
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -34,6 +38,7 @@ export function AdminLayoutClient({
       header={header ?? undefined}
       isMainAdmin={isMainAdmin}
       superAdminActing={superAdminActing}
+      tenantBranding={tenantBranding}
     >
       {children}
     </AdminShell>

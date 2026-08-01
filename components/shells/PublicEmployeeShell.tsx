@@ -14,8 +14,18 @@ import {
   Search,
 } from "lucide-react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { DEFAULT_BRAND_NAME } from "@/lib/brand";
 import { useState, type ReactNode, useMemo } from "react";
+
+function employeeInitials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+}
 
 export function PublicEmployeeShell({
   employeeId,
@@ -57,6 +67,8 @@ export function PublicEmployeeShell({
     { href: `${base}/profile`, label: "Profile", icon: User },
   ];
 
+  const initials = useMemo(() => employeeInitials(displayName) || "E", [displayName]);
+
   const navContent = (
     <>
       <p className="sidebar-section-label">Workspace</p>
@@ -74,7 +86,9 @@ export function PublicEmployeeShell({
               onClick={() => setOpen(false)}
               className={`sidebar-item ${isActive ? "active" : ""}`}
             >
-              <Icon className="nav-icon" aria-hidden />
+              <span className="nav-icon-wrap">
+                <Icon className="nav-icon" aria-hidden strokeWidth={2} />
+              </span>
               <span className="sidebar-item-label">{label}</span>
             </Link>
           );
@@ -83,39 +97,47 @@ export function PublicEmployeeShell({
     </>
   );
 
+  const sidebarFooter = (
+    <div className="sidebar-footer employee-sidebar-footer">
+      <div className="sidebar-footer-user">
+        <span className="sidebar-footer-avatar" aria-hidden>
+          {initials}
+        </span>
+        <div className="sidebar-footer-text min-w-0 flex-1">
+          <p className="sidebar-footer-name">{displayName}</p>
+          <p className="sidebar-footer-role">Employee portal</p>
+        </div>
+      </div>
+      <Link
+        href="/employee-access"
+        className="employee-switch-link"
+        onClick={() => setOpen(false)}
+      >
+        <Users className="h-4 w-4 shrink-0" aria-hidden strokeWidth={2} />
+        <span>Switch employee</span>
+      </Link>
+    </div>
+  );
+
   return (
-    <div className="root-layout">
-      <aside className="sidebar relative hidden md:flex">
-        <div className="relative z-10 w-full shrink-0">
-          <div className="sidebar-logo-area">
+    <div className="root-layout employee-portal">
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <div className="sidebar-logo min-w-0 flex-1">
             <BrandLogo
               size={38}
               showText={false}
               wrapperClassName="shrink-0"
               imageClassName="brand-logo-img sidebar-logo-img"
             />
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0">
               <div className="sidebar-logo-text leading-tight">{brand}</div>
-              <div className="sidebar-brand-sub mt-1 text-[11px] font-medium leading-snug text-[var(--color-text-muted)]">
-                My Dashboard
-              </div>
+              <div className="sidebar-brand-sub mt-0.5">My Dashboard</div>
             </div>
           </div>
         </div>
-        <div className="relative z-10 flex min-h-0 w-full flex-1 flex-col px-0">{navContent}</div>
-        <div className="relative z-10 mt-auto flex w-full flex-col gap-1 border-t border-[var(--color-border)] px-3 py-3">
-          <p className="sidebar-user-name truncate px-1 text-[13px] font-semibold text-[var(--color-text-primary)]">
-            {displayName}
-          </p>
-          <Link
-            href="/employee-access"
-            className="sidebar-item border-0 bg-transparent"
-            onClick={() => setOpen(false)}
-          >
-            <Users className="nav-icon" aria-hidden />
-            <span className="sidebar-item-label">Switch employee</span>
-          </Link>
-        </div>
+        <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden">{navContent}</div>
+        {sidebarFooter}
       </aside>
 
       <div className="main-wrapper">
@@ -124,7 +146,9 @@ export function PublicEmployeeShell({
             <span className="topbar-greeting topbar-greeting-mobile truncate text-sm font-semibold">{brand}</span>
             <span className="topbar-date truncate text-xs text-[var(--color-text-muted)]">{displayName}</span>
           </div>
-          <button
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <button
             type="button"
             className="icon-btn border-0"
             aria-label={open ? "Close menu" : "Open menu"}
@@ -133,6 +157,7 @@ export function PublicEmployeeShell({
           >
             {open ? <X className="h-5 w-5" strokeWidth={2} /> : <Menu className="h-5 w-5" strokeWidth={2} />}
           </button>
+          </div>
         </header>
 
         <header className="topbar topbar-slim hidden md:flex lg:hidden">
@@ -140,6 +165,9 @@ export function PublicEmployeeShell({
             <span className="topbar-greeting truncate text-sm font-semibold">
               {greetingPhrase}, {displayName.split(/\s+/)[0] ?? displayName}
             </span>
+          </div>
+          <div className="topbar-right">
+            <ThemeToggle />
           </div>
         </header>
 
@@ -154,7 +182,9 @@ export function PublicEmployeeShell({
             <Search className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" aria-hidden />
             <input type="search" readOnly placeholder="Search…" tabIndex={-1} aria-label="Search placeholder" />
           </div>
-          <div className="topbar-right" />
+          <div className="topbar-right">
+            <ThemeToggle />
+          </div>
         </header>
 
         {open ? (
@@ -169,7 +199,7 @@ export function PublicEmployeeShell({
                     wrapperClassName="shrink-0"
                     imageClassName="brand-logo-img sidebar-logo-img"
                   />
-                  <span className="truncate font-display text-[15px] font-extrabold uppercase tracking-[1.4px] text-white">
+                  <span className="truncate font-display text-[15px] font-extrabold uppercase tracking-[1.4px] text-[var(--color-sidebar-text)]">
                     {brand}
                   </span>
                 </div>
@@ -177,18 +207,8 @@ export function PublicEmployeeShell({
                   <X className="h-5 w-5" />
                 </button>
               </div>
-              <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-0">{navContent}</div>
-              <div className="border-t border-[var(--color-border)] px-4 py-4">
-                <p className="text-sm font-semibold text-[var(--color-text-primary)]">{displayName}</p>
-                <Link
-                  href="/employee-access"
-                  className="sidebar-item mt-2 border-0 bg-transparent px-2"
-                  onClick={() => setOpen(false)}
-                >
-                  <Users className="nav-icon" aria-hidden />
-                  <span className="sidebar-item-label">Switch employee</span>
-                </Link>
-              </div>
+              <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">{navContent}</div>
+              {sidebarFooter}
             </aside>
           </div>
         ) : null}

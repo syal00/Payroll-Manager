@@ -20,7 +20,7 @@ export async function GET(req: Request) {
     const session = await requireStaff();
     const url = new URL(req.url);
     const q = querySchema.parse(Object.fromEntries(url.searchParams.entries()));
-    const staffScope = timesheetWhereForStaff(session);
+    const staffScope = await timesheetWhereForStaff(session);
     const parts: Prisma.TimesheetWhereInput[] = [];
     if (Object.keys(staffScope).length > 0) parts.push(staffScope);
     if (q.payPeriodId) parts.push({ payPeriodId: q.payPeriodId });
@@ -30,11 +30,11 @@ export async function GET(req: Request) {
       parts.push({
         employee: {
           OR: [
-            { name: { contains: term } },
-            { username: { contains: term } },
-            { contactEmail: { contains: term } },
-            { employeeCode: { contains: term } },
-            { user: { name: { contains: term } } },
+            { name: { contains: term, mode: "insensitive" } },
+            { username: { contains: term, mode: "insensitive" } },
+            { contactEmail: { contains: term, mode: "insensitive" } },
+            { employeeCode: { contains: term, mode: "insensitive" } },
+            { user: { name: { contains: term, mode: "insensitive" } } },
           ],
         },
       });

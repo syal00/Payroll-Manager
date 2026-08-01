@@ -10,7 +10,7 @@ export async function findEmployeeByCodeAnyStatus(employeeCode: string) {
   });
 }
 
-/** Active employees only — public APIs and portal access. */
+/** Active, admin-approved employees only — public APIs and portal access. */
 export async function getPublicEmployeeByCode(employeeCode: string) {
   const code = normalizeEmployeeCode(employeeCode);
   return prisma.employee.findFirst({

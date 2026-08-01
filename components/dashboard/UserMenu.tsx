@@ -3,14 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, LogOut, Settings, UserCircle } from "lucide-react";
+import type { TenantBranding } from "@/lib/tenant-branding";
+import { tenantInitials } from "@/lib/tenant-branding";
 
 export function UserMenu({
   userName,
   emailHint,
+  tenantBranding,
   onLogout,
 }: {
   userName: string;
   emailHint?: string;
+  tenantBranding?: TenantBranding;
   onLogout: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -26,12 +30,16 @@ export function UserMenu({
     }
   }, [open]);
 
-  const initials = userName
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase())
-    .join("");
+  const displayTitle = tenantBranding?.name ?? userName;
+  const displaySubtitle = tenantBranding ? userName : emailHint;
+  const initials = tenantBranding
+    ? tenantInitials(tenantBranding.name)
+    : userName
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((p) => p[0]?.toUpperCase())
+        .join("");
 
   return (
     <div className="relative" ref={menuRef}>
@@ -42,12 +50,21 @@ export function UserMenu({
         onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-2 rounded-xl border border-[var(--elite-border)] bg-[var(--elite-surface)] px-2 py-1.5 pl-3 pr-2 text-left transition hover:border-[var(--elite-accent-tint)] hover:bg-[var(--elite-accent-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--elite-accent)] focus-visible:outline-offset-2"
       >
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--elite-accent)] text-xs font-bold text-white">
-          {initials || "A"}
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--elite-accent)] text-xs font-bold text-white">
+          {tenantBranding?.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={tenantBranding.logoUrl} alt="" className="h-full w-full object-cover" />
+          ) : (
+            initials || "A"
+          )}
         </span>
         <span className="hidden min-w-0 text-left md:block">
-          <span className="block truncate text-[13px] font-semibold text-[var(--color-text-primary)]">{userName}</span>
-          {emailHint ? <span className="block truncate text-[11px] text-[var(--color-text-muted)]">{emailHint}</span> : null}
+          <span className="block truncate text-[13px] font-semibold text-[var(--color-text-primary)]">
+            {displayTitle}
+          </span>
+          {displaySubtitle ? (
+            <span className="block truncate text-[11px] text-[var(--color-text-muted)]">{displaySubtitle}</span>
+          ) : null}
         </span>
         <ChevronDown
           className={`h-4 w-4 shrink-0 text-[var(--color-text-muted)] transition ${open ? "rotate-180" : ""}`}

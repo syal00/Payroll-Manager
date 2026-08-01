@@ -5,7 +5,6 @@ import { Copy, Loader2 } from "lucide-react";
 import { z } from "zod";
 import { formatCompanySubdomain } from "@/lib/company-subdomain-display";
 import { slugFromCompanyName } from "@/lib/company-slug";
-import { buildCompanyLoginEmail } from "@/lib/company-login-email";
 import { DEFAULT_INITIAL_STAFF_PASSWORD } from "@/lib/default-staff-password";
 import {
   COMPANY_TIMEZONE_OPTIONS,
@@ -179,13 +178,6 @@ export function CreateCompanyModal({
     return isValidWebsiteUrl(websiteUrl) ? null : "Enter a valid website URL.";
   }, [websiteUrl]);
 
-  const adminFirstName = useMemo(() => adminName.trim().split(/\s+/)[0] ?? "", [adminName]);
-
-  const companyLoginPreview = useMemo(() => {
-    if (!includeAdmin || !adminFirstName || !slug.trim()) return "";
-    return buildCompanyLoginEmail(adminRole, adminFirstName, slug.trim());
-  }, [includeAdmin, adminRole, adminFirstName, slug]);
-
   const slugReady = slugStatus === "available";
   const canProceedForm =
     name.trim().length > 0 &&
@@ -286,8 +278,7 @@ export function CreateCompanyModal({
         "",
         `Initial ${roleLabel.toLowerCase()}:`,
         `  Name: ${success.initialAdmin.name}`,
-        `  Company login: ${success.initialAdmin.username}`,
-        `  Personal email: ${success.initialAdmin.contactEmail}`,
+        `  Sign-in email: ${success.initialAdmin.contactEmail}`,
         `  Temporary password: ${success.initialAdmin.password}`,
         success.initialAdmin.welcomeEmailSent
           ? "  Welcome email: sent to personal email"
@@ -374,14 +365,10 @@ export function CreateCompanyModal({
               {success.initialAdmin ? (
                 <dl className="mt-3 space-y-1 text-[var(--sa-text)]">
                   <div>
-                    <dt className="text-xs text-[var(--sa-muted)]">Company login</dt>
+                    <dt className="text-xs text-[var(--sa-muted)]">Sign-in email</dt>
                     <dd>
-                      <code className="sa-mono text-[var(--sa-accent)]">{success.initialAdmin.username}</code>
+                      <code className="sa-mono text-[var(--sa-accent)]">{success.initialAdmin.contactEmail}</code>
                     </dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs text-[var(--sa-muted)]">Personal email</dt>
-                    <dd>{success.initialAdmin.contactEmail}</dd>
                   </div>
                   <div>
                     <dt className="text-xs text-[var(--sa-muted)]">Temporary password</dt>
@@ -477,8 +464,8 @@ export function CreateCompanyModal({
                 {includeAdmin ? (
                   <li>
                     Initial {adminRole === "MANAGER" ? "manager" : "main admin"}{" "}
-                    <strong>{adminName.trim()}</strong> — company login{" "}
-                    <code className="sa-mono">{companyLoginPreview || "…"}</code>, welcome email to{" "}
+                    <strong>{adminName.trim()}</strong> — sign-in email{" "}
+                    <code className="sa-mono">{adminContactEmail.trim() || "…"}</code>, welcome email to{" "}
                     {adminContactEmail.trim()}
                   </li>
                 ) : (
@@ -605,7 +592,7 @@ export function CreateCompanyModal({
                   onChange={(e) => setPayPeriodType(e.target.value as PayPeriodProvisionType)}
                 >
                   <option value="biweekly">Bi-weekly (14 days, starting today)</option>
-                  <option value="custom">Custom 14-day window</option>
+                  <option value="custom">Custom date range</option>
                 </select>
               </div>
             </div>
@@ -686,7 +673,7 @@ export function CreateCompanyModal({
                   </div>
                   <div>
                     <label className="sa-label" htmlFor="co-admin-email">
-                      Personal email
+                      Contact email
                     </label>
                     <input
                       id="co-admin-email"
@@ -702,15 +689,9 @@ export function CreateCompanyModal({
                       <code className="sa-mono">.env</code>.
                     </p>
                     {adminContactEmail.trim() && emailValid === false ? (
-                      <p className="sa-hint-error mt-1 text-xs">Enter a valid personal email address.</p>
+                      <p className="sa-hint-error mt-1 text-xs">Enter a valid email address.</p>
                     ) : null}
                   </div>
-                  {companyLoginPreview ? (
-                    <div className="rounded-md border border-[var(--sa-border)] bg-[var(--sa-surface-raised)] px-3 py-2">
-                      <p className="text-xs font-semibold text-[var(--sa-muted)]">Company login (username)</p>
-                      <code className="sa-mono text-sm text-[var(--sa-accent)]">{companyLoginPreview}</code>
-                    </div>
-                  ) : null}
                   <div>
                     <label className="sa-label" htmlFor="co-admin-pass">
                       Temporary password

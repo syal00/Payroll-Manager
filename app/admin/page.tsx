@@ -1,20 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { staggerContainer } from "@/lib/motion";
 import { Users, ClipboardClock, Timer, Wallet, RefreshCw } from "lucide-react";
 import { DashboardMetricCard } from "@/components/dashboard/DashboardMetricCard";
 import { PayrollSummaryStackedChart } from "@/components/dashboard/DashboardCharts";
-import { DashboardQuickActions } from "@/components/dashboard/DashboardQuickActions";
 import { DashboardPayPeriodCard } from "@/components/dashboard/DashboardPayPeriodCard";
 import { DashboardPendingQueue } from "@/components/dashboard/DashboardPendingQueue";
+import { DashboardPayPeriodPayouts } from "@/components/dashboard/DashboardPayPeriodPayouts";
 import { DashboardRecentPayslips } from "@/components/dashboard/DashboardRecentPayslips";
 import { DashboardActivityPanel } from "@/components/dashboard/DashboardActivityPanel";
-import { Card } from "@/components/ui/Card";
-import { TimesheetStatusBadge } from "@/components/status-badges";
-import { shortDate } from "@/lib/format";
 import { ADMIN_STATS_REFRESH_EVENT } from "@/lib/admin-stats-refresh";
 
 type Stats = {
@@ -45,14 +41,6 @@ type Stats = {
     submittedAt: string | null;
     employee: { name: string; employeeCode: string };
   }[];
-  recentSubmissions: {
-    id: string;
-    status: string;
-    totalHours?: number;
-    submittedAt: string | null;
-    employee: { name: string; employeeCode: string; user: { name: string } | null };
-    payPeriod: { name: string | null; startDate: string; endDate: string };
-  }[];
   recentApprovals: {
     id: string;
     newStatus: string;
@@ -67,13 +55,6 @@ type Stats = {
     createdAt: string;
     employee: { name: string };
     payPeriod: { name: string | null };
-  }[];
-  recentDemoRequests: {
-    id: string;
-    name: string;
-    email: string;
-    company: string | null;
-    createdAt: string;
   }[];
   recentAuditLogs: {
     id: string;
@@ -129,7 +110,7 @@ export default function AdminDashboardPage() {
 
   if (err) {
     return (
-      <div className="page-container">
+      <div className="admin-dashboard page-container">
         <div className="alert-error max-w-xl rounded-xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm">{err}</div>
       </div>
     );
@@ -137,16 +118,15 @@ export default function AdminDashboardPage() {
 
   if (!data) {
     return (
-      <div className="page-container space-y-6">
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="admin-dashboard page-container space-y-8">
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="skeleton skeleton-card min-h-[148px] rounded-xl" />
+            <div key={i} className="skeleton skeleton-card min-h-[88px] rounded-2xl" />
           ))}
         </div>
-        <div className="skeleton skeleton-card min-h-[100px] rounded-xl" />
-        <div className="grid gap-6 lg:grid-cols-2">
-          <div className="skeleton skeleton-card min-h-[360px] rounded-xl" />
-          <div className="skeleton skeleton-card min-h-[360px] rounded-xl" />
+        <div className="grid gap-6 xl:grid-cols-12">
+          <div className="skeleton skeleton-card min-h-[320px] rounded-2xl xl:col-span-8" />
+          <div className="skeleton skeleton-card min-h-[320px] rounded-2xl xl:col-span-4" />
         </div>
       </div>
     );
@@ -156,16 +136,16 @@ export default function AdminDashboardPage() {
 
   const cards = [
     {
-      label: "Total Employees",
+      label: "Employees",
       value: data.totalEmployees,
       href: "/admin/employees",
       icon: Users,
-      trend: data.pendingEmployeeApprovals > 0 ? `${data.pendingEmployeeApprovals} pending signup` : `${data.openPayPeriods} open periods`,
+      trend: data.pendingEmployeeApprovals > 0 ? `${data.pendingEmployeeApprovals} pending signup` : undefined,
       trendUp: data.pendingEmployeeApprovals === 0,
       iconVariant: "primary" as const,
     },
     {
-      label: "Payroll Run",
+      label: "Payslips issued",
       value: data.generatedPayslips,
       href: "/admin/payslips",
       icon: Wallet,
@@ -174,32 +154,35 @@ export default function AdminDashboardPage() {
       iconVariant: "success" as const,
     },
     {
-      label: "Hours Logged",
+      label: "Approved timesheets",
       value: data.approvedSubmissions,
       href: "/admin/review",
       icon: Timer,
-      trend: `${data.underReviewSubmissions} under review`,
+      trend: data.underReviewSubmissions > 0 ? `${data.underReviewSubmissions} in review` : undefined,
       trendUp: data.underReviewSubmissions === 0,
       iconVariant: "success" as const,
     },
     {
-      label: "Pending Approvals",
+      label: "Needs approval",
       value: pendingTotal,
-      href: "/admin/timesheets",
+      href: "/admin/review",
       icon: ClipboardClock,
-      trend: pendingTotal > 0 ? "Action required" : "All clear",
+      trend: pendingTotal > 0 ? "Review queue" : "All clear",
       trendUp: pendingTotal === 0,
       iconVariant: "warning" as const,
     },
   ];
 
   return (
-    <div className="page-container space-y-6">
-      <div className="flex items-center justify-between gap-4">
+    <div className="admin-dashboard page-container space-y-8 pb-10">
+      <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-[var(--elite-heading)]">Dashboard</h1>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">
-            Overview of payroll operations and pending work.
+          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">Overview</p>
+          <h1 className="mt-1 font-[family-name:var(--font-heading)] text-2xl font-semibold tracking-tight text-[var(--elite-heading)] sm:text-[1.75rem]">
+            Dashboard
+          </h1>
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-[var(--text-muted)]">
+            Payroll operations at a glance — focus on what needs attention first.
           </p>
         </div>
         <button
@@ -211,10 +194,10 @@ export default function AdminDashboardPage() {
         >
           <RefreshCw className={`h-[18px] w-[18px] ${statsRefreshing ? "animate-spin" : ""}`} strokeWidth={2} />
         </button>
-      </div>
+      </header>
 
       <motion.div
-        className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+        className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4"
         variants={reduceMotion ? undefined : staggerContainer}
         initial={reduceMotion ? false : "hidden"}
         animate={reduceMotion ? false : "visible"}
@@ -224,102 +207,35 @@ export default function AdminDashboardPage() {
         ))}
       </motion.div>
 
-      <DashboardQuickActions
-        pendingSubmissions={pendingTotal}
-        pendingEmployeeApprovals={data.pendingEmployeeApprovals}
-        demoRequestCount={data.demoRequestCount ?? 0}
-        isMainAdmin={data.isMainAdmin}
-      />
-
       {data.currentPayPeriod ? <DashboardPayPeriodCard period={data.currentPayPeriod} /> : null}
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="ui-panel !rounded-xl !border-[var(--elite-border)] !shadow-sm">
-          <div className="card-header !mb-0 flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h2 className="card-heading text-base text-[var(--elite-heading)]">Recent timesheets</h2>
-              <p className="card-subtitle">Latest employee submissions</p>
-            </div>
-            <Link href="/admin/timesheets" className="link-accent shrink-0 text-sm font-semibold">
-              View all →
-            </Link>
-          </div>
-          <div className="table-wrap mt-5">
-            <table className="table-shell min-w-[560px]">
-              <thead>
-                <tr className="table-head">
-                  <th className="px-4 py-3">Employee ID</th>
-                  <th className="px-4 py-3">Name</th>
-                  <th className="px-4 py-3">Submission Date</th>
-                  <th className="px-4 py-3">Total Hours</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.recentSubmissions.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-4 py-12 text-center">
-                      <p className="text-sm font-semibold text-[var(--elite-heading)]">No recent submissions</p>
-                      <p className="mt-1 text-xs text-[var(--text-muted)]">
-                        Employee timesheets will appear here as they are submitted.
-                      </p>
-                    </td>
-                  </tr>
-                ) : (
-                  data.recentSubmissions.map((row) => (
-                    <tr key={row.id} className="table-row table-row-muted">
-                      <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-[var(--text-muted)]">
-                        {row.employee.employeeCode}
-                      </td>
-                      <td className="px-4 py-3 font-medium text-[var(--elite-text)]">{row.employee.name}</td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm text-[var(--text-muted)]">
-                        {row.submittedAt ? shortDate(row.submittedAt) : "—"}
-                      </td>
-                      <td className="table-num px-4 py-3 text-[var(--text-muted)]">
-                        {typeof row.totalHours === "number" ? `${row.totalHours}h` : "—"}
-                      </td>
-                      <td className="px-4 py-3">
-                        <TimesheetStatusBadge status={row.status} />
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <Link
-                          href={`/admin/timesheets/${row.id}`}
-                          className="inline-flex rounded-lg px-3 py-1.5 text-xs font-semibold text-[var(--elite-accent)] hover:bg-[var(--elite-accent-soft)]"
-                        >
-                          Open
-                        </Link>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-
-        <Card className="ui-panel !rounded-xl !border-[var(--elite-border)] !shadow-sm">
-          <div className="card-header !mb-1">
-            <div>
-              <h2 className="card-heading text-base text-[var(--elite-heading)]">Payroll summary</h2>
-              <p className="card-subtitle">Gross, deductions, and net pay by period</p>
-            </div>
+      <div className="grid gap-6 xl:grid-cols-12 xl:items-start">
+        <section className="ui-panel dash-panel rounded-2xl border border-[var(--elite-border)] bg-[var(--elite-surface)] p-5 shadow-sm xl:col-span-8">
+          <div className="mb-1">
+            <h2 className="text-base font-semibold text-[var(--elite-heading)]">Payroll summary</h2>
+            <p className="text-sm text-[var(--text-muted)]">Gross, deductions, and net by period</p>
           </div>
           <PayrollSummaryStackedChart data={data.payrollSummary ?? []} />
-        </Card>
+        </section>
+
+        <div className="xl:col-span-4">
+          <DashboardPendingQueue items={data.timesheetsAwaitingAction} />
+        </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <DashboardPendingQueue items={data.timesheetsAwaitingAction} />
-        <DashboardRecentPayslips items={data.recentPayslips} />
+      <div className="grid gap-6 xl:grid-cols-12 xl:items-start">
+        <div className="xl:col-span-7">
+          <DashboardPayPeriodPayouts defaultPayPeriodId={data.currentPayPeriod?.id ?? null} />
+        </div>
+
+        <div className="xl:col-span-5">
+          <DashboardRecentPayslips items={data.recentPayslips} />
+        </div>
       </div>
 
       <DashboardActivityPanel
         recentApprovals={data.recentApprovals}
         recentAuditLogs={data.recentAuditLogs ?? []}
-        recentDemoRequests={data.recentDemoRequests ?? []}
-        demoRequestCount={data.demoRequestCount ?? 0}
-        pendingEmployeeApprovals={data.pendingEmployeeApprovals}
         isMainAdmin={data.isMainAdmin}
       />
     </div>

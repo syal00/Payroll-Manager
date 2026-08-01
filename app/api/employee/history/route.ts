@@ -40,7 +40,13 @@ export async function GET(req: Request) {
         take: 20,
         include: { payPeriod: true },
       }),
-      prisma.payPeriod.findMany({ orderBy: { startDate: "desc" }, take: 24 }),
+      emp.companyId != null
+        ? prisma.payPeriod.findMany({
+            where: { companyId: emp.companyId },
+            orderBy: { startDate: "desc" },
+            take: 24,
+          })
+        : Promise.resolve([]),
     ]);
 
     return NextResponse.json({ timesheets, payslips, payPeriods: periods });

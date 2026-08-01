@@ -1,11 +1,14 @@
+import "server-only";
+
 import { prisma } from "@/lib/prisma";
+import { mirrorEmployeeToTargetCompany, syncEmployeeLoginAcrossMirror } from "@/lib/company-mirror";
+import { findEmployeeByContactEmailInCompany } from "@/lib/employee-lookup";
 import {
-  assertUsernameNotContactEmail,
+  loginUsernameFromContactEmail,
   normalizeContactEmail,
   splitDisplayName,
-  validateEmailDeliverableOrThrow,
-} from "@/lib/email-deliverable";
-import { generateUsername } from "@/lib/username-generator";
+} from "@/lib/display-name";
+import { validateEmailDeliverableOrThrow } from "@/lib/email-deliverable";
 
 type CreateStaffUserInput = {
   firstName: string;
@@ -17,35 +20,21 @@ type CreateStaffUserInput = {
   name?: string;
   createdById?: string | null;
   mustChangePassword?: boolean;
-  /** When set (e.g. manager@rakesh-ironwatch.com), used instead of auto-generated username. */
   username?: string;
 };
 
 export async function createStaffUser(input: CreateStaffUserInput) {
   const contactEmail = await validateEmailDeliverableOrThrow(input.contactEmail);
   const name = input.name?.trim() || `${input.firstName.trim()} ${input.lastName.trim()}`.trim();
-
-  let companySlug = "platform";
-  if (input.companyId) {
-    const company = await prisma.company.findUnique({
-      where: { id: input.companyId },
-      select: { slug: true },
-    });
-    if (!company) throw new Error("Company not found");
-    companySlug = company.slug;
-  }
-
   const username =
-    input.username?.trim().toLowerCase() ??
-    (await generateUsername(input.firstName, input.lastName, companySlug));
-  assertUsernameNotContactEmail(username, contactEmail);
+    input.username?.trim().toLowerCase() ?? loginUsernameFromContactEmail(contactEmail);
 
   const existingUsername = await prisma.user.findUnique({
     where: { username },
     select: { id: true },
   });
   if (existingUsername) {
-    throw new Error("An account with this company login already exists.");
+    throw new Error("An account with this email already exists.");
   }
 
   const existingContact = await prisma.user.findUnique({
@@ -86,35 +75,247 @@ type CreateEmployeeProfileInput = {
   companyId: string | null;
   employeeCode: string;
   isApproved?: boolean;
+  emailVerified?: boolean;
   hourlyRate?: number;
   overtimeRate?: number;
 };
 
+type CreateSelfRegisteredEmployeeInput = {
+  firstName: string;
+  lastName: string;
+  contactEmail: string;
+  passwordHash: string;
+  companyId: string | null;
+  employeeCode: string;
+};
+
+const employeeResultSelect = {
+  id: true,
+  employeeCode: true,
+  username: true,
+  contactEmail: true,
+  name: true,
+  isApproved: true,
+} as const;
+
+/** Self-service registration: linked User (password) + pending Employee profile in one company. */
+export async function createSelfRegisteredEmployee(input: CreateSelfRegisteredEmployeeInput) {
+  const contactEmail = await validateEmailDeliverableOrThrow(input.contactEmail);
+  const name = `${input.firstName.trim()} ${input.lastName.trim()}`.trim();
+  const username = loginUsernameFromContactEmail(contactEmail);
+  const companyId = input.companyId;
+
+  if (!companyId) {
+    throw new Error("Company is required for employee registration.");
+  }
+
+  const existingEmployee = await findEmployeeByContactEmailInCompany(contactEmail, companyId);
+
+  if (existingEmployee?.deletedAt) {
+    throw new Error("DEACTIVATED");
+  }
+
+  if (existingEmployee?.isApproved && existingEmployee.userId) {
+    throw new Error("ALREADY_REGISTERED");
+  }
+
+  if (existingEmployee?.isApproved && !existingEmployee.userId) {
+    const existingUser = await prisma.user.findUnique({
+      where: { contactEmail },
+      select: { id: true, role: true },
+    });
+    if (existingUser && existingUser.role !== "EMPLOYEE") {
+      throw new Error("ADMIN_EMAIL_IN_USE");
+    }
+
+    if (existingUser) {
+      await prisma.$transaction([
+        prisma.user.update({
+          where: { id: existingUser.id },
+          data: { passwordHash: input.passwordHash, name },
+        }),
+        prisma.employee.update({
+          where: { id: existingEmployee.id },
+          data: { userId: existingUser.id, name, emailVerified: true },
+        }),
+      ]);
+      await syncEmployeeLoginAcrossMirror(existingEmployee.id, existingUser.id);
+    } else {
+      const user = await prisma.$transaction(async (tx) => {
+        const createdUser = await tx.user.create({
+          data: {
+            username,
+            contactEmail,
+            passwordHash: input.passwordHash,
+            name,
+            role: "EMPLOYEE",
+            companyId,
+          },
+          select: { id: true },
+        });
+        await tx.employee.update({
+          where: { id: existingEmployee.id },
+          data: { userId: createdUser.id, name, emailVerified: true },
+        });
+        return createdUser;
+      });
+      await syncEmployeeLoginAcrossMirror(existingEmployee.id, user.id);
+    }
+
+    await mirrorEmployeeToTargetCompany(existingEmployee.id);
+    return {
+      id: existingEmployee.id,
+      employeeCode: existingEmployee.employeeCode,
+      username: existingEmployee.username,
+      contactEmail,
+      name,
+      isApproved: true,
+    };
+  }
+
+  if (existingEmployee && !existingEmployee.isApproved) {
+    if (existingEmployee.userId) {
+      await prisma.$transaction([
+        prisma.user.update({
+          where: { id: existingEmployee.userId },
+          data: { passwordHash: input.passwordHash, name },
+        }),
+        prisma.employee.update({
+          where: { id: existingEmployee.id },
+          data: { name, emailVerified: true },
+        }),
+      ]);
+    } else {
+      const existingUser = await prisma.user.findUnique({
+        where: { contactEmail },
+        select: { id: true, role: true },
+      });
+
+      if (existingUser) {
+        if (existingUser.role !== "EMPLOYEE") {
+          throw new Error("ADMIN_EMAIL_IN_USE");
+        }
+        await prisma.$transaction([
+          prisma.user.update({
+            where: { id: existingUser.id },
+            data: { passwordHash: input.passwordHash, name },
+          }),
+          prisma.employee.update({
+            where: { id: existingEmployee.id },
+            data: { userId: existingUser.id, name, emailVerified: true },
+          }),
+        ]);
+      } else {
+        await prisma.$transaction(async (tx) => {
+          const user = await tx.user.create({
+            data: {
+              username,
+              contactEmail,
+              passwordHash: input.passwordHash,
+              name,
+              role: "EMPLOYEE",
+              companyId,
+            },
+            select: { id: true },
+          });
+          await tx.employee.update({
+            where: { id: existingEmployee.id },
+            data: { userId: user.id, name, emailVerified: true },
+          });
+        });
+      }
+    }
+
+    await mirrorEmployeeToTargetCompany(existingEmployee.id);
+    return {
+      id: existingEmployee.id,
+      employeeCode: existingEmployee.employeeCode,
+      username: existingEmployee.username,
+      contactEmail,
+      name,
+      isApproved: false,
+    };
+  }
+
+  const existingUser = await prisma.user.findUnique({
+    where: { contactEmail },
+    select: { id: true, role: true },
+  });
+
+  if (existingUser && existingUser.role !== "EMPLOYEE") {
+    throw new Error("ADMIN_EMAIL_IN_USE");
+  }
+
+  let employee;
+  if (existingUser) {
+    employee = await prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: existingUser.id },
+        data: { passwordHash: input.passwordHash, name },
+      });
+      return tx.employee.create({
+        data: {
+          employeeCode: input.employeeCode,
+          username,
+          contactEmail,
+          name,
+          companyId,
+          userId: existingUser.id,
+          isApproved: false,
+          emailVerified: true,
+        },
+        select: employeeResultSelect,
+      });
+    });
+  } else {
+    employee = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          username,
+          contactEmail,
+          passwordHash: input.passwordHash,
+          name,
+          role: "EMPLOYEE",
+          companyId,
+        },
+        select: { id: true },
+      });
+
+      return tx.employee.create({
+        data: {
+          employeeCode: input.employeeCode,
+          username,
+          contactEmail,
+          name,
+          companyId,
+          userId: user.id,
+          isApproved: false,
+          emailVerified: true,
+        },
+        select: employeeResultSelect,
+      });
+    });
+  }
+
+  await mirrorEmployeeToTargetCompany(employee.id);
+  return employee;
+}
+
 export async function createEmployeeProfile(input: CreateEmployeeProfileInput) {
   const contactEmail = await validateEmailDeliverableOrThrow(input.contactEmail);
   const name = input.name?.trim() || `${input.firstName.trim()} ${input.lastName.trim()}`.trim();
+  const username = loginUsernameFromContactEmail(contactEmail);
 
-  let companySlug = "company";
-  if (input.companyId) {
-    const company = await prisma.company.findUnique({
-      where: { id: input.companyId },
-      select: { slug: true },
-    });
-    companySlug = company?.slug ?? companySlug;
+  if (!input.companyId) {
+    throw new Error("Company is required.");
   }
 
-  const username = await generateUsername(input.firstName, input.lastName, companySlug);
-  assertUsernameNotContactEmail(username, contactEmail);
-
-  const existingContact = await prisma.employee.findUnique({
-    where: { contactEmail },
-    select: { id: true },
-  });
+  const existingContact = await findEmployeeByContactEmailInCompany(contactEmail, input.companyId);
   if (existingContact) {
-    throw new Error("An employee profile with this contact email already exists.");
+    throw new Error("An employee profile with this contact email already exists in this company.");
   }
 
-  return prisma.employee.create({
+  const employee = await prisma.employee.create({
     data: {
       employeeCode: input.employeeCode,
       username,
@@ -124,8 +325,12 @@ export async function createEmployeeProfile(input: CreateEmployeeProfileInput) {
       hourlyRate: input.hourlyRate ?? 28,
       overtimeRate: input.overtimeRate ?? 42,
       isApproved: input.isApproved ?? false,
+      emailVerified: input.emailVerified ?? (input.isApproved ?? false),
     },
   });
+
+  await mirrorEmployeeToTargetCompany(employee.id);
+  return employee;
 }
 
 export async function resolveCompanySlug(companyId: string | null): Promise<string> {
@@ -137,4 +342,4 @@ export async function resolveCompanySlug(companyId: string | null): Promise<stri
   return company?.slug ?? "company";
 }
 
-export { splitDisplayName, normalizeContactEmail };
+export { splitDisplayName, normalizeContactEmail } from "@/lib/display-name";

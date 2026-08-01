@@ -16,9 +16,16 @@ export async function GET() {
       });
     }
 
-    const currentPeriod = await prisma.payPeriod.findFirst({
-      where: { isCurrent: true, status: PayPeriodStatus.OPEN },
-    });
+    const currentPeriod =
+      emp.companyId != null
+        ? await prisma.payPeriod.findFirst({
+            where: {
+              companyId: emp.companyId,
+              isCurrent: true,
+              status: PayPeriodStatus.OPEN,
+            },
+          })
+        : null;
 
     const [pending, approved, rejected, draft, recentPayslips, notifications] = await Promise.all([
       prisma.timesheet.count({

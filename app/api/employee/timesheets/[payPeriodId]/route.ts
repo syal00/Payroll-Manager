@@ -7,9 +7,9 @@ import { sumEntries, validateDayEntry } from "@/lib/timesheet-math";
 import { normalizeEntryLocation } from "@/lib/timesheet-entry-fields";
 import { updateTimesheetEntryHours } from "@/lib/timesheet-entry-hours-update";
 import { writeAuditLog } from "@/lib/audit";
-import { eachDayOfInterval } from "date-fns";
 import { validateTimesheetRowsAgainstPeriod } from "@/lib/timesheet-submit-validation";
-import { validateTimesheetWorkDatePolicy } from "@/lib/timesheet-work-date-policy";
+import { ensureTimesheetForPayPeriod } from "@/lib/timesheet-period-entries";
+import { validateTimesheetWorkDatePolicyForEntry } from "@/lib/timesheet-work-date-policy";
 import { timesheetSaveRequestSchema } from "@/lib/timesheet-save-payload";
 import {
   readTimesheetJsonBody,
@@ -34,45 +34,24 @@ export async function GET(
       return NextResponse.json({ error: "Pay period not available for submission." }, { status: 400 });
     }
 
-    let timesheet = await prisma.timesheet.findUnique({
-      where: {
-        employeeId_payPeriodId: { employeeId: employee.id, payPeriodId },
-      },
-      include: {
-        entries: { orderBy: { workDate: "asc" } },
-        approvals: { orderBy: { createdAt: "desc" }, take: 10 },
+    const timesheet = await ensureTimesheetForPayPeriod(prisma, {
+      employeeId: employee.id,
+      payPeriodId,
+      periodStart: period.startDate,
+      periodEnd: period.endDate,
+      periodOpen: true,
+      createAction: "TIMESHEET_DRAFT_CREATED",
+      createDetails: { payPeriodId },
+      writeAudit: async ({ action, entityId, details }) => {
+        await writeAuditLog({
+          actorId: session.id,
+          action,
+          entityType: "Timesheet",
+          entityId,
+          details,
+        });
       },
     });
-
-    if (!timesheet) {
-      const days = eachDayOfInterval({ start: period.startDate, end: period.endDate });
-      timesheet = await prisma.timesheet.create({
-        data: {
-          employeeId: employee.id,
-          payPeriodId,
-          status: TimesheetStatus.DRAFT,
-          entries: {
-            create: days.map((workDate) => ({
-              workDate,
-              regularHours: 0,
-              overtimeHours: 0,
-              leaveHours: 0,
-            })),
-          },
-        },
-        include: {
-          entries: { orderBy: { workDate: "asc" } },
-          approvals: { orderBy: { createdAt: "desc" }, take: 10 },
-        },
-      });
-      await writeAuditLog({
-        actorId: session.id,
-        action: "TIMESHEET_DRAFT_CREATED",
-        entityType: "Timesheet",
-        entityId: timesheet.id,
-        details: { payPeriodId },
-      });
-    }
 
     const editable =
       timesheet.status === TimesheetStatus.DRAFT || timesheet.status === TimesheetStatus.REJECTED;
@@ -129,7 +108,7 @@ export async function PUT(
       if (v) return NextResponse.json({ error: v }, { status: 400 });
       const row = sortedExisting[i];
       if (row) {
-        const dateErr = validateTimesheetWorkDatePolicy(row.workDate);
+        const dateErr = validateTimesheetWorkDatePolicyForEntry(row.workDate, body.entries[i]!);
         if (dateErr) return NextResponse.json({ error: dateErr }, { status: 400 });
       }
     }

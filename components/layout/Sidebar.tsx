@@ -16,12 +16,13 @@ import {
   Settings,
   LogOut,
   X,
-  ClipboardList,
-  Inbox,
+  UserCheck,
   type LucideIcon,
 } from "lucide-react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { DEFAULT_BRAND_NAME } from "@/lib/brand";
+import type { TenantBranding } from "@/lib/tenant-branding";
+import { tenantInitials } from "@/lib/tenant-branding";
 
 export type SidebarNavLink = {
   href: string;
@@ -33,14 +34,13 @@ export type SidebarNavLink = {
 export const adminNavLinks: SidebarNavLink[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, mainAdminOnly: false },
   { href: "/admin/employees", label: "Employees", icon: Users, mainAdminOnly: false },
+  { href: "/admin/pending-approval", label: "Pending approvals", icon: UserCheck, mainAdminOnly: false },
   { href: "/admin/timesheets", label: "Timesheets", icon: Clock3, mainAdminOnly: false },
   { href: "/admin/pay-periods", label: "Pay periods", icon: CalendarDays, mainAdminOnly: false },
   { href: "/admin/review", label: "Review", icon: ClipboardCheck, mainAdminOnly: false },
   { href: "/admin/payslips", label: "Payslips", icon: Receipt, mainAdminOnly: false },
   { href: "/admin/history", label: "History", icon: History, mainAdminOnly: false },
   { href: "/admin/reports", label: "Reports", icon: BarChart3, mainAdminOnly: false },
-  { href: "/admin/audit", label: "Audit log", icon: ClipboardList, mainAdminOnly: true },
-  { href: "/admin/demo-requests", label: "Demo requests", icon: Inbox, mainAdminOnly: true },
   { href: "/admin/managers", label: "Managers", icon: UserCog, mainAdminOnly: true },
   { href: "/admin/profile", label: "Profile", icon: UserCircle, mainAdminOnly: false },
   { href: "/admin/settings", label: "Settings", icon: Settings, mainAdminOnly: true },
@@ -52,6 +52,7 @@ type SidebarProps = {
   userName: string;
   userRole: string;
   isMainAdmin?: boolean;
+  tenantBranding?: TenantBranding;
   onLogout: () => void;
 };
 
@@ -70,12 +71,14 @@ export function Sidebar({
   userName,
   userRole,
   isMainAdmin = true,
+  tenantBranding,
   onLogout,
 }: SidebarProps) {
   const pathname = usePathname();
   const brand = process.env.NEXT_PUBLIC_COMPANY_NAME ?? DEFAULT_BRAND_NAME;
+  const displayName = tenantBranding?.name ?? userName;
   const links = adminNavLinks.filter((l) => isMainAdmin || !l.mainAdminOnly);
-  const initials = getInitials(userName);
+  const initials = tenantBranding ? tenantInitials(tenantBranding.name) : getInitials(userName);
 
   return (
     <>
@@ -93,7 +96,8 @@ export function Sidebar({
           <BrandLogo
             size={38}
             showTag={false}
-            nameLine1={brand}
+            nameLine1={tenantBranding?.name ?? brand}
+            logoSrc={tenantBranding?.logoUrl}
             wrapperClassName="sidebar-logo"
             imageClassName="brand-logo-img sidebar-logo-img"
             textWrapperClassName="sidebar-footer-text min-w-0"
@@ -131,9 +135,22 @@ export function Sidebar({
 
         <div className="sidebar-footer">
           <div className="sidebar-footer-user">
-            <span className="sidebar-footer-avatar">{initials || "A"}</span>
+            <span className="sidebar-footer-avatar sidebar-footer-avatar--tenant">
+              {tenantBranding?.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={tenantBranding.logoUrl}
+                  alt=""
+                  className="sidebar-footer-avatar-img"
+                  width={32}
+                  height={32}
+                />
+              ) : (
+                initials || "A"
+              )}
+            </span>
             <div className="sidebar-footer-text min-w-0 flex-1">
-              <p className="sidebar-footer-name">{userName}</p>
+              <p className="sidebar-footer-name">{displayName}</p>
               <p className="sidebar-footer-role">{userRole}</p>
             </div>
             <div className="sidebar-footer-actions">

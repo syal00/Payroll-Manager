@@ -6,7 +6,7 @@ import { Calendar, ListChecks } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TimesheetStatusBadge } from "@/components/status-badges";
-import { shortDate, money } from "@/lib/format";
+import { formatPayPeriodLabel, shortDate, money } from "@/lib/format";
 
 type DashboardPayload = {
   employee: {
@@ -23,14 +23,14 @@ type DashboardPayload = {
     status: string;
     totalHours: number;
     updatedAt: string;
-    payPeriod: { name: string | null; startDate: string };
+    payPeriod: { id: string; name: string | null; startDate: string; endDate: string };
     payslip: { id: string } | null;
   }[];
   recentPayslips: {
     id: string;
     payslipNumber: string;
     netPay: number;
-    payPeriod: { name: string | null; startDate: string };
+    payPeriod: { name: string | null; startDate: string; endDate: string };
   }[];
   notifications: { id: string; title: string; body: string; readAt: string | null; createdAt: string }[];
 };
@@ -79,42 +79,44 @@ export default function PublicEmployeeDashboardPage({
     );
   }
 
+  const emailLine =
+    data.employee.username.toLowerCase() === data.employee.contactEmail.toLowerCase()
+      ? data.employee.contactEmail
+      : `${data.employee.username} · ${data.employee.contactEmail}`;
+
   return (
-    <div className="page-container max-w-5xl space-y-10">
-      <div className="page-header !mb-4">
+    <div className="page-container max-w-5xl space-y-8">
+      <div className="page-header !mb-2">
         <div className="page-header-left">
           <p className="page-eyebrow">Hello</p>
           <h1 className="page-title mt-1">Welcome, {data.employee.name}</h1>
-          <p className="page-description mt-2 font-mono text-[var(--color-text-secondary)]">
-            <span className="font-semibold">{data.employee.employeeCode}</span>
+          <p className="page-description mt-2 text-[var(--color-text-secondary)]">
+            <span className="font-mono font-semibold">{data.employee.employeeCode}</span>
             <span> · </span>
-            <span>{data.employee.username}</span>
-            <span> · </span>
-            <span>{data.employee.contactEmail}</span>
+            <span>{emailLine}</span>
           </p>
         </div>
       </div>
 
-      <div className="employee-dash-top gap-4">
-        <Card className="card-violet shadow-[var(--shadow-violet)] transition hover:opacity-[0.98]">
+      <div className="employee-dash-top">
+        <Card className="employee-dash-card h-full border-[var(--color-border)] bg-[var(--color-surface)]">
           <div className="flex items-start gap-3">
-            <div className="stat-icon !border-[rgba(255,255,255,0.3)] !bg-[rgba(255,255,255,0.2)] !text-white">
-              <Calendar className="h-5 w-5 text-white" aria-hidden />
+            <div className="stat-icon !border-[var(--color-primary-muted)] !bg-[var(--color-surface)] !text-[var(--color-primary)]">
+              <Calendar className="h-5 w-5" aria-hidden />
             </div>
             <div className="min-w-0 flex-1">
-              <h2 className="text-[15px] font-bold text-[var(--color-text-inverse)]">Current pay period</h2>
+              <h2 className="card-heading">Current pay period</h2>
               {data.currentPeriod ? (
                 <>
-                  <p className="mt-2 text-base font-semibold leading-snug text-[rgba(255,255,255,0.9)]">
-                    {data.currentPeriod.name ??
-                      `${shortDate(data.currentPeriod.startDate)} – ${shortDate(data.currentPeriod.endDate)}`}
+                  <p className="mt-2 text-base font-semibold leading-snug text-[var(--color-text-primary)]">
+                    {formatPayPeriodLabel(data.currentPeriod)}
                   </p>
                   <Link href={`${base}/timesheet/${data.currentPeriod.id}`} className="mt-4 inline-block">
-                    <Button className="!bg-[rgba(255,255,255,0.96)] !text-[var(--color-primary)] hover:!brightness-105">Submit my hours</Button>
+                    <Button>Submit my hours</Button>
                   </Link>
                 </>
               ) : (
-                <p className="mt-2 text-sm text-[rgba(255,255,255,0.7)]">
+                <p className="mt-2 text-sm text-[var(--color-text-muted)]">
                   There isn&apos;t an active period right now. Check back when payroll opens a new window.
                 </p>
               )}
@@ -122,7 +124,7 @@ export default function PublicEmployeeDashboardPage({
           </div>
         </Card>
 
-        <Card>
+        <Card className="employee-dash-card">
           <div className="flex items-start gap-3">
             <div className="stat-icon !border-[var(--color-info-border)] !bg-[var(--color-info-bg)] !text-[var(--color-info)]">
               <ListChecks className="h-5 w-5" aria-hidden />
@@ -156,17 +158,19 @@ export default function PublicEmployeeDashboardPage({
         </Card>
       </div>
 
-      <Card>
-        <div className="card-header flex-wrap">
-          <div>
-            <h2 className="card-heading">Recent submissions</h2>
-            <p className="card-subtitle">Last updates across periods</p>
+      <Card padding={false} className="employee-dash-card overflow-hidden">
+        <div className="border-b border-[var(--color-border)] px-6 py-5">
+          <div className="card-header !mb-0 flex-wrap">
+            <div>
+              <h2 className="card-heading">Recent submissions</h2>
+              <p className="card-subtitle">Last updates across periods</p>
+            </div>
+            <Link href={`${base}/history`} className="link-accent text-sm">
+              Full history
+            </Link>
           </div>
-          <Link href={`${base}/history`} className="link-accent text-sm">
-            Full history
-          </Link>
         </div>
-        <div className="-mx-[2px] table-wrap rounded-[var(--radius-lg)]">
+        <div className="overflow-x-auto">
           <table className="table-shell min-w-[480px]">
             <thead>
               <tr className="table-head">
@@ -187,7 +191,14 @@ export default function PublicEmployeeDashboardPage({
               ) : (
                 data.recentTimesheets.map((t) => (
                   <tr key={t.id} className="table-row table-row-muted">
-                    <td className="px-4 py-3 font-medium text-[var(--color-text-secondary)]">{t.payPeriod.name ?? shortDate(t.payPeriod.startDate)}</td>
+                    <td className="px-4 py-3 font-medium">
+                      <Link
+                        href={`${base}/timesheet/${t.payPeriod.id}`}
+                        className="text-[var(--color-text-secondary)] hover:text-[var(--color-accent-light)]"
+                      >
+                        {formatPayPeriodLabel(t.payPeriod)}
+                      </Link>
+                    </td>
                     <td className="px-4 py-3">
                       <TimesheetStatusBadge status={t.status} />
                     </td>
@@ -202,7 +213,7 @@ export default function PublicEmployeeDashboardPage({
       </Card>
 
       <div className="employee-dash-bottom-grid">
-        <Card>
+        <Card className="employee-dash-card">
           <div className="card-header flex-wrap">
             <h2 className="card-heading">Notifications</h2>
             <button
@@ -240,7 +251,7 @@ export default function PublicEmployeeDashboardPage({
           </ul>
         </Card>
 
-        <Card>
+        <Card className="employee-dash-card">
           <div className="card-header">
             <h2 className="card-heading">Recent payslips</h2>
             <Link href={`${base}/payslips`} className="link-accent text-sm">
@@ -262,7 +273,9 @@ export default function PublicEmployeeDashboardPage({
                 >
                   <div>
                     <p className="font-mono text-xs font-bold text-[var(--color-text-primary)]">{p.payslipNumber}</p>
-                    <p className="text-xs text-[var(--color-text-muted)]">{p.payPeriod.name ?? shortDate(p.payPeriod.startDate)}</p>
+                    <p className="text-xs text-[var(--color-text-muted)]">
+                      {formatPayPeriodLabel(p.payPeriod)}
+                    </p>
                   </div>
                   <div className="text-right">
                     <p className="font-bold tabular-nums text-[var(--color-text-primary)]">{money(p.netPay)}</p>

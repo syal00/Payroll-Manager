@@ -11,9 +11,10 @@ import { companyLogoUrlSchema } from "@/lib/company-logo-url";
 import { companyWebsiteUrlSchema } from "@/lib/website-url";
 import { createInitialPayPeriod } from "@/lib/company-provisioning";
 import { DEFAULT_COMPANY_TIMEZONE } from "@/lib/company-timezones";
-import { allocateCompanyLoginUsername } from "@/lib/company-login-email";
 import { DEFAULT_INITIAL_STAFF_PASSWORD } from "@/lib/default-staff-password";
 import { sendWelcomeAccessGrantedEmail } from "@/lib/email/welcome-access-granted";
+import { getPlatformWorkingCompanyId } from "@/lib/platform-working-company";
+import { getCompanyMirrorStatus } from "@/lib/company-mirror";
 import { z } from "zod";
 
 /**
@@ -60,7 +61,12 @@ export async function GET() {
       pendingCountByCompany.set(cid, (pendingCountByCompany.get(cid) ?? 0) + 1);
     }
 
+    const workingCompanyId = await getPlatformWorkingCompanyId();
+    const companyMirror = await getCompanyMirrorStatus();
+
     return NextResponse.json({
+      workingCompanyId,
+      companyMirror,
       companies: companies.map((c) => ({
         id: c.id,
         name: c.name,
@@ -72,6 +78,7 @@ export async function GET() {
         employeeCount: employeeCountByCompany.get(c.id) ?? 0,
         managerCount: managerCountByCompany.get(c.id) ?? 0,
         timesheetPendingCount: pendingCountByCompany.get(c.id) ?? 0,
+        isWorkingCompany: workingCompanyId === c.id,
       })),
     });
   } catch (e) {
@@ -94,7 +101,7 @@ const createSchema = z.object({
       endDate: z.string().optional(),
     })
     .optional(),
-  /** Optional initial staff account — company login email is generated; welcome email goes to personal email. */
+  /** Optional initial staff account — sign-in uses the contact email; welcome email goes to the same address. */
   initialAdmin: z
     .object({
       contactEmail: z.string().trim().email().max(320),
@@ -155,6 +162,7 @@ export async function POST(req: Request) {
     let payPeriod: { id: string; name: string | null; startDate: Date; endDate: Date } | null = null;
     if (body.payPeriod) {
       payPeriod = await createInitialPayPeriod({
+        companyId: company.id,
         type: body.payPeriod.type,
         customStart: body.payPeriod.startDate,
         customEnd: body.payPeriod.endDate,
@@ -183,11 +191,6 @@ export async function POST(req: Request) {
       const mustChangePassword = body.initialAdmin.mustChangePassword ?? true;
       const passwordHash = await bcrypt.hash(password, 12);
       const { firstName, lastName } = splitDisplayName(body.initialAdmin.name);
-      const companyLogin = await allocateCompanyLoginUsername(
-        body.initialAdmin.role,
-        firstName,
-        company.slug
-      );
       const admin = await createStaffUser({
         firstName,
         lastName,
@@ -198,7 +201,6 @@ export async function POST(req: Request) {
         name: body.initialAdmin.name,
         createdById: session.id,
         mustChangePassword,
-        username: companyLogin,
       });
 
       const welcomeResult = await sendWelcomeAccessGrantedEmail({
@@ -208,7 +210,7 @@ export async function POST(req: Request) {
         companySlug: company.slug,
         companyWebsiteUrl: company.websiteUrl,
         role: body.initialAdmin.role,
-        generatedUsername: admin.username,
+        loginEmail: admin.username,
         temporaryPassword: password,
       });
 

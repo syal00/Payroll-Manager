@@ -12,6 +12,14 @@ export async function getTenantActingCompanyId(): Promise<string | null> {
   return raw || null;
 }
 
+/** Company id for tenant-scoped admin API routes (session, super-admin drill-down cookie). */
+export async function resolveTenantCompanyId(session: SessionUser): Promise<string | null> {
+  if (session.companyId) return session.companyId;
+  if (!isSuperAdminRole(session.role)) return null;
+  const acting = await applySuperAdminTenantActing(session);
+  return acting.companyId;
+}
+
 /** API prefixes super admin may call when tenant-acting cookie is set. */
 export function isTenantScopedApiPath(pathname: string): boolean {
   return (

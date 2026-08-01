@@ -30,7 +30,7 @@ export async function POST(
 
     const ts = await prisma.timesheet.findUnique({
       where: { id },
-      include: { employee: { include: { user: true } } },
+      include: { employee: { include: { user: true } }, payslip: { select: { id: true, payslipNumber: true } } },
     });
     if (!ts) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -43,9 +43,17 @@ export async function POST(
     const validTransition = (() => {
       if (body.newStatus === "UNDER_REVIEW") return prev === TimesheetStatus.PENDING;
       if (body.newStatus === "APPROVED")
-        return prev === TimesheetStatus.UNDER_REVIEW || prev === TimesheetStatus.PENDING;
+        return (
+          prev === TimesheetStatus.UNDER_REVIEW ||
+          prev === TimesheetStatus.PENDING ||
+          prev === TimesheetStatus.REJECTED
+        );
       if (body.newStatus === "REJECTED")
-        return prev === TimesheetStatus.PENDING || prev === TimesheetStatus.UNDER_REVIEW;
+        return (
+          prev === TimesheetStatus.PENDING ||
+          prev === TimesheetStatus.UNDER_REVIEW ||
+          prev === TimesheetStatus.APPROVED
+        );
       return false;
     })();
 
@@ -56,7 +64,12 @@ export async function POST(
       );
     }
 
+    const payslipToVoid = body.newStatus === "REJECTED" && prev === TimesheetStatus.APPROVED ? ts.payslip : null;
+
     const updated = await prisma.$transaction(async (tx) => {
+      if (payslipToVoid) {
+        await tx.payslip.delete({ where: { id: payslipToVoid.id } });
+      }
       await tx.approval.create({
         data: {
           timesheetId: id,
@@ -76,21 +89,28 @@ export async function POST(
 
     const empUserId = ts.employee.userId;
     if (empUserId && body.newStatus === "APPROVED") {
+      const reapproved = prev === TimesheetStatus.REJECTED;
       await prisma.notification.create({
         data: {
           userId: empUserId,
           type: "TIMESHEET_APPROVED",
-          title: "Timesheet approved",
-          body: "Your submitted hours were approved. Your payslip can now be issued.",
+          title: reapproved ? "Timesheet approved again" : "Timesheet approved",
+          body: reapproved
+            ? "Your timesheet was reviewed and approved. Your payslip can now be issued."
+            : "Your submitted hours were approved. Your payslip can now be issued.",
         },
       });
     } else if (empUserId && body.newStatus === "REJECTED") {
+      const revoked = prev === TimesheetStatus.APPROVED;
+      const payslipNote = payslipToVoid
+        ? ` Payslip ${payslipToVoid.payslipNumber} was voided.`
+        : "";
       await prisma.notification.create({
         data: {
           userId: empUserId,
           type: "TIMESHEET_REJECTED",
-          title: "Timesheet needs revision",
-          body: `Reason: ${body.rejectionReason}`,
+          title: revoked ? "Approved timesheet reversed" : "Timesheet needs revision",
+          body: `${revoked ? "Your approved hours were rejected and must be corrected." : "Your submitted hours need changes."} Reason: ${body.rejectionReason}.${payslipNote}`,
         },
       });
     } else if (empUserId && body.newStatus === "UNDER_REVIEW") {
@@ -121,10 +141,16 @@ export async function POST(
         to: body.newStatus,
         comment: body.comment,
         rejectionReason: body.rejectionReason,
+        revokedFromApproved: prev === TimesheetStatus.APPROVED && body.newStatus === "REJECTED",
+        reapprovedAfterRejection: prev === TimesheetStatus.REJECTED && body.newStatus === "APPROVED",
+        payslipVoided: payslipToVoid?.payslipNumber ?? null,
       },
     });
 
-    return NextResponse.json({ timesheet: updated });
+    return NextResponse.json({
+      timesheet: updated,
+      payslipVoided: payslipToVoid?.payslipNumber ?? null,
+    });
   } catch (e) {
     if (e instanceof z.ZodError) {
       return NextResponse.json({ error: "Validation failed", issues: e.issues }, { status: 400 });

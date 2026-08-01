@@ -2,9 +2,8 @@
 // See lib/manager-scope.ts scopeForCompanyDrilldown for why session.companyId (null for
 // SUPER_ADMIN) can never be used here.
 //
-// Mirrors app/api/admin/employees/route.ts. GET only: there is no admin-side POST-create-employee
-// endpoint to mirror either (employees are created via public self-registration + admin approval),
-// so none is added here.
+// Mirrors app/api/admin/employees/* for super-admin tenant drill-down. List is GET on this folder;
+// archive/restore/permanent delete live under [employeeId]/.
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { scopeForCompanyDrilldown } from "@/lib/manager-scope";
@@ -22,7 +21,8 @@ export async function GET(req: Request, ctx: { params: Promise<{ companyId: stri
     const url = new URL(req.url);
     const { status } = querySchema.parse(Object.fromEntries(url.searchParams.entries()));
 
-    const where: Prisma.EmployeeWhereInput = { ...scopeForCompanyDrilldown(session, companyId) };
+    const drilldownScope = await scopeForCompanyDrilldown(session, companyId);
+    const where: Prisma.EmployeeWhereInput = { ...drilldownScope };
     if (status === "active") {
       where.deletedAt = null;
       where.isApproved = true;

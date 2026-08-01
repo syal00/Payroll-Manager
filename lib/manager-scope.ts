@@ -1,18 +1,13 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { companyIdFilter, getEmployeeVisibilityCompanyIds, payPeriodCompanyIdFilter } from "@/lib/company-mirror";
 import { isMainAdminRole, isManagerRole, isSuperAdminRole, isSupervisorRole } from "@/lib/roles";
 import type { SessionUser } from "@/lib/session";
 
-/**
- * Company + role scoping for staff sessions. Company scoping always applies first (SUPER_ADMIN is
- * the sole exception — cross-company by design), then the existing role-specific fallback logic is
- * AND-ed on top of it: managers keep seeing their reports plus unassigned employees, supervisors see
- * only their exact direct reports.
- */
-export function scopeFor(session: SessionUser): Prisma.EmployeeWhereInput {
+function scopeForWithCompanies(session: SessionUser, companyIds: string[]): Prisma.EmployeeWhereInput {
   if (isSuperAdminRole(session.role)) return {};
 
-  const companyFilter: Prisma.EmployeeWhereInput = { companyId: session.companyId };
+  const companyFilter = companyIdFilter(companyIds);
 
   if (isMainAdminRole(session.role)) return companyFilter;
 
@@ -28,19 +23,27 @@ export function scopeFor(session: SessionUser): Prisma.EmployeeWhereInput {
 }
 
 /** Extra `where` for employees visible to the current staff user (undefined = no filter, SUPER_ADMIN only). */
-export function employeeWhereForStaff(session: SessionUser): Prisma.EmployeeWhereInput | undefined {
+export async function employeeWhereForStaff(session: SessionUser): Promise<Prisma.EmployeeWhereInput | undefined> {
   if (isSuperAdminRole(session.role)) return undefined;
-  return scopeFor(session);
+  if (!session.companyId) return { id: "__no_access__" };
+  const companyIds = await getEmployeeVisibilityCompanyIds(session.companyId);
+  return scopeForWithCompanies(session, companyIds);
 }
 
-export function timesheetWhereForStaff(session: SessionUser): Prisma.TimesheetWhereInput {
-  const ew = employeeWhereForStaff(session);
-  if (!ew) return {};
-  return { employee: ew };
+export async function timesheetWhereForStaff(session: SessionUser): Promise<Prisma.TimesheetWhereInput> {
+  if (isSuperAdminRole(session.role)) return {};
+  const companyId = session.companyId;
+  if (!companyId) return { id: "__no_access__" };
+
+  const companyIds = await getEmployeeVisibilityCompanyIds(companyId);
+  const employeeScope = scopeForWithCompanies(session, companyIds);
+  return {
+    OR: [{ employee: employeeScope }, { payPeriod: payPeriodCompanyIdFilter(companyIds) }],
+  };
 }
 
-export function payslipWhereForStaff(session: SessionUser): Prisma.PayslipWhereInput {
-  const ew = employeeWhereForStaff(session);
+export async function payslipWhereForStaff(session: SessionUser): Promise<Prisma.PayslipWhereInput> {
+  const ew = await employeeWhereForStaff(session);
   if (!ew) return {};
   return { employee: ew };
 }
@@ -52,8 +55,10 @@ export async function assertStaffCanAccessEmployee(session: SessionUser, employe
     where: { id: employeeId },
     select: { companyId: true, managerUserId: true, supervisorId: true },
   });
-  if (!row) return false;
-  if (row.companyId !== session.companyId) return false;
+  if (!row?.companyId || !session.companyId) return false;
+
+  const visibleCompanyIds = await getEmployeeVisibilityCompanyIds(session.companyId);
+  if (!visibleCompanyIds.includes(row.companyId)) return false;
 
   if (isMainAdminRole(session.role)) return true;
   if (isManagerRole(session.role)) {
@@ -65,53 +70,48 @@ export async function assertStaffCanAccessEmployee(session: SessionUser, employe
   return false;
 }
 
-/** Super-admin company drill-down — employee must belong to the URL's targetCompanyId. */
-export async function assertStaffCanAccessEmployeeInCompanyDrilldown(
+/** Super-admin company drill-down — employees visible for the URL tenant (includes mirror source when viewing target). */
+export async function scopeForCompanyDrilldown(
+  session: SessionUser,
+  targetCompanyId: string
+): Promise<Prisma.EmployeeWhereInput> {
+  const companyIds = await getEmployeeVisibilityCompanyIds(targetCompanyId);
+  return scopeForWithCompanies(session, companyIds);
+}
+
+export async function timesheetWhereForCompanyDrilldown(
+  session: SessionUser,
+  targetCompanyId: string
+): Promise<Prisma.TimesheetWhereInput> {
+  const companyIds = await getEmployeeVisibilityCompanyIds(targetCompanyId);
+  return {
+    OR: [
+      { employee: scopeForWithCompanies(session, companyIds) },
+      { payPeriod: payPeriodCompanyIdFilter(companyIds) },
+    ],
+  };
+}
+
+export async function payslipWhereForCompanyDrilldown(
+  session: SessionUser,
+  targetCompanyId: string
+): Promise<Prisma.PayslipWhereInput> {
+  return { employee: await scopeForCompanyDrilldown(session, targetCompanyId) };
+}
+
+/** @deprecated Use scopeForCompanyDrilldown — kept for type compatibility in comments only. */
+export function assertStaffCanAccessEmployeeInCompanyDrilldown(
   employeeId: string,
   targetCompanyId: string
 ): Promise<boolean> {
-  const row = await prisma.employee.findUnique({
-    where: { id: employeeId },
-    select: { companyId: true },
-  });
-  return row?.companyId === targetCompanyId;
-}
-
-/**
- * Company drill-down scope for `app/api/super-admin/companies/[companyId]/*` routes. `targetCompanyId`
- * ALWAYS comes from the URL param — a super admin's session.companyId is null, so `scopeFor` would
- * return `{}` (no filter) and mix every tenant's rows together, which is the bug this function exists
- * to prevent. Never falls back to "no filter": every branch, including the default, includes the
- * companyId filter.
- */
-export function scopeForCompanyDrilldown(
-  session: SessionUser,
-  targetCompanyId: string
-): Prisma.EmployeeWhereInput {
-  const companyFilter: Prisma.EmployeeWhereInput = { companyId: targetCompanyId };
-
-  // These routes are requireSuperAdmin()-gated today, so this is full access within the target
-  // company. Kept role-aware (rather than always returning companyFilter) so a future narrower
-  // "impersonate as manager/supervisor" view can reuse this same helper without weakening it.
-  if (isManagerRole(session.role)) {
-    return { AND: [companyFilter, { OR: [{ managerUserId: session.id }, { managerUserId: null }] }] };
-  }
-  if (isSupervisorRole(session.role)) {
-    return { AND: [companyFilter, { supervisorId: session.id }] };
-  }
-  return companyFilter;
-}
-
-export function timesheetWhereForCompanyDrilldown(
-  session: SessionUser,
-  targetCompanyId: string
-): Prisma.TimesheetWhereInput {
-  return { employee: scopeForCompanyDrilldown(session, targetCompanyId) };
-}
-
-export function payslipWhereForCompanyDrilldown(
-  session: SessionUser,
-  targetCompanyId: string
-): Prisma.PayslipWhereInput {
-  return { employee: scopeForCompanyDrilldown(session, targetCompanyId) };
+  return prisma.employee
+    .findFirst({
+      where: { id: employeeId },
+      select: { companyId: true },
+    })
+    .then(async (row) => {
+      if (!row?.companyId) return false;
+      const visible = await getEmployeeVisibilityCompanyIds(targetCompanyId);
+      return visible.includes(row.companyId);
+    });
 }
