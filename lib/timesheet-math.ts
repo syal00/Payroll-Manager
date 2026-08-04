@@ -1,8 +1,8 @@
 /** Max hours per day (regular + overtime + leave) */
-export const MAX_HOURS_PER_DAY = 16;
+export const MAX_HOURS_PER_DAY = 18;
 
 /** Max regular hours in one day */
-export const MAX_REGULAR_PER_DAY = 12;
+export const MAX_REGULAR_PER_DAY = 18;
 
 /** Max overtime hours in one day */
 export const MAX_OVERTIME_PER_DAY = 8;
@@ -23,7 +23,7 @@ export function validateDayEntry(d: DayEntryInput): string | null {
   const total = r + o + l;
   if (total > MAX_HOURS_PER_DAY)
     return `Total hours per day cannot exceed ${MAX_HOURS_PER_DAY} (regular + overtime + leave).`;
-  if (total > 0 && total < 0.5) return "Hours must be between 0.5 and 16 per day when any time is logged.";
+  if (total > 0 && total < 0.5) return `Hours must be between 0.5 and ${MAX_HOURS_PER_DAY} per day when any time is logged.`;
   return null;
 }
 
